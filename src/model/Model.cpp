@@ -123,6 +123,12 @@ void Vars<T>::print()
   } 
 }
 
+template <class T>
+bool Vars<T>::member(std::string name)
+{
+  return vars.count(name);
+}
+
 // ---------------------------------------------------------------------------
 // Enums
 
@@ -143,12 +149,7 @@ int Enum::lookup(std::string tag)
 
 bool Enum::member(std::string tag)
 {
-  auto it = tags.find(tag);
-  if (it != tags.end()) {
-    return true;
-  } else {
-    return false;
-  }
+  return tags.count(tag);
 }
 
 // ---------------------------------------------------------------------------
@@ -226,6 +227,33 @@ void State::appendCallbackDouble(std::string name, std::function<void(double)> c
 void State::appendCallbackString(std::string name, std::function<void(std::string)> call)
 {
   strings.appendCallback(name, call);
+}
+
+void State::appendSetter(std::string name, std::function<void(void)> call) 
+{
+  if (ints.member(name)) {
+    appendCallbackInt(name, [this,call](auto x) { (void)x; call(); } );
+  } else if (doubles.member(name)) {
+    appendCallbackDouble(name, [this,call](auto x) { (void)x; call(); } );
+  } else if (strings.member(name)) {
+    appendCallbackString(name, [this,call](auto x) { (void)x; call(); } );
+  }
+
+}
+
+void State::appendSetterInt(std::string name, std::string key, int val)
+{
+  appendSetter(name, [this, key,val] { this->setInt(key, val); });
+}
+
+void State::appendSetterDouble(std::string name, std::string key, double val)
+{
+  appendSetter(name, [this, key,val] { this->setDouble(key, val); });
+}
+
+void State::appendSetterString(std::string name, std::string key, std::string val)
+{
+  appendSetter(name, [this, key,val] { this->setString(key, val); });
 }
 
 // debug

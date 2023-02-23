@@ -150,9 +150,9 @@ void Config::run(YAML::Node node)
 
 void Window::run(YAML::Node node) 
 {
+  this->config->onKey(node, "config");
   this->state->onKey(node, "state");
   this->ui->onKey(node, "ui");
-  this->config->onKey(node, "config");
 }
 
 

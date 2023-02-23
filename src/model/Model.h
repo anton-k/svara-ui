@@ -75,6 +75,8 @@ class Callback
 template <class T>
 class Var
 {
+  enum Type { Int, Double, String };
+
   public:
     Var<T>(): val(), update() {}
     Var<T>(T init);
@@ -111,6 +113,8 @@ class Vars
 
     void print();
 
+    bool member(std::string);
+
   private:
     T defaultVal;
     std::map<std::string, Var<T>*> vars;
@@ -131,6 +135,8 @@ class Enum
 class State
 {
   public:
+
+
     State(): ints(Vars<int>(0)), doubles(Vars<double>(0)), strings(Vars<std::string>("")) {}
 
     // register new variable
@@ -154,6 +160,11 @@ class State
     void appendCallbackInt(std::string name, std::function<void(int)> call);
     void appendCallbackDouble(std::string name, std::function<void(double)> call);
     void appendCallbackString(std::string name, std::function<void(std::string)> call);
+
+    void appendSetter(std::string name, std::function<void(void)> call);
+    void appendSetterInt (std::string name, std::string key, int val);
+    void appendSetterDouble (std::string name, std::string key, double val);
+    void appendSetterString (std::string name, std::string key, std::string val);
 
     // debug
     void printInt(std::string name);
