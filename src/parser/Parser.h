@@ -21,6 +21,31 @@ namespace Parser
       void forString(std::string name, std::string val);
   };
 
+  class Chan {
+    public:
+      Chan(std::string _name): name(_name) {}
+      std::string name;
+  };
+
+  template <class T>
+  class Val
+  {
+    public:
+      Val(): isChanFlag(false), chan(Chan("")), val() {};
+      Val(Chan _chan): isChanFlag(true), chan(_chan), val() {};
+      Val(T _val): isChanFlag(false), chan(Chan("")), val(_val) {};
+
+      T getVal() { return val; };
+      Chan getChan() { return chan; };
+
+      bool isChan() { return isChanFlag; }
+
+    private:
+      bool isChanFlag;
+      Chan chan;
+      T val;
+  };
+
   class InitVars : public IsYaml
   {
     public:
@@ -82,7 +107,7 @@ namespace Parser
       virtual void verEnd() {};
       virtual void gridBegin() {};
       virtual void gridEnd() {};
-      virtual void scale(double val) { (void)val; };
+      virtual void scale(Val<double> val) { (void)val; };
       virtual void space() {};
 
       void run(YAML::Node node);
@@ -91,6 +116,7 @@ namespace Parser
   class Col
   {
     public:
+      Col(): val("") {};
       Col(std::string v): val(v) {};
 
       std::string val;
@@ -99,6 +125,7 @@ namespace Parser
   class Pad
   {
     public:
+      Pad(): top(0), bottom(0), left(0), right(0) {};
       Pad(int _top, int _bottom, int _left, int _right): top(_top), bottom(_bottom), left(_left), right(_right) {};
       int top, bottom, left, right;
   };
@@ -106,6 +133,8 @@ namespace Parser
   class Border
   {
     public:
+      Border(): width(0), round(0) {};
+      Border(int _width, int _round): width(_width), round(_round) {};
       int width, round;
   };
 
@@ -124,11 +153,11 @@ namespace Parser
   class Style : public IsYaml
   {
     public:
-      virtual void color(Col col) { (void)col; };
-      virtual void background(Col col) { (void)col; };
-      virtual void secondaryColor(Col col) { (void)col; };
-      virtual void textSize(int size) { (void)size; };
-      virtual void font(std::string name) { (void)name; };
+      virtual void color(Val<Col> col) { (void)col; };
+      virtual void background(Val<Col> col) { (void)col; };
+      virtual void secondaryColor(Val<Col> col) { (void)col; };
+      virtual void textSize(Val<int> size) { (void)size; };
+      virtual void font(Val<std::string> name) { (void)name; };
       virtual void pad(Pad pad) { (void)pad; };
       virtual void border(Border border) {  (void)border; };
       virtual void hints(Hint val) { (void)val; };

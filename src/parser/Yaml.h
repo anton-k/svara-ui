@@ -29,10 +29,18 @@ namespace Parser
   // domain specific funs
 
   Col getColor(YAML::Node node);
-  void forInt(YAML::Node node, std::string key, std::function<void(int)> go);
-  void forDouble(YAML::Node node, std::string key, std::function<void(double)> go);
+  Val<int> getValInt (YAML::Node node, int def);
+  Val<double> getValDouble (YAML::Node node, double def);
+  Val<std::string> getValString (YAML::Node node, std::string def);
+  Val<Col> getValColor (YAML::Node node);
+
+  void forInt(YAML::Node node, std::string key, std::function<void(Val<int>)> go);
+  void forDouble(YAML::Node node, std::string key, std::function<void(Val<double>)> go);
   void forString(YAML::Node node, std::string key, std::function<void(std::string)> go);
   void forColor(YAML::Node node, std::string key, std::function<void(Col)> go);
+
+  void forValString(YAML::Node node, std::string key, std::function<void(Val<std::string>)> go);
+  void forValColor(YAML::Node node, std::string key, std::function<void(Val<Col>)> go);
 }
 
 

@@ -43,6 +43,28 @@ int getInt (YAML::Node node, int def)
   return init;
 }
 
+Val<int> getValInt (YAML::Node node, int def)
+{
+  if (isInt(node)) { return Val<int>(getInt(node, def)); }
+  return Val<int>(Chan(getString(node, "")));
+}
+
+Val<double> getValDouble (YAML::Node node, double def)
+{
+  if (isDouble(node)) { return Val<double>(getDouble(node, def)); }
+  return Val<double>(Chan(getString(node, "")));
+}
+
+Val<std::string> getValString (YAML::Node node, std::string def)
+{
+  std::string res = getString(node, def);
+  if (res.size() > 0 && res[0] ==  '#') {
+    return Val<std::string>(Chan(res.erase(0, 1)));
+  } else {
+    return Val<std::string>(res);
+  }
+}
+
 bool isInt(YAML::Node node)
 {
   if (node.IsScalar()) {
@@ -97,14 +119,24 @@ Col getColor(YAML::Node node, Col def)
   return Col(getString(node, def.val));
 }
 
-void forInt(YAML::Node node, std::string key, std::function<void(int)> go)
+Val<Col> getValColor(YAML::Node node, Col def)
 {
-  forKey(node, key, [&go](auto x) { go(getInt(x, 0));});
+  Val<std::string> res = getValString(node, def.val);
+  if (res.isChan()) {
+    return Val<Col>(res.getChan());
+  } else {
+    return Val<Col>(Col(res.getVal()));
+  }
 }
 
-void forDouble(YAML::Node node, std::string key, std::function<void(double)> go)
+void forInt(YAML::Node node, std::string key, std::function<void(Val<int>)> go)
 {
-  forKey(node, key, [&go](auto x) { go(getDouble(x, 0));});
+  forKey(node, key, [&go](auto x) { go(getValInt(x, 0));});
+}
+
+void forDouble(YAML::Node node, std::string key, std::function<void(Val<double>)> go)
+{
+  forKey(node, key, [&go](auto x) { go(getValDouble(x, 0));});
 }
 
 void forString(YAML::Node node, std::string key, std::function<void(std::string)> go)
@@ -112,9 +144,20 @@ void forString(YAML::Node node, std::string key, std::function<void(std::string)
   forKey(node, key, [&go](auto x) { go(getString(x, ""));});
 }
 
+
+void forValString(YAML::Node node, std::string key, std::function<void(Val<std::string>)> go)
+{
+  forKey(node, key, [&go](auto x) { go(getValString(x, ""));});
+}
+
 void forColor(YAML::Node node, std::string key, std::function<void(Col)> go)
 {
   forKey(node, key, [&go](auto x) { go(getColor(x, Col("blue")));});
+}
+
+void forValColor(YAML::Node node, std::string key, std::function<void(Val<Col>)> go)
+{
+  forKey(node, key, [&go](auto x) { go(getValColor(x, Col("blue")));});
 }
 
 }

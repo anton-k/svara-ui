@@ -56,11 +56,11 @@ class DebugWidget : public Widget {
 };
 
 class DebugStyle : public Style {
-  void color(Col col) override { printVar("color", col.val);  };
-  void background(Col col) override { printVar("background", col.val); };
-  void secondaryColor(Col col) override { printVar("secondary-color", col.val); };
-  void textSize(int size) override { printVar("text-size", size); };
-  void font(std::string name) override { printVar("font", name); };
+  void color(Parser::Val<Parser::Col> col) override { printVar("color", col.getVal().val);  };
+  void background(Parser::Val<Parser::Col> col) override { printVar("background", col.getVal().val); };
+  void secondaryColor(Parser::Val<Parser::Col> col) override { printVar("secondary-color", col.getVal().val); };
+  void textSize(Val<int> size) override { printVar("text-size", size.getVal()); };
+  void font(Parser::Val<std::string> name) override { printVar("font", name.getVal()); };
   void pad(Pad pad) override { std::cout << "pad: " << pad.top << " " << pad.bottom << " "<< pad.left << " " << pad.right << "\n"; };
   void border(Border border) override { std::cout << "border: " << border.width << " " << border.round << "\n"; };
   void hints(Hint val) override { printVar("hint", fromHint(val)); };
@@ -73,7 +73,7 @@ class DebugLayout : public Layout {
   void verEnd() override { printVar("ver", "end"); };
   void gridBegin() override { printVar("grid", "begin"); };
   void gridEnd() override { printVar("grid", "end"); };
-  void scale(double val) override { printVar("scale", val); };
+  void scale(Parser::Val<double> val) override { printVar("scale", val.getVal()); };
   void space() override { printVar("space", ""); };
 };
 

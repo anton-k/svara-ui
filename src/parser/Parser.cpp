@@ -79,11 +79,11 @@ std::string fromHint(Hint hint)
 }
 
 void Style::run(YAML::Node node) {
-  forColor(node, "color", [this](auto col) { this->color(col);});
-  forColor(node, "background", [this](auto col) { this->background(col);});
-  forColor(node, "secondary-color", [this](auto col) { this->secondaryColor(col);});
+  forValColor(node, "color", [this](auto col) { this->color(col);});
+  forValColor(node, "background", [this](auto col) { this->background(col);});
+  forValColor(node, "secondary-color", [this](auto col) { this->secondaryColor(col);});
   forInt(node, "text-size", [this](auto size) { this->textSize(size); });
-  forString(node, "font", [this](auto f) { this->font(f); });
+  forValString(node, "font", [this](auto f) { this->font(f); });
   forString(node, "hints", [this](auto x) { this->hints(toHint(x)); });
 }
 
