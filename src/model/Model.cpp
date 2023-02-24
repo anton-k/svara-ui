@@ -38,10 +38,12 @@ void Callback<T>::append(std::function<void(T)> f)
 // Var
 
 template <class T>
-Var<T>::Var(T init) 
+Var<T>::Var(T init, std::string str, bool debug) 
 {
   val = init;
   update = Callback<T>( [this](T v) { this->val = v; } );
+  name = str;
+  hasDebug = debug;
 }
 
 int within(int x, int min, int max )
@@ -68,6 +70,9 @@ template <class T>
 void Var<T>::set(T v)
 {
   update.apply(v);
+  if (hasDebug) {
+    std::cout << "[DEBUG] set-var: " << name << ": " << v << "\n";
+  }
 }
 
 template <class T>
@@ -101,7 +106,6 @@ void Vars<T>::set(std::string name, T val)
 {
   auto it = vars.find(name);
   if (it != vars.end()) {
-    std::cout << it->first << ": " << val << "\n";
     it->second->set(val);
   }
 }
@@ -158,9 +162,9 @@ bool Enum::member(std::string tag)
 
 // inserts
 
-void State::insertInt(std::string name, int init)
+void State::insertInt(std::string name, int init, bool needDebug)
 {
-  ints.insert(name, new Var<int>(init));
+  ints.insert(name, new Var<int>(init, name, needDebug));
 }
     
 void State::insertIntRange(std::string name, int init, int min, int max)
@@ -168,14 +172,14 @@ void State::insertIntRange(std::string name, int init, int min, int max)
   ints.insert(name, Var<int>::makeRange(init, min, max));
 }
 
-void State::insertDouble(std::string name, double init)
+void State::insertDouble(std::string name, double init, bool needDebug)
 {
-  doubles.insert(name, new Var<double>(init));
+  doubles.insert(name, new Var<double>(init, name, needDebug));
 }
 
-void State::insertString(std::string name, std::string init)
+void State::insertString(std::string name, std::string init, bool needDebug)
 {
-  strings.insert(name, new Var<std::string>(init));
+  strings.insert(name, new Var<std::string>(init, name, needDebug));
 }
 
 // getters
@@ -290,8 +294,8 @@ int check_model()
   // x = 0
   // y = 0
   // z = x + y
-  st.insertInt("x", 0);
-  st.insertInt("y", 2);
+  st.insertInt("x", 0, true);
+  st.insertInt("y", 2, true);
   st.insertIntRange("z", 0, 0, 5);
 
   st.appendCallbackInt("x", [&st](int v) { st.setInt("z", v + st.getInt("y")); });
@@ -304,16 +308,13 @@ int check_model()
   st.setInt("y", 4);
   st.printInts();
 
-  Var<int> v(1);
-  v.appendCallback([](int x) {
-      std::cout << "Echo:  "<< x << "\n";
-  });
+  Var<int> v(1, "v", true);
   v.set(2);
   v.set(4);
   
   Vars<int> vs;
-  auto vx = new Var<int>(0);
-  auto vy = new Var<int>(2);
+  auto vx = new Var<int>(0, "vx");
+  auto vy = new Var<int>(2, "vy");
   vs.insert("x", vx);
   vs.insert("y", vy);
   vs.print();

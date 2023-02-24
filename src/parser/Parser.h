@@ -60,9 +60,9 @@ namespace Parser
   class InitVars : public IsYaml
   {
     public:
-      virtual void intVar(std::string name, int val) { (void)name; (void)val; };
-      virtual void doubleVar(std::string name, double val) { (void)name; (void)val; };
-      virtual void stringVar(std::string name, std::string val) { (void)name; (void)val; };
+      virtual void intVar(std::string name, int val, bool needDebug) { (void)name; (void)val; (void)needDebug; };
+      virtual void doubleVar(std::string name, double val, bool needDebug) { (void)name; (void)val; (void)needDebug; };
+      virtual void stringVar(std::string name, std::string val, bool needDebug) { (void)name; (void)val; (void)needDebug; };
 
       void run(YAML::Node node);
       /*

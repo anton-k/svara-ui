@@ -21,14 +21,26 @@ void IsUi::onKey(YAML::Node node, std::string key, Rect rect)
 // -------------------------------------------------------------------
 // State
 
+// If key name end on ! prefix we turn debug on for this variable
+bool parseDebugFlag(std::string& str)
+{
+  if (str.size() != 0) {
+    if (str[str.size() - 1] == '!') {
+      str.erase(str.size() - 1);
+      return true;
+    }
+  } 
+  return false;
+}
 
 void InitVars::run(YAML::Node node) 
 {
   forObject(node, [this](std::string key, YAML::Node x) {    
-      if (isInt(x)) { this->intVar(key, getInt(x, 0)); 
-      } else if (isDouble(x)) { this->doubleVar(key, getDouble(x, 0)); 
+      bool needDebug = parseDebugFlag(key);
+      if (isInt(x)) { this->intVar(key, getInt(x, 0), needDebug); 
+      } else if (isDouble(x)) { this->doubleVar(key, getDouble(x, 0), needDebug); 
       } else {
-        this->stringVar(key, getString(x, ""));
+        this->stringVar(key, getString(x, ""), needDebug);
       }
   });  
 }

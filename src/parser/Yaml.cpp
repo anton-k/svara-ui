@@ -65,13 +65,6 @@ Val<std::string> getValString (YAML::Node node, std::string def)
   }
 }
 
-inline std::string trim(std::string& str)
-{
-    str.erase(str.find_last_not_of(' ')+1);         //suffixing spaces
-    str.erase(0, str.find_first_not_of(' '));       //prefixing spaces
-    return str;
-}
-
 bool isInt(YAML::Node node)
 {
   if (node.IsScalar()) {

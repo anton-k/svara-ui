@@ -78,9 +78,8 @@ class Var
   enum Type { Int, Double, String };
 
   public:
-    Var<T>(): val(), update() {}
-    Var<T>(T init);
-    Var<T>(T init, std::function<void(T)> setter);
+    Var<T>(): val(), update(), name(""), hasDebug(false) {}
+    Var<T>(T init, std::string name, bool hasDebug = false);
     static Var<T>* makeRange(T init, T min, T max);
 
     T get();
@@ -90,6 +89,8 @@ class Var
   private:
     T val;
     Callback<T> update;
+    std::string name;
+    bool hasDebug;
 };
 
 // ---------------------------------------------------------------------------
@@ -140,11 +141,11 @@ class State
     State(): ints(Vars<int>(0)), doubles(Vars<double>(0)), strings(Vars<std::string>("")) {}
 
     // register new variable
-    void insertInt(std::string name, int init);
+    void insertInt(std::string name, int init, bool needDebug);
     void insertIntRange(std::string name, int init, int min, int max);
-    void insertDouble(std::string name, double init);
+    void insertDouble(std::string name, double init, bool needDebug);
     void insertDoubleRange(std::string name, double init, double min, double max);
-    void insertString(std::string name, std::string init);
+    void insertString(std::string name, std::string init, bool needDebug);
 
     // get variable value
     int getInt(std::string name);

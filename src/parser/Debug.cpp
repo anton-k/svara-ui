@@ -19,11 +19,11 @@ void printUpdateVar(std::string trigger, std::string name, T val)
 class DebugInits : public InitVars {
   public:
     DebugInits() {};
-    void intVar(std::string name, int val) override { printVar(name, val); };
+    void intVar(std::string name, int val, bool needDebug) override { printVar(name, val); };
     
-    void doubleVar(std::string name, double val) override { printVar(name, val); };
+    void doubleVar(std::string name, double val, bool needDebug) override { printVar(name, val); };
 
-    void stringVar(std::string name, std::string val) override { printVar(name, val); }
+    void stringVar(std::string name, std::string val, bool needDebug) override { printVar(name, val); }
 };
 
 class DebugUpdates : public UpdateVars {

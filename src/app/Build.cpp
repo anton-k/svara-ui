@@ -18,19 +18,19 @@ class BuildInits : public Parser::InitVars {
     BuildInits() {};
     BuildInits(App* _app): app(_app) {};
 
-    void intVar(std::string name, int val) override { 
-      std::cout << "Insert Int: " << name << " by " << val << "\n";
-      app->state->insertInt(name, val); 
+    void intVar(std::string name, int val, bool needDebug) override { 
+      if (needDebug) { std::cout << "Insert int: " << name << " by " << val << "\n"; }
+      app->state->insertInt(name, val, needDebug); 
     };
     
-    void doubleVar(std::string name, double val) override { 
-      std::cout << "Insert: " << name << " by " << val << "\n";
-      app->state->insertDouble(name, val); 
+    void doubleVar(std::string name, double val, bool needDebug) override { 
+      if (needDebug) {  std::cout << "Insert double: " << name << " by " << val << "\n"; }
+      app->state->insertDouble(name, val, needDebug); 
     };
 
-    void stringVar(std::string name, std::string val) override { 
-      std::cout << "Insert: " << name << " by " << val << "\n";
-      app->state->insertString(name, val); 
+    void stringVar(std::string name, std::string val, bool needDebug) override { 
+      if (needDebug) { std::cout << "Insert string: " << name << " by " << val << "\n"; }
+      app->state->insertString(name, val, needDebug); 
     }
   
   private:
