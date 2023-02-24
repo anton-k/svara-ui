@@ -129,12 +129,23 @@ Val<Col> getValColor(YAML::Node node, Col def)
   }
 }
 
-void forInt(YAML::Node node, std::string key, std::function<void(Val<int>)> go)
+void forInt(YAML::Node node, std::string key, std::function<void(int)> go)
+{
+  forKey(node, key, [&go](auto x) { go(getInt(x, 0));});
+}
+
+void forValInt(YAML::Node node, std::string key, std::function<void(Val<int>)> go)
 {
   forKey(node, key, [&go](auto x) { go(getValInt(x, 0));});
 }
 
-void forDouble(YAML::Node node, std::string key, std::function<void(Val<double>)> go)
+void forDouble(YAML::Node node, std::string key, std::function<void(double)> go)
+{
+  forKey(node, key, [&go](auto x) { go(getDouble(x, 0));});
+}
+
+
+void forValDouble(YAML::Node node, std::string key, std::function<void(Val<double>)> go)
 {
   forKey(node, key, [&go](auto x) { go(getValDouble(x, 0));});
 }

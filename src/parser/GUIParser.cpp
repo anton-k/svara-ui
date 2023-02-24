@@ -4,7 +4,7 @@
 #include <sstream>
 #include "../MainComponent.h"
 #include "GUIParser.h"
-
+/*
 //# https://github.com/biojppm/rapidyaml/blob/master/samples/quickstart.cpp
 juce::Colour parse_color(std::string str) 
 {
@@ -204,5 +204,5 @@ int check_rapid_yaml()
 }
 
 
-
+*/
 

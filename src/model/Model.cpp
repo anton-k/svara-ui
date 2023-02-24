@@ -101,6 +101,7 @@ void Vars<T>::set(std::string name, T val)
 {
   auto it = vars.find(name);
   if (it != vars.end()) {
+    std::cout << it->first << ": " << val << "\n";
     it->second->set(val);
   }
 }

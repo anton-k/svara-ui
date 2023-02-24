@@ -45,14 +45,15 @@ class DebugConfig : public Config {
 };
 
 class DebugWidget : public Widget {
-  void knob(std::string name) override { printVar("knob", name); };
-  void slider(std::string name) override { printVar("slider", name); };
-  void xyPad(std::string nameX, std::string nameY) override { std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
-  void button(std::string name) override { printVar("button", name); };
-  void toggle(std::string name) override { printVar("toggle", name); };
+  void knob(Rect rect, std::string name) override { printVar("knob", name); };
+  void slider(Rect rect, std::string name) override { printVar("slider", name); };
+  void xyPad(Rect rect, std::string nameX, std::string nameY) override { std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
+  void button(Rect rect, std::string name) override { printVar("button", name); };
+  void toggle(Rect rect, std::string name) override { printVar("toggle", name); };
   // void buttonRow(std::string name) override { (void)name; };
-  void label(std::string val) override { printVar("label", val); };
-  void text(std::string name) override { printVar("text", name); };
+  void label(Rect rect, std::string val) override { printVar("label", val); };
+  void text(Rect rect, std::string name) override { printVar("text", name); };
+  void space(Rect rect) override { printVar("space", ""); };
 };
 
 class DebugStyle : public Style {
@@ -74,7 +75,6 @@ class DebugLayout : public Layout {
   void gridBegin() override { printVar("grid", "begin"); };
   void gridEnd() override { printVar("grid", "end"); };
   void scale(Parser::Val<double> val) override { printVar("scale", val.getVal()); };
-  void space() override { printVar("space", ""); };
 };
 
 

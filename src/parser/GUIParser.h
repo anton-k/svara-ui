@@ -1,6 +1,7 @@
 #pragma once
 #include "../../libs/yaml-cpp/include/yaml-cpp/yaml.h"
 
+/*
 int check_rapid_yaml();
 
 class Box
@@ -62,3 +63,4 @@ bool is_ver (YAML::Node node);
 Ver get_ver (YAML::Node node);
 bool is_space (YAML::Node node);
 Space get_space ();
+*/

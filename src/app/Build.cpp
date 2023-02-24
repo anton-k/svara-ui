@@ -61,6 +61,7 @@ class BuildConfig : public Parser::Config {
 
     void windowSize(int height, int width) override 
     {
+      std::cout << "set sizes\n";
       app->config->windowHeight = height;
       app->config->windowWidth = width;
     }
@@ -90,14 +91,24 @@ class BuildStyle : public Parser::Style {
 class BuildWidget : public Parser::Widget {
   public:
     BuildWidget(App* _app): app(_app) {}
-    void knob(std::string name) override { printVar("knob", name); };
-    void slider(std::string name) override { printVar("slider", name); };
-    void xyPad(std::string nameX, std::string nameY) override { std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
-    void button(std::string name) override { printVar("button", name); };
-    void toggle(std::string name) override { printVar("toggle", name); };
+    void knob(Parser::Rect rect, std::string name) override 
+    { 
+      juce::Slider* knob = new juce::Slider(juce::Slider::SliderStyle::Rotary, juce::Slider::TextEntryBoxPosition::NoTextBox);
+      knob->setRange(0, 1.0);
+      knob->setValue(app->state->getDouble(name));
+      std::cout << "knob name: " << app->state->getDouble(name) << "\n";
+      knob->onValueChange = [this, name, knob] { this->app->state->setDouble(name, knob->getValue()); };
+      app->scene->addWidget(knob, rect);
+    }
+    
+    void slider(Parser::Rect rect, std::string name) override { printVar("slider", name); };
+    void xyPad(Parser::Rect rect, std::string nameX, std::string nameY) override { std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
+    void button(Parser::Rect rect, std::string name) override { printVar("button", name); };
+    void toggle(Parser::Rect rect, std::string name) override { printVar("toggle", name); };
     // void buttonRow(std::string name) override { (void)name; };
-    void label(std::string val) override { printVar("label", val); };
-    void text(std::string name) override { printVar("text", name); };
+    void label(Parser::Rect rect, std::string val) override { printVar("label", val); };
+    void text(Parser::Rect rect, std::string name) override { printVar("text", name); };
+    void space(Parser::Rect rect) override { printVar("space", ""); };
   private:
     App* app;
 };
@@ -112,7 +123,6 @@ class BuildLayout : public Parser::Layout {
     void gridBegin() override { printVar("grid", "begin"); };
     void gridEnd() override { printVar("grid", "end"); };
     void scale(Parser::Val<double> val) override { printVar("scale", val.getVal()); };
-    void space() override { printVar("space", ""); };
   private:
     App* app;
 };
@@ -120,13 +130,8 @@ class BuildLayout : public Parser::Layout {
 //------------------------------------------------------------------------------------- 
 // Build App from YAML file
 
-App* initApp(YAML::Node node) 
+void initApp(App* app, YAML::Node node) 
 {
-  // init empty app
-  Config* config = new Config();
-  State* state = new State();
-  App* app = new App(config, state);
-
   // assemble builders
   
   Parser::InitVars* buildInits = new BuildInits(app);  
@@ -140,7 +145,5 @@ App* initApp(YAML::Node node)
   Parser::Ui* buildUi = new Parser::Ui(buildWidget, buildLayout, buildStyle);
   Parser::Window* buildWindow = new Parser::Window(buildState, buildUi, buildConfig);
   buildWindow->run(node);
-
-  return app;
 }
 

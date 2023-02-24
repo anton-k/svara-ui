@@ -16,10 +16,10 @@ class Palette {
 
 class Config {
   public:
-    Config(): windowWidth(200), windowHeight(100) {};
+    Config(): windowWidth(200), windowHeight(100), palette(Palette()) {};
 
     int windowWidth, windowHeight;
-    Palette* palette;
+    Palette palette;
 };
 
 class Style {
@@ -41,12 +41,65 @@ class Style {
     Parser::Hint hint;
 };
 
+
+class Box {
+  public:
+    Box(juce::Rectangle<float> _rect, juce::Component* _widget): rect(_rect), widget(_widget) {};
+
+    void setBounds();
+
+    juce::Rectangle<float> rect;
+    juce::Component* widget;
+};
+
+class Scene
+{
+public:
+    //==============================================================================
+    Scene(): widgets(std::vector<Box*>()) {};
+
+    //==============================================================================
+//    void paint (juce::Graphics&) override;
+    void resized();
+
+    void addWidget(juce::Component* widget, Parser::Rect rect)
+    {
+      Box* box = new Box(rect, widget);
+      widgets.push_back(box);
+    };
+
+    void setup(std::function<void(juce::Component*)> call)
+    {
+      std::for_each(widgets.begin(), widgets.end(), [this, call] (Box* box) { call(box->widget); });
+    }
+    std::vector<Box*> widgets;
+
+private:
+    //==============================================================================
+    // Your private member variables go here...
+
+};
+
+
 class App {
   public:
-    App();
+    App(): config(new Config()), style(new Style()), state(new State()), scene(new Scene()) {};
     App(Config* _config, State* _state): config(_config), state(_state) {}
+
+    void setup(std::function<void(juce::Component*)> addAndMakeVisible)
+    {
+      // scene->setSize(config->windowWidth, config->windowHeight);
+    }
+
+    void resized()
+    {
+      scene->resized();
+    };
 
     Config* config;
     Style* style;
     State* state;
+    Scene* scene;
 };
+
+void initApp(App* app, YAML::Node node);

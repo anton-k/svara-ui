@@ -13,6 +13,11 @@ void IsYaml::onKey(YAML::Node node, std::string key)
   forKey(node, key, [this](auto x) { this->run(x); });
 }
 
+void IsUi::onKey(YAML::Node node, std::string key, Rect rect)
+{
+  forKey(node, key, [this, rect](auto x) { this->run(x, rect); });
+}
+
 // -------------------------------------------------------------------
 // State
 
@@ -92,45 +97,92 @@ void Layout::run(YAML::Node node)
   (void) node;
 }
 
-void Widget::run(YAML::Node node) 
+void Widget::run(YAML::Node node, Rect rect) 
 {
-  forString(node, "knob", [this](auto chan) { this->knob(chan);});
-  forString(node, "slider", [this](auto chan) { this->slider(chan); });
-  forString(node, "button", [this](auto chan) { this->button(chan); });
-  forString(node, "toggle", [this](auto chan) { this->toggle(chan); });
-  forString(node, "label", [this](auto val) { this->label(val); });
-  forString(node, "text", [this](auto chan) { this->text(chan); });
-  forKey(node, "xy-pad", [this](auto xyNode) {
-    forString(xyNode, "x", [this, &xyNode] (auto x) {
-      forString(xyNode, "y", [this, x](auto y) { this->xyPad(x, y); });
+  forString(node, "knob", [this, rect](auto chan) { this->knob(rect, chan);});
+  forString(node, "slider", [this, rect](auto chan) { this->slider(rect, chan); });
+  forString(node, "button", [this, rect](auto chan) { this->button(rect, chan); });
+  forString(node, "toggle", [this, rect](auto chan) { this->toggle(rect, chan); });
+  forString(node, "label", [this, rect](auto val) { this->label(rect, val); });
+  forString(node, "text", [this, rect](auto chan) { this->text(rect, chan); });
+  forKey(node, "xy-pad", [this, rect](auto xyNode) {
+    forString(xyNode, "x", [this, rect, &xyNode] (auto x) {
+      forString(xyNode, "y", [this, rect, x](auto y) { this->xyPad(rect, x, y); });
     });
   });
+  forKey(node, "space", [this, rect] (auto x) { (void)x; this->space(rect); });
 }
 
-void forListLayout(std::string tag, Ui* parent, Layout* layout, YAML::Node node, std::function<void(void)> begin, std::function<void(void)> end) 
+std::string getLayoutListTag(bool isHor) 
 {
-  forKey(node, tag, [parent, layout, begin, end](auto elems) {
+  return isHor ? "hor" : "ver";
+}
+
+float getScale(YAML::Node node) 
+{
+  float res = 1.0;
+  forDouble(node, "scale", [&res](int val) { res = val; });
+  return res;
+}
+
+void foldBoxes(bool isHor, std::vector<std::pair<float, YAML::Node>>& boxes, Rect rect, Ui* parent) 
+{
+  float x = rect.getX();
+  float y = rect.getY();
+  float width = rect.getWidth();
+  float height = rect.getHeight();
+
+  
+  float total = 0;
+  std::for_each(boxes.begin(), boxes.end(), [&total](auto pair) { total = total + pair.first; });
+  if (total == 0) { return; }
+
+  float dw, dh;
+  if (isHor) {
+    dh = height;
+    std::for_each(boxes.begin(), boxes.end(), [&](auto pair) {
+        dw = width * pair.first / total;
+        parent->run(pair.second, Rect(x, y, dw, dh));
+        x = x + dw;
+    });
+  } else {
+    dw = width;
+    std::for_each(boxes.begin(), boxes.end(), [&](auto pair) {
+        dh = height * pair.first / total;
+        parent->run(pair.second, Rect(x, y, dw, dh));
+        y = y + dh;
+    });
+  }
+}
+
+void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect) 
+{
+  std::string tag = getLayoutListTag(isHor);
+  std::vector<std::pair<float,YAML::Node>> boxes;  
+
+  forKey(node, tag, [&boxes](auto elems) {
       if (elems.IsSequence()) {
-        begin();    
-        forNodes(elems, [parent, layout](auto x) { parent->run(x); });
-        end();    
+        forNodes(elems, [&boxes](auto elem) { 
+            boxes.push_back(std::pair(getScale(elem), elem));
+        });
       }
   });
+  
+  foldBoxes(isHor, boxes, rect, parent);
 }
 
-void runLayout(Ui* parent, YAML::Node node)
+void runLayout(Ui* parent, YAML::Node node, Rect rect)
 {
-  forDouble(node, "scale", [parent] (auto x) { parent->layout->scale(x); });
-  forKey(node, "space", [parent] (auto x) { (void) x; parent->layout->space(); });
-  forListLayout("hor", parent, parent->layout, node, [parent] { parent->layout->horBegin(); }, [parent] { parent->layout->horEnd(); });
-  forListLayout("ver", parent, parent->layout, node, [parent] { parent->layout->verBegin(); }, [parent] { parent->layout->verEnd(); });
+  bool isHor = true;
+  forListLayout(isHor,  parent, node, rect);
+  forListLayout(!isHor, parent, node, rect);
 }
 
-void Ui::run(YAML::Node node) 
+void Ui::run(YAML::Node node, Rect rect) 
 {  
   this->style->onKey(node, "style");
-  runLayout(this, node);
-  this->widget->run(node);
+  runLayout(this, node, rect);
+  this->widget->run(node, rect);
 }
 
 // -------------------------------------------------------------------
@@ -152,7 +204,7 @@ void Window::run(YAML::Node node)
 {
   this->config->onKey(node, "config");
   this->state->onKey(node, "state");
-  this->ui->onKey(node, "ui");
+  this->ui->onKey(node, "ui", Rect(0.0, 0.0, 1.0, 1.0));
 }
 
 

@@ -30,6 +30,3 @@ Palette::Palette()
 
   defaultColor = palette["blue"];
 }
-
-
-

@@ -1,10 +1,13 @@
 #pragma once
 #include "../../libs/yaml-cpp/include/yaml-cpp/yaml.h"
 #include <string>
+#include <juce_gui_extra/juce_gui_extra.h>
 
 namespace Parser
 {
   void check_parser();
+
+  typedef juce::Rectangle<float> Rect;
 
   class IsYaml
   {
@@ -12,6 +15,14 @@ namespace Parser
       virtual void run(YAML::Node node){ (void)node; };
       void onKey(YAML::Node node, std::string key);
   };
+
+  class IsUi
+  {
+    public:
+      virtual void run(YAML::Node node, Rect rect) { (void)node; (void) rect; };
+      void onKey(YAML::Node node, std::string key, Rect rect);
+  };
+
 
   class Var
   {
@@ -83,19 +94,20 @@ namespace Parser
       UpdateVars* update;
   };
 
-  class Widget : public IsYaml
+  class Widget : public IsUi
   {
     public:
-      virtual void knob(std::string name) { (void)name; };
-      virtual void slider(std::string name) { (void)name; };
-      virtual void xyPad(std::string nameX, std::string nameY) { (void)nameX; (void)nameY; };
-      virtual void button(std::string name) { (void)name; };
-      virtual void toggle(std::string name) { (void)name; };
+      virtual void knob(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void slider(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void xyPad(Rect rect, std::string nameX, std::string nameY) { (void) rect; (void)nameX; (void)nameY; };
+      virtual void button(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void toggle(Rect rect, std::string name) { (void) rect; (void)name; };
       // virtual void buttonRow(std::string name) { (void)name; };
-      virtual void label(std::string val) { (void)val; };
-      virtual void text(std::string name) { (void)name; };
+      virtual void label(Rect rect, std::string val) { (void) rect; (void)val; };
+      virtual void text(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void space(Rect rect) { (void)rect; };
 
-      void run(YAML::Node node);
+      void run(YAML::Node node, Rect rect) override;
   };
 
   class Layout : public IsYaml
@@ -108,7 +120,6 @@ namespace Parser
       virtual void gridBegin() {};
       virtual void gridEnd() {};
       virtual void scale(Val<double> val) { (void)val; };
-      virtual void space() {};
 
       void run(YAML::Node node);
   };
@@ -165,7 +176,7 @@ namespace Parser
       void run(YAML::Node node);
   };
 
-  class Ui : public IsYaml
+  class Ui : public IsUi
   {
     public:
       Ui() {};
@@ -174,7 +185,7 @@ namespace Parser
       Widget* widget;
       Layout* layout;
       Style* style;
-      void run(YAML::Node node);
+      void run(YAML::Node node, Rect rect) override;
   };
 
   class Config : public IsYaml
@@ -184,7 +195,7 @@ namespace Parser
 
       virtual void windowSize(int width, int height) { (void)width; (void)height; };
 
-      void run(YAML::Node node);
+      void run(YAML::Node node) override;
   };
 
   class Window : public IsYaml

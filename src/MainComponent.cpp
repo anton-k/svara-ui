@@ -1,10 +1,10 @@
 #include "MainComponent.h"
-#include "parser/GUIParser.h"
 #include "model/Model.h"
 #include "parser/Parser.h"
 
 // Beautiful colors from:
 // https://clrs.cc/
+/*
 class Palette
 {
 public:  
@@ -83,12 +83,14 @@ void SceneComponent::resized()
   smallHouse.setBounds (20, 10, 50, 70);
   sun.setBounds (530, 10,  60, 60);
 };
-
+*/
 //==============================================================================
 
 MainComponent::MainComponent()
   {
+    
     Parser::check_parser ();
+    /*
     addAndMakeVisible (checkTheTimeButton);
     checkTheTimeButton.setButtonText ("Check the time...");
     // check_model();
@@ -100,6 +102,14 @@ MainComponent::MainComponent()
     checkTheTimeButton.onClick = [this] { checkTime(); };
  
     setSize (600, 310);
+    */
+    YAML::Node node = YAML::LoadFile("config.yaml");
+    initApp(&app, node);
+    std::cout << "sizes:  "<< app.config->windowWidth  << "  " << app.config->windowHeight << "\n";
+    app.scene->setup([this] (juce::Component* widget) { this->addAndMakeVisible(widget); });
+    setSize(app.config->windowWidth, app.config->windowHeight);
+    std::cout << "Widget size " << app.scene->widgets.size() << "\n";
+  
   };
 
 
@@ -108,12 +118,14 @@ void MainComponent::resized()
     // This is called when the MainComponent is resized.
     // If you add any child components, this is where you should
     // update their positions.
-
-  checkTheTimeButton.setBounds (10, 100, getWidth() - 50, 50);
-  timeLabel.setBounds (10, 10, getWidth() - 50, 50);
   
+  // checkTheTimeButton.setBounds (10, 100, getWidth() - 50, 50);
+  // timeLabel.setBounds (10, 10, getWidth() - 50, 50);
+  setBounds (0, 0, getWidth(), getHeight());
+  app.resized();
 };
 
+/*
 void MainComponent::checkTime () 
 {
   auto currentTime = juce::Time::getCurrentTime();                                          // [4]
@@ -126,4 +138,4 @@ void MainComponent::checkTime ()
   std::cout << "\n";
   Parser::check_parser ();
 };
-
+*/
