@@ -65,15 +65,23 @@ Val<std::string> getValString (YAML::Node node, std::string def)
   }
 }
 
+inline std::string trim(std::string& str)
+{
+    str.erase(str.find_last_not_of(' ')+1);         //suffixing spaces
+    str.erase(0, str.find_first_not_of(' '));       //prefixing spaces
+    return str;
+}
+
 bool isInt(YAML::Node node)
 {
   if (node.IsScalar()) {
-    try {
-      std::stoi(node.as<std::string>());
-      return true;
-    } catch (const std::invalid_argument &) {                                      
-    } catch (const std::out_of_range &) {                                          
-    }
+    std::string str = node.as<std::string>();
+    if (str.size() == 0) { return false; }
+    if (not (isdigit(str[0]) || str[0]=='-')) { return false; }
+
+    return std::all_of(str.begin()++, str.end(), [](char ch) {   
+      return isdigit(ch);
+    });
   }
   return false;
 }
