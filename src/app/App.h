@@ -8,7 +8,7 @@ class Palette {
   public:
     Palette();
 
-    juce::Colour fromName(Parser:: Col);
+    juce::Colour fromName(Parser::Col);
   private:
     std::map<std::string, juce::Colour> palette;
     juce::Colour defaultColor;
@@ -22,68 +22,95 @@ class Config {
     Palette palette;
 };
 
-class Style {
-  public:
-    Style():
-      color (Parser::Val<Parser::Col>(Parser::Col("blue"))),
-      secondaryColor (Parser::Val<Parser::Col>(Parser::Col("blue"))),
-      background (Parser::Val<Parser::Col>(Parser::Col("white"))),
-      textSize (14),
-      font (""),
-      pad (Parser::Pad()),
-      border(Parser::Border()) {}
-
-    Parser::Val<Parser::Col> color, secondaryColor, background;
-    Parser::Val<int> textSize;
-    Parser::Val<std::string> font;
-    Parser::Pad pad;
-    Parser::Border border;
-    Parser::Hint hint;
-};
-
 
 class Box {
   public:
-    Box(juce::Rectangle<float> _rect, juce::Component* _widget): rect(_rect), widget(_widget) {};
+    virtual void setBounds(Parser::Rect rect) { (void) rect; };
 
-    void setBounds();
+    virtual void append(std::function<void(juce::Component*)> call) { (void) call; };
 
-    juce::Rectangle<float> rect;
+    virtual Parser::Rect getRectangle() { return Parser::Rect(0.0, 0.0, 1.0, 1.0); }
+
+    void setBounds() {
+      setBounds(getRectangle());
+    };
+  // virtual void setVisible(bool isVisible) { (void) isVisible; };
+};
+
+class Widget : public Box {
+  public:
+    Widget(juce::Component* _widget, juce::Rectangle<float> _rect):
+      rect(_rect),
+      widget(_widget) {};
+
+    void setBounds(Parser::Rect) override;
+
+    void append(std::function<void(juce::Component*)> call) override;
+
+    Parser::Rect getRectangle() { return rect; }
+    // void setVisible()
+
+  private:
+    Parser::Rect rect;
     juce::Component* widget;
 };
+
+
+class Group : public Box {
+  public:
+    Group(juce::GroupComponent* _group, std::vector<Box*> _children, juce::Rectangle<float> _rect):
+      group(_group),
+      children(_children),
+      rect(_rect) {}
+
+    void setBounds(Parser::Rect) override;
+
+    void append(std::function<void(juce::Component*)> call) override;
+
+    void push_back(Box* box);
+
+    Parser::Rect getRectangle() { return rect; }
+
+  private:
+    Parser::Rect rect;
+    juce::GroupComponent* group;
+    std::vector<Box*> children;
+};
+
 
 class Scene
 {
 public:
     //==============================================================================
-    Scene(): widgets(std::vector<Box*>()) {};
+    Scene():
+      widgets(std::vector<Box*>()),
+      groupStack(std::vector<Group*>())
+    {};
 
     //==============================================================================
 //    void paint (juce::Graphics&) override;
     void resized();
 
-    void addWidget(juce::Component* widget, Parser::Rect rect)
-    {
-      Box* box = new Box(rect, widget);
-      widgets.push_back(box);
-    };
+    void append(Box* box);
+    void addWidget(juce::Component* comp, Parser::Rect rect);
 
-    void setup(std::function<void(juce::Component*)> call)
-    {
-      std::for_each(widgets.begin(), widgets.end(), [this, call] (Box* box) { call(box->widget); });
-    }
-    std::vector<Box*> widgets;
+    void setup(juce::Component* parent);
+
+    void setGroup(juce::String name);
+    void groupBegin(Parser::Rect rect, std::string name = "");
+    void groupEnd();
 
 private:
     //==============================================================================
     // Your private member variables go here...
-
+    std::vector<Box*> widgets;
+    std::vector<Group*> groupStack;
 };
 
 
 class App {
   public:
-    App(): config(new Config()), style(new Style()), state(new State()), scene(new Scene()) {};
+    App(): config(new Config()), state(new State()), scene(new Scene()) {};
     App(Config* _config, State* _state): config(_config), state(_state) {}
 
     void setup(std::function<void(juce::Component*)> addAndMakeVisible)
@@ -91,13 +118,17 @@ class App {
       // scene->setSize(config->windowWidth, config->windowHeight);
     }
 
+    juce::Colour findColor(Parser::Col col)
+    {
+      return config->palette.fromName(col);
+    };
+
     void resized()
     {
       scene->resized();
     };
 
     Config* config;
-    Style* style;
     State* state;
     Scene* scene;
 };

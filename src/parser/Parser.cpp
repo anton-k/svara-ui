@@ -13,9 +13,9 @@ void IsYaml::onKey(YAML::Node node, std::string key)
   forKey(node, key, [this](auto x) { this->run(x); });
 }
 
-void IsUi::onKey(YAML::Node node, std::string key, Rect rect)
+void IsUi::onKey(YAML::Node node, std::string key, Rect rect, Style style)
 {
-  forKey(node, key, [this, rect](auto x) { this->run(x, rect); });
+  forKey(node, key, [this, rect, style](auto x) { this->run(x, rect, style); });
 }
 
 // -------------------------------------------------------------------
@@ -95,13 +95,23 @@ std::string fromHint(Hint hint)
   return "none";
 }
 
-void Style::run(YAML::Node node) {
-  forValColor(node, "color", [this](auto col) { this->color(col);});
-  forValColor(node, "background", [this](auto col) { this->background(col);});
-  forValColor(node, "secondary-color", [this](auto col) { this->secondaryColor(col);});
-  forInt(node, "text-size", [this](auto size) { this->textSize(size); });
-  forValString(node, "font", [this](auto f) { this->font(f); });
-  forString(node, "hints", [this](auto x) { this->hints(toHint(x)); });
+void StyleUpdate::update(YAML::Node node, Style& style) 
+{
+  forValColor(node, "color", [this,&style](auto col) { this->color(col); style.color = col; });
+  forValColor(node, "background", [this,&style](auto col) { this->background(col); style.background = col; });
+  forValColor(node, "secondary-color", [this,&style](auto col) { this->secondaryColor(col); style.secondaryColor = col; });
+  forInt(node, "text-size", [this,&style](auto size) { this->textSize(size); style.textSize = size; });
+  forValString(node, "font", [this,&style](auto f) { this->font(f); style.font = f; });
+  forString(node, "hints", [this,&style](auto x) { this->hints(toHint(x)); style.hint = toHint(x); });
+  forDouble(node, "pad", [this,&style](double x) { this->pad(Pad(x, x, x, x)); style.pad = Pad(x, x, x, x); });
+  forKey(node, "pad", [this,&style] (auto padNode) {
+    if (padNode.IsMap()) {
+      forDouble(padNode, "left", [this,&style](double x) { style.pad.left = x; });
+      forDouble(padNode, "right", [this,&style](double x) { style.pad.right = x;  });
+      forDouble(padNode, "bottom", [this,&style](double x) { style.pad.bottom = x;  });
+      forDouble(padNode, "top", [this,&style](double x) { style.pad.top = x;  });
+    }
+  });
 }
 
 void Layout::run(YAML::Node node) 
@@ -109,14 +119,15 @@ void Layout::run(YAML::Node node)
   (void) node;
 }
 
-void Widget::run(YAML::Node node, Rect rect) 
+void Widget::run(YAML::Node node, Rect rect, Style style) 
 {
-  forString(node, "knob", [this, rect](auto chan) { this->knob(rect, chan);});
-  forString(node, "slider", [this, rect](auto chan) { this->slider(rect, chan); });
+  forString(node, "knob", [this, rect, &style](auto chan) { this->knob(style, rect, chan);});
+  forString(node, "slider", [this, rect, &style](auto chan) { this->slider(style, rect, chan); });
+  forString(node, "bar", [this, rect, &style](auto chan) { this->bar(style, rect, chan); });
   forString(node, "button", [this, rect](auto chan) { this->button(rect, chan); });
   forString(node, "toggle", [this, rect](auto chan) { this->toggle(rect, chan); });
-  forString(node, "label", [this, rect](auto val) { this->label(rect, val); });
-  forString(node, "text", [this, rect](auto chan) { this->text(rect, chan); });
+  forString(node, "label", [this, rect, &style](auto val) { this->label(style, rect, val); });
+  forString(node, "text", [this, rect, &style](auto chan) { this->text(style, rect, chan); });  
   forKey(node, "xy-pad", [this, rect](auto xyNode) {
     forString(xyNode, "x", [this, rect, &xyNode] (auto x) {
       forString(xyNode, "y", [this, rect, x](auto y) { this->xyPad(rect, x, y); });
@@ -133,17 +144,16 @@ std::string getLayoutListTag(bool isHor)
 float getScale(YAML::Node node) 
 {
   float res = 1.0;
-  forDouble(node, "scale", [&res](int val) { res = val; });
+  forDouble(node, "scale", [&res](double val) { res = val; });
   return res;
 }
 
-void foldBoxes(bool isHor, std::vector<std::pair<float, YAML::Node>>& boxes, Rect rect, Ui* parent) 
+void foldBoxes(bool isHor, std::vector<std::pair<float, YAML::Node>>& boxes, Rect rect, Style style, Ui* parent) 
 {
   float x = rect.getX();
   float y = rect.getY();
   float width = rect.getWidth();
   float height = rect.getHeight();
-
   
   float total = 0;
   std::for_each(boxes.begin(), boxes.end(), [&total](auto pair) { total = total + pair.first; });
@@ -154,20 +164,20 @@ void foldBoxes(bool isHor, std::vector<std::pair<float, YAML::Node>>& boxes, Rec
     dh = height;
     std::for_each(boxes.begin(), boxes.end(), [&](auto pair) {
         dw = width * pair.first / total;
-        parent->run(pair.second, Rect(x, y, dw, dh));
+        parent->run(pair.second, Rect(x, y, dw, dh), style);
         x = x + dw;
     });
   } else {
     dw = width;
     std::for_each(boxes.begin(), boxes.end(), [&](auto pair) {
         dh = height * pair.first / total;
-        parent->run(pair.second, Rect(x, y, dw, dh));
+        parent->run(pair.second, Rect(x, y, dw, dh), style);
         y = y + dh;
     });
   }
 }
 
-void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect) 
+void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect, Style style) 
 {
   std::string tag = getLayoutListTag(isHor);
   std::vector<std::pair<float,YAML::Node>> boxes;  
@@ -180,21 +190,28 @@ void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect)
       }
   });
   
-  foldBoxes(isHor, boxes, rect, parent);
+  foldBoxes(isHor, boxes, rect, style, parent);
 }
 
-void runLayout(Ui* parent, YAML::Node node, Rect rect)
+void runLayout(Ui* parent, YAML::Node node, Rect rect, Style style)
 {
   bool isHor = true;
-  forListLayout(isHor,  parent, node, rect);
-  forListLayout(!isHor, parent, node, rect);
+  forListLayout(isHor,  parent, node, rect, style);
+  forListLayout(!isHor, parent, node, rect, style);
 }
 
-void Ui::run(YAML::Node node, Rect rect) 
-{  
-  this->style->onKey(node, "style");
-  runLayout(this, node, rect);
-  this->widget->run(node, rect);
+void Ui::updateStyle(YAML::Node node, Style& style) 
+{
+  if (hasKey(node, "style")) {
+    styleUpdate->update(node["style"], style);
+  }
+}
+
+void Ui::run(YAML::Node node, Rect rect, Style style) 
+{ 
+  updateStyle(node, style);
+  runLayout(this, node, rect, style);
+  this->widget->run(node, rect, style);
 }
 
 // -------------------------------------------------------------------
@@ -216,7 +233,7 @@ void Window::run(YAML::Node node)
 {
   this->config->onKey(node, "config");
   this->state->onKey(node, "state");
-  this->ui->onKey(node, "ui", Rect(0.0, 0.0, 1.0, 1.0));
+  this->ui->onKey(node, "ui", Rect(0.0, 0.0, 1.0, 1.0), Style());
 }
 
 

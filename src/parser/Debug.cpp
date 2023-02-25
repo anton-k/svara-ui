@@ -45,18 +45,19 @@ class DebugConfig : public Config {
 };
 
 class DebugWidget : public Widget {
-  void knob(Rect rect, std::string name) override { printVar("knob", name); };
-  void slider(Rect rect, std::string name) override { printVar("slider", name); };
+  void knob(Style& style, Rect rect, std::string name) override { printVar("knob", name); };
+  void slider(Style& style, Rect rect, std::string name) override { printVar("slider", name); };
+  void bar(Style& style, Rect rect, std::string name) override { printVar("bar", name); };
   void xyPad(Rect rect, std::string nameX, std::string nameY) override { std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
   void button(Rect rect, std::string name) override { printVar("button", name); };
   void toggle(Rect rect, std::string name) override { printVar("toggle", name); };
   // void buttonRow(std::string name) override { (void)name; };
-  void label(Rect rect, std::string val) override { printVar("label", val); };
-  void text(Rect rect, std::string name) override { printVar("text", name); };
+  void label(Style& style, Rect rect, std::string val) override { printVar("label", val); };
+  void text(Style& style, Rect rect, std::string name) override { printVar("text", name); };
   void space(Rect rect) override { printVar("space", ""); };
 };
 
-class DebugStyle : public Style {
+class DebugStyle : public StyleUpdate {
   void color(Parser::Val<Parser::Col> col) override { printVar("color", col.getVal().val);  };
   void background(Parser::Val<Parser::Col> col) override { printVar("background", col.getVal().val); };
   void secondaryColor(Parser::Val<Parser::Col> col) override { printVar("secondary-color", col.getVal().val); };
@@ -88,7 +89,7 @@ void check_parser()
   Config* debugConfig = new DebugConfig();
   Widget* debugWidget = new DebugWidget();
   Layout* debugLayout = new DebugLayout();
-  Style* debugStyle = new DebugStyle();
+  StyleUpdate* debugStyle = new DebugStyle();
   Ui* debugUi = new Ui(debugWidget, debugLayout, debugStyle);
   Window* debugWindow = new Window(debugState, debugUi, debugConfig);
   debugWindow->run(node);

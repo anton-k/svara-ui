@@ -104,12 +104,19 @@ MainComponent::MainComponent()
     setSize (600, 310);
     */
     YAML::Node node = YAML::LoadFile("config.yaml");
+    app.scene->groupBegin(Parser::Rect(0, 0, 1.0, 1.0), "UI group");
     initApp(&app, node);
-    std::cout << "sizes:  "<< app.config->windowWidth  << "  " << app.config->windowHeight << "\n";
-    app.scene->setup([this] (juce::Component* widget) { this->addAndMakeVisible(widget); });
+    app.scene->groupEnd();
+
+    // group = new juce::GroupComponent("UI");
+    // std::cout << "sizes:  "<< app.config->windowWidth  << "  " << app.config->windowHeight << "\n";
+    // app.scene->setup([this] (juce::Component* widget) { this->group->addAndMakeVisible(widget); });
+//    app.scene->setGroup("GUI");
+    app.scene->setup(this);
+
+    // addAndMakeVisible(*group);
     setSize(app.config->windowWidth, app.config->windowHeight);
-    std::cout << "Widget size " << app.scene->widgets.size() << "\n";
-  
+    // std::cout << "Widget size " << app.scene->widgets.size() << "\n";
   };
 
 
@@ -122,6 +129,7 @@ void MainComponent::resized()
   // checkTheTimeButton.setBounds (10, 100, getWidth() - 50, 50);
   // timeLabel.setBounds (10, 10, getWidth() - 50, 50);
   setBounds (0, 0, getWidth(), getHeight());
+  // group->setBoundsRelative(0, 0, 1, 1);
   app.resized();
 };
 

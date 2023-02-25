@@ -9,21 +9,6 @@ namespace Parser
 
   typedef juce::Rectangle<float> Rect;
 
-  class IsYaml
-  {
-    public:
-      virtual void run(YAML::Node node){ (void)node; };
-      void onKey(YAML::Node node, std::string key);
-  };
-
-  class IsUi
-  {
-    public:
-      virtual void run(YAML::Node node, Rect rect) { (void)node; (void) rect; };
-      void onKey(YAML::Node node, std::string key, Rect rect);
-  };
-
-
   class Var
   {
     public:
@@ -50,11 +35,84 @@ namespace Parser
       Chan getChan() { return chan; };
 
       bool isChan() { return isChanFlag; }
+      bool isVal() { return !isChanFlag; }
 
     private:
       bool isChanFlag;
       Chan chan;
       T val;
+  };
+
+
+  class Col
+  {
+    public:
+      Col(): val("") {};
+      Col(std::string v): val(v) {};
+
+      std::string val;
+  };
+
+  class Pad
+  {
+    public:
+      Pad(): top(0), bottom(0), left(0), right(0) {};
+      Pad(float _top, float _bottom, float _left, float _right): top(_top), bottom(_bottom), left(_left), right(_right) {};
+      float top, bottom, left, right;
+  };
+
+  class Border
+  {
+    public:
+      Border(): width(0), round(0) {};
+      Border(int _width, int _round): width(_width), round(_round) {};
+      int width, round;
+  };
+
+  enum Hint { None, Hover, Top, Right, Left, Bottom };
+  Hint toHint(std::string str);
+  std::string fromHint(Hint hint);
+
+
+  class Font
+  {
+    public:
+      Font(std::string _name): name(_name) {};
+      std::string name;
+  };
+
+
+  class Style {
+    public:
+      Style():
+        color (Val<Col>(Col("blue"))),
+        secondaryColor (Val<Col>(Col("blue"))),
+        background (Val<Col>(Col("navy"))),
+        textSize (18),
+        font (""),
+        pad (Pad()),
+        border(Border()) {}
+
+      Val<Col> color, secondaryColor, background;
+      Val<double> textSize;
+      Val<std::string> font;
+      Pad pad;
+      Border border;
+      Hint hint;
+  };
+
+  class IsYaml
+  {
+    public:
+      virtual void run(YAML::Node node){ (void)node; };
+      void onKey(YAML::Node node, std::string key);
+  };
+
+  class IsUi
+  {
+    public:
+      virtual void run(YAML::Node node, Rect rect, Style style) { (void)node; (void) rect; (void)style; };
+      void onKey(YAML::Node node, std::string key, Rect rect, Style style);
   };
 
   class InitVars : public IsYaml
@@ -97,17 +155,20 @@ namespace Parser
   class Widget : public IsUi
   {
     public:
-      virtual void knob(Rect rect, std::string name) { (void) rect; (void)name; };
-      virtual void slider(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void knob(Style& style, Rect rect, std::string name) { (void) style, (void) rect; (void)name; };
+      virtual void slider(Style& style, Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void bar(Style& style, Rect rect, std::string name) { (void) rect; (void)name; };
+      // XYPad impl: https://github.com/seanlikeskites/SAFEJuceModule/blob/master/SAFE_juce_module/UIComponents/XYSlider.h
       virtual void xyPad(Rect rect, std::string nameX, std::string nameY) { (void) rect; (void)nameX; (void)nameY; };
       virtual void button(Rect rect, std::string name) { (void) rect; (void)name; };
       virtual void toggle(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void checkBox(Rect rect, std::string name) { (void) rect; (void)name; };
       // virtual void buttonRow(std::string name) { (void)name; };
-      virtual void label(Rect rect, std::string val) { (void) rect; (void)val; };
-      virtual void text(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void label(Style& style, Rect rect, std::string val) { (void)style; (void) rect; (void)val; };
+      virtual void text(Style& style, Rect rect, std::string name) { (void)style; (void) rect; (void)name; };
       virtual void space(Rect rect) { (void)rect; };
 
-      void run(YAML::Node node, Rect rect) override;
+      void run(YAML::Node node, Rect rect, Style style) override;
   };
 
   class Layout : public IsYaml
@@ -124,44 +185,7 @@ namespace Parser
       void run(YAML::Node node);
   };
 
-  class Col
-  {
-    public:
-      Col(): val("") {};
-      Col(std::string v): val(v) {};
-
-      std::string val;
-  };
-
-  class Pad
-  {
-    public:
-      Pad(): top(0), bottom(0), left(0), right(0) {};
-      Pad(int _top, int _bottom, int _left, int _right): top(_top), bottom(_bottom), left(_left), right(_right) {};
-      int top, bottom, left, right;
-  };
-
-  class Border
-  {
-    public:
-      Border(): width(0), round(0) {};
-      Border(int _width, int _round): width(_width), round(_round) {};
-      int width, round;
-  };
-
-  enum Hint { None, Hover, Top, Right, Left, Bottom };
-  Hint toHint(std::string str);
-  std::string fromHint(Hint hint);
-
-
-  class Font
-  {
-    public:
-      Font(std::string _name): name(_name) {};
-      std::string name;
-  };
-
-  class Style : public IsYaml
+  class StyleUpdate
   {
     public:
       virtual void color(Val<Col> col) { (void)col; };
@@ -173,19 +197,20 @@ namespace Parser
       virtual void border(Border border) {  (void)border; };
       virtual void hints(Hint val) { (void)val; };
 
-      void run(YAML::Node node);
+      void update (YAML::Node node, Style& style);
   };
 
   class Ui : public IsUi
   {
     public:
       Ui() {};
-      Ui(Widget* _widget, Layout* _layout, Style* _style): widget(_widget), layout(_layout), style(_style) {};
+      Ui(Widget* _widget, Layout* _layout, StyleUpdate* _style): widget(_widget), layout(_layout), styleUpdate(_style) {};
+      void updateStyle(YAML::Node node, Style& style);
 
       Widget* widget;
       Layout* layout;
-      Style* style;
-      void run(YAML::Node node, Rect rect) override;
+      StyleUpdate* styleUpdate;
+      void run(YAML::Node node, Rect rect, Style style) override;
   };
 
   class Config : public IsYaml
