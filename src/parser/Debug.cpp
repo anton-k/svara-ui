@@ -55,6 +55,8 @@ class DebugWidget : public Widget {
   void label(Style& style, Rect rect, std::string val) override { printVar("label", val); };
   void text(Style& style, Rect rect, std::string name) override { printVar("text", name); };
   void space(Rect rect) override { printVar("space", ""); };
+  void groupBegin(Parser::Style& style, Parser::Rect rect, std::string name) override {};
+  void groupEnd() override {};
 };
 
 class DebugStyle : public StyleUpdate {

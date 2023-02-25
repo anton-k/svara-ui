@@ -39,9 +39,10 @@ find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your sys
 
 find_package(c4core REQUIRED)
 
-# add_subdirectory("libs/c4core")
-add_subdirectory("libs/rapidyaml")
 add_subdirectory("libs/yaml-cpp")
+add_subdirectory("libs/plog")
+
+include_directories ("libs/plog/include")
 
 # include_directories("/usr/local/include/ryml")
 # include_directories("/usr/local/include/c4")

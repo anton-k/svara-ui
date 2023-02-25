@@ -1,0 +1,72 @@
+config:
+  size:
+    width: 400
+    height: 700
+state:
+  init:
+    foo!: 0.0
+    zoo!: 0.5
+    bar: 0.2
+    qux: 0.9
+    set-color!: "olive"
+  update:
+    set-color:
+      foo: 1.0
+      zoo: 0.2
+      qux: 0.2
+ui:
+  ver:
+    - label: My awesome GUI
+      scale: 0.3
+      style:
+        color: orange
+        text-size: 20
+        font: "Comic"
+    - scale: 0.3
+      hor:
+        - label: "Set color:"
+          scale: 0.5
+        - text: set-color
+          style:
+            color: .set-color
+            text-size: 20
+
+    - style:
+        color: .set-color
+      scale: 1.2
+      hor:
+        - group:
+            name: envelope
+            hor:
+              - ver:
+                - knob: zoo
+                - knob: bar
+              - group:
+                  hor:
+                    - ver:
+                      - knob: zoo
+                      - knob: bar
+                    - ver:
+                      - knob: zoo
+                      - knob: bar
+        - knob: qux
+    - knob: foo
+      scale: 2
+      style:
+        color: olive
+    - group:
+        ver:
+        - slider: zoo
+          scale: 0.5
+        - slider: foo
+          style:
+            color: orange
+          scale: 0.5
+        - bar: qux
+          style:
+            color: green
+            pad:
+              left: 0.02
+              right: 0.02
+              bottom: 0.15
+          scale: 0.5

@@ -1,6 +1,7 @@
 #include "App.h"
 #include "../parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <plog/Log.h>
 
 // ------------------------------------------------------------------------------------- 
 // Palette
@@ -17,28 +18,30 @@ juce::Colour Palette::fromName(Parser::Col col)
 // ------------------------------------------------------------------------------------- 
 // Atomic widget
 
-void Widget::setBounds(Parser::Rect parentRect) 
+void Widget::setBounds() 
 {
-  widget->setBoundsRelative(parentRect);
+  PLOG_DEBUG << "setBounds: " << widget->getName() << "  " << rect.toString();
+  widget->setBoundsRelative(rect);
 }
 
-void Widget::append(std::function<void(juce::Component*)> addAndMakeVisible)
+void Widget::append(std::function<void(juce::Component*)> add)
 {
-  addAndMakeVisible(widget);
+  add(widget);
 }
 
 // ------------------------------------------------------------------------------------- 
 // Group widget
 
-void Group::setBounds(Parser::Rect parentRect)
+void Group::setBounds()
 {
-  group->setBoundsRelative(parentRect);
+  PLOG_DEBUG << "GROUP SIZE " << children.size();
+  group->setBoundsRelative(rect);
   std::for_each(children.begin(), children.end(), [this](auto box) { box->setBounds();} );
 }
 
-void Group::append(std::function<void(juce::Component*)> addAndMakeVisible)
+void Group::append(std::function<void(juce::Component*)> add)
 {
-  addAndMakeVisible(group);
+  add(group);
   std::for_each(children.begin(), children.end(), [this](auto box) {
     box->append( [this](juce::Component* child) {
       group->addAndMakeVisible(child);
@@ -48,6 +51,7 @@ void Group::append(std::function<void(juce::Component*)> addAndMakeVisible)
 
 void Group::push_back(Box* box) 
 {
+  PLOG_DEBUG << "PUSH";
   children.push_back(box);
 }
 
@@ -60,6 +64,7 @@ void Scene::resized()
     // If you add any child components, this is where you should
     // update their positions.
     std::for_each(widgets.begin(), widgets.end(), [](auto box) { box->setBounds(); });
+    PLOG_DEBUG << "WIDGET SIZE: " << widgets.size();
 };
 
 void Scene::append(Box* box)
@@ -83,6 +88,7 @@ void Scene::setup(juce::Component* parent)
   std::for_each(widgets.begin(), widgets.end(), [parent, call] (Box* box) { box->append(call); });
 }
 
+/*
 void Scene::setGroup(juce::String name)
 {
   auto group = new juce::GroupComponent(name, name);
@@ -91,19 +97,20 @@ void Scene::setGroup(juce::String name)
   widgets = std::vector<Box*>();
   widgets.push_back(groupBox);
 }
-
+*/
 void Scene::groupBegin(Parser::Rect rect, std::string name)
 {
   auto group = new juce::GroupComponent();
   if (name.size() > 0) {
     group->setText(juce::String(name));
   } 
-  auto groupBox = new Group(group, widgets, rect);
+  auto groupBox = new Group(group, rect);
   groupStack.push_back(groupBox);
 }
 
 void Scene::groupEnd()
 {
-  Group* lastGroup = groupStack.back();
-  widgets.push_back(lastGroup);
+  Group* lastGroup = groupStack.back();  
+  groupStack.pop_back();
+  append(lastGroup);
 }

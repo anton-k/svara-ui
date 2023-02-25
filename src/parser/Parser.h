@@ -168,6 +168,9 @@ namespace Parser
       virtual void text(Style& style, Rect rect, std::string name) { (void)style; (void) rect; (void)name; };
       virtual void space(Rect rect) { (void)rect; };
 
+      virtual void groupBegin(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void) name; };
+      virtual void groupEnd() {};
+
       void run(YAML::Node node, Rect rect, Style style) override;
   };
 

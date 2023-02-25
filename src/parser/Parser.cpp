@@ -1,6 +1,7 @@
 #include "Parser.h"
 #include "Yaml.h"
 #include <string>
+#include <plog/Log.h>
 
 namespace Parser
 {
@@ -134,6 +135,7 @@ void Widget::run(YAML::Node node, Rect rect, Style style)
     });
   });
   forKey(node, "space", [this, rect] (auto x) { (void)x; this->space(rect); });
+
 }
 
 std::string getLayoutListTag(bool isHor) 
@@ -193,11 +195,27 @@ void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect, Style sty
   foldBoxes(isHor, boxes, rect, style, parent);
 }
 
+void runGroup(Ui* parent, YAML::Node node, Rect rect, Style style)
+{
+  forKey(node, "group", [parent, rect, &style] (auto x) {
+    std::string groupName = "";
+    forString(x, "name", [&groupName](auto str) { 
+      groupName = str; 
+    });  
+    PLOG_DEBUG << "GROUP NAME " << groupName;
+
+    parent->widget->groupBegin(style, rect, groupName);
+    parent->run(x, Rect(0.0, 0.0, 1.0, 1.0), style);
+    parent->widget->groupEnd();
+  });
+}
+
 void runLayout(Ui* parent, YAML::Node node, Rect rect, Style style)
 {
   bool isHor = true;
   forListLayout(isHor,  parent, node, rect, style);
   forListLayout(!isHor, parent, node, rect, style);
+  runGroup(parent, node, rect, style);
 }
 
 void Ui::updateStyle(YAML::Node node, Style& style) 
@@ -209,9 +227,12 @@ void Ui::updateStyle(YAML::Node node, Style& style)
 
 void Ui::run(YAML::Node node, Rect rect, Style style) 
 { 
+  PLOG_DEBUG << "UI::RUN";
+  PLOG_DEBUG << node;
+  PLOG_DEBUG << "RECT: " << rect.toString() << "\n";
   updateStyle(node, style);
-  runLayout(this, node, rect, style);
   this->widget->run(node, rect, style);
+  runLayout(this, node, rect, style);
 }
 
 // -------------------------------------------------------------------

@@ -1,0 +1,33 @@
+config:
+  size:
+    width: 400
+    height: 700
+state:
+  init:
+    foo: 0.5
+    zoo: 0.5
+ui:
+  group:
+    style:
+      pad: 0.02
+    name: manin
+    ver:
+      - ver:
+          - knob: foo
+            style:
+              color: orange
+          - group:
+              name: fourth
+              slider: foo
+            style:
+              top: 0
+              bottom: 0
+      - group:
+          name: second
+          hor:
+            - knob: zoo
+            - group:
+                knob: zoo
+                name: third
+              style:
+                pad: 0.03

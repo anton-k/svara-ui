@@ -2,6 +2,7 @@
 #include "../parser/Parser.h"
 #include <string>
 #include <iostream>
+#include <plog/Log.h>
 
 // Build Application from YAML-file
 
@@ -19,17 +20,17 @@ class BuildInits : public Parser::InitVars {
     BuildInits(App* _app): app(_app) {};
 
     void intVar(std::string name, int val, bool needDebug) override { 
-      if (needDebug) { std::cout << "Insert int: " << name << " by " << val << "\n"; }
+      if (needDebug) { PLOG_INFO << "Insert int: " << name << " by " << val; }
       app->state->insertInt(name, val, needDebug); 
     };
     
     void doubleVar(std::string name, double val, bool needDebug) override { 
-      if (needDebug) {  std::cout << "Insert double: " << name << " by " << val << "\n"; }
+      if (needDebug) { PLOG_INFO << "Insert double: " << name << " by " << val; }
       app->state->insertDouble(name, val, needDebug); 
     };
 
     void stringVar(std::string name, std::string val, bool needDebug) override { 
-      if (needDebug) { std::cout << "Insert string: " << name << " by " << val << "\n"; }
+      if (needDebug) { PLOG_INFO << "Insert string: " << name << " by " << val; }
       app->state->insertString(name, val, needDebug); 
     }
   
@@ -99,13 +100,11 @@ class BuildStyle : public Parser::StyleUpdate {
 
 void padRect(Parser::Rect& rect, Parser::Pad pad) 
 {
-  std::cout << "pre: " << rect.toString() << "\n";
   float x = rect.getX(), 
         y = rect.getY(), 
         w = rect.getWidth(),
         h = rect.getHeight();
 
-  std::cout << pad.left << "  " << pad.right << "\n";
   x = x + pad.left * w;
   y = y + pad.top * h;
   w = w * (1 - pad.left - pad.right);
@@ -115,7 +114,6 @@ void padRect(Parser::Rect& rect, Parser::Pad pad)
   rect.setY(y);
   rect.setHeight(h);
   rect.setWidth(w);
-  std::cout << "after: " << rect.toString() << "\n";
 }
 
 void setColor(App* app, Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter)
@@ -171,7 +169,7 @@ void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string
 {
   widget->setRange(0, 1.0);
   widget->setValue(app->state->getDouble(name));
-  std::cout << "widget name: " << app->state->getDouble(name) << "\n";
+  PLOG_DEBUG << "setSlider: widget name: " << app->state->getDouble(name);
   
   // Callback to update channel value on change in slider
   widget->onValueChange = [app, name, widget] { app->state->setDouble(name, widget->getValue()); };
@@ -198,6 +196,7 @@ class BuildWidget : public Parser::Widget {
     { 
       padRect(rect, style.pad);
       juce::Slider* knob = new juce::Slider(juce::Slider::SliderStyle::Rotary, juce::Slider::TextEntryBoxPosition::NoTextBox);
+      knob->setName(name);
       setSlider(app, knob, style, name, juce::Slider::rotarySliderFillColourId);
       app->scene->addWidget(knob, rect);
     }
@@ -278,6 +277,18 @@ class BuildWidget : public Parser::Widget {
       });
     };
     void space(Parser::Rect rect) override { printVar("space", ""); };
+
+    void groupBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
+    {
+      padRect(rect, style.pad);
+      app->scene->groupBegin(rect, name);
+    }
+
+    void groupEnd() override
+    {
+      app->scene->groupEnd();
+    }
+
   private:
     App* app;
 };

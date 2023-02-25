@@ -25,15 +25,11 @@ class Config {
 
 class Box {
   public:
-    virtual void setBounds(Parser::Rect rect) { (void) rect; };
+    virtual void setBounds() {};
 
     virtual void append(std::function<void(juce::Component*)> call) { (void) call; };
 
     virtual Parser::Rect getRectangle() { return Parser::Rect(0.0, 0.0, 1.0, 1.0); }
-
-    void setBounds() {
-      setBounds(getRectangle());
-    };
   // virtual void setVisible(bool isVisible) { (void) isVisible; };
 };
 
@@ -43,7 +39,7 @@ class Widget : public Box {
       rect(_rect),
       widget(_widget) {};
 
-    void setBounds(Parser::Rect) override;
+    void setBounds() override;
 
     void append(std::function<void(juce::Component*)> call) override;
 
@@ -58,12 +54,12 @@ class Widget : public Box {
 
 class Group : public Box {
   public:
-    Group(juce::GroupComponent* _group, std::vector<Box*> _children, juce::Rectangle<float> _rect):
+    Group(juce::GroupComponent* _group, juce::Rectangle<float> _rect):
       group(_group),
-      children(_children),
+      children(std::vector<Box*>()),
       rect(_rect) {}
 
-    void setBounds(Parser::Rect) override;
+    void setBounds() override;
 
     void append(std::function<void(juce::Component*)> call) override;
 
@@ -91,18 +87,17 @@ public:
 //    void paint (juce::Graphics&) override;
     void resized();
 
-    void append(Box* box);
     void addWidget(juce::Component* comp, Parser::Rect rect);
 
     void setup(juce::Component* parent);
 
-    void setGroup(juce::String name);
     void groupBegin(Parser::Rect rect, std::string name = "");
     void groupEnd();
 
 private:
     //==============================================================================
     // Your private member variables go here...
+    void append(Box* box);
     std::vector<Box*> widgets;
     std::vector<Group*> groupStack;
 };

@@ -1,6 +1,7 @@
 #include "Model.h"
 #include <fstream>
 #include <iostream>
+#include <plog/Log.h>
 
 double Val::getDouble() 
 {
@@ -71,7 +72,7 @@ void Var<T>::set(T v)
 {
   update.apply(v);
   if (hasDebug) {
-    std::cout << "[DEBUG] set-var: " << name << ": " << v << "\n";
+    PLOG_INFO << "set-var: " << name << ": " << v;
   }
 }
 
