@@ -51,8 +51,36 @@ void Group::append(std::function<void(juce::Component*)> add)
 
 void Group::push_back(Box* box) 
 {
-  PLOG_DEBUG << "PUSH";
   children.push_back(box);
+}
+
+// ------------------------------------------------------------------------------------- 
+// Panel widget
+
+void Panel::setBounds()
+{
+  std::for_each(panels.begin(), panels.end(), [](Group* item) { item->setBounds(); });
+}
+
+void Panel::append(std::function<void(juce::Component*)> add) 
+{
+  std::for_each(panels.begin(), panels.end(), [&add](Group* item) { item->append(add); });
+}
+
+void Panel::push_back(Box* box)
+{
+  if (panels.empty()) {
+    initItem();
+  }
+
+  Group* lastPanel = panels.back();
+  lastPanel->push_back(box);
+}
+
+void Panel::initItem() 
+{
+  auto group = new Group(rect, "");
+  panels.push_back(group);
 }
 
 // ------------------------------------------------------------------------------------- 
@@ -72,7 +100,7 @@ void Scene::append(Box* box)
   if (groupStack.empty()) {
     widgets.push_back(box);
   } else {
-    Group* lastGroup = groupStack.back();
+    GroupBox* lastGroup = groupStack.back();
     lastGroup->push_back(box);
   }
 };
@@ -88,29 +116,43 @@ void Scene::setup(juce::Component* parent)
   std::for_each(widgets.begin(), widgets.end(), [parent, call] (Box* box) { box->append(call); });
 }
 
-/*
-void Scene::setGroup(juce::String name)
-{
-  auto group = new juce::GroupComponent(name, name);
-  auto groupBox = new Group(group, widgets, Parser::Rect(0, 0, 1, 1));
-
-  widgets = std::vector<Box*>();
-  widgets.push_back(groupBox);
-}
-*/
 void Scene::groupBegin(Parser::Rect rect, std::string name)
 {
-  auto group = new juce::GroupComponent();
-  if (name.size() > 0) {
-    group->setText(juce::String(name));
-  } 
-  auto groupBox = new Group(group, rect);
+  auto groupBox = new Group(rect, name);
   groupStack.push_back(groupBox);
 }
 
 void Scene::groupEnd()
 {
-  Group* lastGroup = groupStack.back();  
+  GroupBox* lastGroup = groupStack.back();  
+  lastGroup->end();
   groupStack.pop_back();
   append(lastGroup);
 }
+
+void Scene::panelBegin(Parser::Rect rect, std::string name)
+{
+  GroupBox* panel = new Panel(rect, name);
+  groupStack.push_back(panel);
+}
+
+void Scene::panelItemBegin()
+{
+  try {
+    Panel* lastGroup = dynamic_cast<Panel*>(groupStack.back()); 
+    lastGroup->initItem();
+  } catch (...) {
+    PLOG_ERROR << "panel item begin: not a panel on groupStack";
+  }
+}
+
+void Scene::panelItemEnd()
+{
+  panelItemBegin();
+}
+
+void Scene::panelEnd()
+{
+  groupEnd();
+}
+

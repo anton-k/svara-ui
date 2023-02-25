@@ -57,6 +57,11 @@ class DebugWidget : public Widget {
   void space(Rect rect) override { printVar("space", ""); };
   void groupBegin(Parser::Style& style, Parser::Rect rect, std::string name) override {};
   void groupEnd() override {};
+  // panels. With panels we can toggle visibility of groups of widgets
+  void panelBegin(Style& style, Rect rect, std::string name) override { (void) style, rect, name; };
+  void panelItemBegin()override  {};
+  void panelItemEnd()override  {};
+  void panelEnd()override {};
 };
 
 class DebugStyle : public StyleUpdate {

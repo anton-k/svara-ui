@@ -289,6 +289,27 @@ class BuildWidget : public Parser::Widget {
       app->scene->groupEnd();
     }
 
+    void panelBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
+    {
+      padRect(rect, style.pad);
+      app->scene->groupBegin(rect, name);
+    }
+
+    void panelEnd() override
+    {
+      app->scene->panelEnd();
+    }
+
+    void panelItemBegin() override
+    {
+      app->scene->panelItemBegin();
+    }
+
+    void panelItemEnd() override
+    {
+      app->scene->panelItemEnd();
+    }
+
   private:
     App* app;
 };

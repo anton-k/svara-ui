@@ -168,8 +168,15 @@ namespace Parser
       virtual void text(Style& style, Rect rect, std::string name) { (void)style; (void) rect; (void)name; };
       virtual void space(Rect rect) { (void)rect; };
 
+      // groups: set of items
       virtual void groupBegin(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void) name; };
       virtual void groupEnd() {};
+
+      // panels. With panels we can toggle visibility of groups of widgets
+      virtual void panelBegin(Style& style, Rect rect, std::string name) { (void) style, rect, name; };
+      virtual void panelItemBegin() {};
+      virtual void panelItemEnd() {};
+      virtual void panelEnd();
 
       void run(YAML::Node node, Rect rect, Style style) override;
   };
