@@ -40,9 +40,11 @@ find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your sys
 find_package(c4core REQUIRED)
 
 add_subdirectory("libs/yaml-cpp")
-add_subdirectory("libs/plog")
 
-include_directories ("libs/plog/include")
+# How to include HEADER only libs so that hey do not produce warnings
+add_library(plog INTERFACE)
+target_sources(plog INTERFACE "libs/plog/include")
+target_include_directories(plog SYSTEM INTERFACE "libs/plog/include")
 
 # include_directories("/usr/local/include/ryml")
 # include_directories("/usr/local/include/c4")
@@ -79,10 +81,11 @@ target_sources(GuiAppExample
         src/Main.cpp
         src/MainComponent.cpp
         src/model/Model.cpp
-        src/parser/GUIParser.cpp
         src/parser/Debug.cpp
         src/parser/Yaml.cpp
-        src/parser/Parser.cpp)
+        src/parser/Parser.cpp
+        src/widgets/KeyPressListener.cpp
+        )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
 # project, these might be passed in the 'Preprocessor Definitions' field. JUCE modules also make use
@@ -123,10 +126,11 @@ target_link_libraries(GuiAppExample
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
-        c4core
-        ryml
+        plog
         yaml-cpp
         )
 
 include_directories("../MyStaticLibrary")
+
+target_compile_options(GuiAppExample PRIVATE -Werror -Wall -Wextra)
 

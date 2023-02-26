@@ -71,6 +71,8 @@ public:
            #endif
 
             setVisible (true);
+            setWantsKeyboardFocus(false);
+            getContentComponent()->grabKeyboardFocus();
         }
 
         void closeButtonPressed() override

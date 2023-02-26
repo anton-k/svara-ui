@@ -83,21 +83,6 @@ class BuildConfig : public Parser::Config {
 //------------------------------------------------------------------------------------- 
 // Build UI
 
-class BuildStyle : public Parser::StyleUpdate {
-  public:
-    BuildStyle(App* _app): app(_app) {}
-    void color(Parser::Val<Parser::Col> col) override { /* app->style->color = col; */  };
-    void background(Parser::Val<Parser::Col> col) override { /* app->style->background = col;*/ };
-    void secondaryColor(Parser::Val<Parser::Col> col) override { /* app->style->secondaryColor = col;*/ };
-    void textSize(Parser::Val<int> size) override { /* app->style->textSize = size;*/ };
-    void font(Parser::Val<std::string> name) override { /* app->style->font = name; */ };
-    void pad(Parser::Pad pad) override { /* app->style->pad = pad;*/ };
-    void border(Parser::Border border) override { /* app->style->border = border;*/ };
-    void hints(Parser::Hint val) override { /* app->style->hint = val;*/ };
-  private:
-    App* app;
-};
-
 void padRect(Parser::Rect& rect, Parser::Pad pad) 
 {
   float x = rect.getX(), 
@@ -208,6 +193,7 @@ class BuildWidget : public Parser::Widget {
           ? juce::Slider::SliderStyle::LinearVertical
           : juce::Slider::SliderStyle::LinearHorizontal;
       juce::Slider* slider = new juce::Slider(sliderStyle, juce::Slider::TextEntryBoxPosition::NoTextBox);
+      slider->setName(name);
       setSlider(app, slider, style, name, juce::Slider::trackColourId);
       app->scene->addWidget(slider, rect);
     };
@@ -219,19 +205,21 @@ class BuildWidget : public Parser::Widget {
           ? juce::Slider::SliderStyle::LinearBarVertical 
           : juce::Slider::SliderStyle::LinearBar;
       juce::Slider* slider = new juce::Slider(sliderStyle, juce::Slider::TextEntryBoxPosition::NoTextBox);
+      slider->setName(name);
       setSlider(app, slider, style, name, juce::Slider::trackColourId);
       app->scene->addWidget(slider, rect);
     };
 
-    void xyPad(Parser::Rect rect, std::string nameX, std::string nameY) override { std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
-    void button(Parser::Rect rect, std::string name) override { printVar("button", name); };
-    void toggle(Parser::Rect rect, std::string name) override { printVar("toggle", name); };
+    void xyPad(Parser::Rect rect, std::string nameX, std::string nameY) override { (void) rect; std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
+    void button(Parser::Rect rect, std::string name) override { (void) rect; printVar("button", name); };
+    void toggle(Parser::Rect rect, std::string name) override { (void) rect; printVar("toggle", name); };
     // void buttonRow(std::string name) override { (void)name; };
     
     void label(Parser::Style& style, Parser::Rect rect, std::string val) override 
     {
       padRect(rect, style.pad);
       juce::Label* widget = new juce::Label();
+      widget->setName(val);
       widget->setText(val, juce::dontSendNotification);
       widget->setFont(juce::Font(16.0f, juce::Font::plain));
 
@@ -251,6 +239,7 @@ class BuildWidget : public Parser::Widget {
     {
       padRect(rect, style.pad);
       juce::Label* widget = new juce::Label();      
+      widget->setName(name);
       widget->setText(app->state->getString(name), juce::dontSendNotification);
       widget->setFont(juce::Font(16.0f, juce::Font::plain));
 
@@ -276,7 +265,7 @@ class BuildWidget : public Parser::Widget {
         }
       });
     };
-    void space(Parser::Rect rect) override { printVar("space", ""); };
+    void space(Parser::Rect rect) override { (void) rect; };
 
     void groupBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
     {
@@ -291,22 +280,28 @@ class BuildWidget : public Parser::Widget {
 
     void panelBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
     {
+      PLOG_DEBUG << "panelBegin: " << rect.toString() << " , name: " << name;
       padRect(rect, style.pad);
-      app->scene->groupBegin(rect, name);
+      Panel* panel = app->scene->panelBegin(rect, name);    
+      app->state->appendCallbackInt(name, [panel] (int n) { panel->selectVisible((size_t) n); });
     }
 
-    void panelEnd() override
+    void panelEnd(std::string name) override
     {
-      app->scene->panelEnd();
+      PLOG_DEBUG << "panelEnd: " << name;
+      Panel* panel = app->scene->panelEnd();
+      panel->selectVisible((size_t) app->state->getInt(name));
     }
 
     void panelItemBegin() override
     {
+      PLOG_DEBUG << "panelItemBegin";
       app->scene->panelItemBegin();
     }
 
     void panelItemEnd() override
     {
+      PLOG_DEBUG << "panelItemEnd";
       app->scene->panelItemEnd();
     }
 
@@ -342,8 +337,7 @@ void initApp(App* app, YAML::Node node)
   Parser::Config* buildConfig = new BuildConfig(app);
   Parser::Widget* buildWidget = new BuildWidget(app);
   Parser::Layout* buildLayout = new BuildLayout(app);
-  Parser::StyleUpdate* buildStyle = new BuildStyle(app);
-  Parser::Ui* buildUi = new Parser::Ui(buildWidget, buildLayout, buildStyle);
+  Parser::Ui* buildUi = new Parser::Ui(buildWidget, buildLayout);
   Parser::Window* buildWindow = new Parser::Window(buildState, buildUi, buildConfig);
   buildWindow->run(node);
 }

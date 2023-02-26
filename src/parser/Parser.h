@@ -156,8 +156,8 @@ namespace Parser
   {
     public:
       virtual void knob(Style& style, Rect rect, std::string name) { (void) style, (void) rect; (void)name; };
-      virtual void slider(Style& style, Rect rect, std::string name) { (void) rect; (void)name; };
-      virtual void bar(Style& style, Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void slider(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void)name; };
+      virtual void bar(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void)name; };
       // XYPad impl: https://github.com/seanlikeskites/SAFEJuceModule/blob/master/SAFE_juce_module/UIComponents/XYSlider.h
       virtual void xyPad(Rect rect, std::string nameX, std::string nameY) { (void) rect; (void)nameX; (void)nameY; };
       virtual void button(Rect rect, std::string name) { (void) rect; (void)name; };
@@ -173,10 +173,10 @@ namespace Parser
       virtual void groupEnd() {};
 
       // panels. With panels we can toggle visibility of groups of widgets
-      virtual void panelBegin(Style& style, Rect rect, std::string name) { (void) style, rect, name; };
+      virtual void panelBegin(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void) name; };
       virtual void panelItemBegin() {};
       virtual void panelItemEnd() {};
-      virtual void panelEnd();
+      virtual void panelEnd(std::string name) { (void) name; };
 
       void run(YAML::Node node, Rect rect, Style style) override;
   };
@@ -195,31 +195,19 @@ namespace Parser
       void run(YAML::Node node);
   };
 
-  class StyleUpdate
-  {
-    public:
-      virtual void color(Val<Col> col) { (void)col; };
-      virtual void background(Val<Col> col) { (void)col; };
-      virtual void secondaryColor(Val<Col> col) { (void)col; };
-      virtual void textSize(Val<int> size) { (void)size; };
-      virtual void font(Val<std::string> name) { (void)name; };
-      virtual void pad(Pad pad) { (void)pad; };
-      virtual void border(Border border) {  (void)border; };
-      virtual void hints(Hint val) { (void)val; };
-
-      void update (YAML::Node node, Style& style);
-  };
-
   class Ui : public IsUi
   {
     public:
       Ui() {};
-      Ui(Widget* _widget, Layout* _layout, StyleUpdate* _style): widget(_widget), layout(_layout), styleUpdate(_style) {};
+      Ui(Widget* _widget, Layout* _layout):
+        widget(_widget),
+        layout(_layout)
+      {};
+
       void updateStyle(YAML::Node node, Style& style);
 
       Widget* widget;
       Layout* layout;
-      StyleUpdate* styleUpdate;
       void run(YAML::Node node, Rect rect, Style style) override;
   };
 

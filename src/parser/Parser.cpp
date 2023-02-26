@@ -96,25 +96,6 @@ std::string fromHint(Hint hint)
   return "none";
 }
 
-void StyleUpdate::update(YAML::Node node, Style& style) 
-{
-  forValColor(node, "color", [this,&style](auto col) { this->color(col); style.color = col; });
-  forValColor(node, "background", [this,&style](auto col) { this->background(col); style.background = col; });
-  forValColor(node, "secondary-color", [this,&style](auto col) { this->secondaryColor(col); style.secondaryColor = col; });
-  forInt(node, "text-size", [this,&style](auto size) { this->textSize(size); style.textSize = size; });
-  forValString(node, "font", [this,&style](auto f) { this->font(f); style.font = f; });
-  forString(node, "hints", [this,&style](auto x) { this->hints(toHint(x)); style.hint = toHint(x); });
-  forDouble(node, "pad", [this,&style](double x) { this->pad(Pad(x, x, x, x)); style.pad = Pad(x, x, x, x); });
-  forKey(node, "pad", [this,&style] (auto padNode) {
-    if (padNode.IsMap()) {
-      forDouble(padNode, "left", [this,&style](double x) { style.pad.left = x; });
-      forDouble(padNode, "right", [this,&style](double x) { style.pad.right = x;  });
-      forDouble(padNode, "bottom", [this,&style](double x) { style.pad.bottom = x;  });
-      forDouble(padNode, "top", [this,&style](double x) { style.pad.top = x;  });
-    }
-  });
-}
-
 void Layout::run(YAML::Node node) 
 {
   (void) node;
@@ -210,25 +191,62 @@ void runGroup(Ui* parent, YAML::Node node, Rect rect, Style style)
   });
 }
 
+void runTabs(Ui* parent, YAML::Node node, Rect rect, Style style)
+{
+  forKey(node, "tabs", [parent, rect, &style] (auto tabNode) {
+    if (tabNode["index"].IsScalar() && tabNode["items"].IsSequence()) {
+      std::string name = "";
+      forString(tabNode, "index", [&name] (auto str) { name = str; });
+      
+      PLOG_DEBUG << "TABS INDEX: " << name;
+      parent->widget->panelBegin(style, rect, name);
+
+      forNodes(tabNode["items"], [parent, &style] (YAML::Node x) {
+        parent->widget->panelItemBegin();        
+        parent->run(x, Rect(0.0, 0.0, 1.0, 1.0), style);
+        parent->widget->panelItemEnd();        
+      });
+
+      parent->widget->panelEnd(name);    
+    }
+  });
+}
+
 void runLayout(Ui* parent, YAML::Node node, Rect rect, Style style)
 {
   bool isHor = true;
   forListLayout(isHor,  parent, node, rect, style);
   forListLayout(!isHor, parent, node, rect, style);
   runGroup(parent, node, rect, style);
+  runTabs(parent, node, rect, style);
 }
 
-void Ui::updateStyle(YAML::Node node, Style& style) 
+void Ui::updateStyle(YAML::Node root, Style& style) 
 {
-  if (hasKey(node, "style")) {
-    styleUpdate->update(node["style"], style);
+  if (hasKey(root, "style")) {
+    YAML::Node node = root["style"];
+    forValColor(node, "color", [this,&style](auto col) { style.color = col; });
+    forValColor(node, "background", [this,&style](auto col) { style.background = col; });
+    forValColor(node, "secondary-color", [this,&style](auto col) { style.secondaryColor = col; });
+    forInt(node, "text-size", [this,&style](auto size) { style.textSize = size; });
+    forValString(node, "font", [this,&style](auto f) { style.font = f; });
+    forString(node, "hints", [this,&style](auto x) { style.hint = toHint(x); });
+    forDouble(node, "pad", [this,&style](double x) { style.pad = Pad(x, x, x, x); });
+    forKey(node, "pad", [this,&style] (auto padNode) {
+      if (padNode.IsMap()) {
+        forDouble(padNode, "left", [this,&style](double x) { style.pad.left = x; });
+        forDouble(padNode, "right", [this,&style](double x) { style.pad.right = x;  });
+        forDouble(padNode, "bottom", [this,&style](double x) { style.pad.bottom = x;  });
+        forDouble(padNode, "top", [this,&style](double x) { style.pad.top = x;  });
+      }
+    });
   }
 }
 
 void Ui::run(YAML::Node node, Rect rect, Style style) 
 { 
   PLOG_DEBUG << "UI::RUN";
-  PLOG_DEBUG << node;
+  std::cout << node << "\n";
   PLOG_DEBUG << "RECT: " << rect.toString() << "\n";
   updateStyle(node, style);
   this->widget->run(node, rect, style);

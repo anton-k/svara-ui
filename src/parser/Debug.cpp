@@ -3,7 +3,7 @@
 #include <iostream>
 
 namespace Parser {
-
+/*
 template<class T>
 void printVar(std::string name, T val)
 {
@@ -101,5 +101,5 @@ void check_parser()
   Window* debugWindow = new Window(debugState, debugUi, debugConfig);
   debugWindow->run(node);
 }
-
+*/
 }

@@ -3,6 +3,7 @@
 #include "../model/Model.h"
 #include "../parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
+#include "Log.h"
 
 class Palette {
   public:
@@ -25,12 +26,14 @@ class Config {
 
 class Box {
   public:
+    virtual std::string getName() = 0;
+
     virtual void setBounds() {};
 
     virtual void append(std::function<void(juce::Component*)> call) { (void) call; };
 
     virtual Parser::Rect getRectangle() { return Parser::Rect(0.0, 0.0, 1.0, 1.0); }
-  // virtual void setVisible(bool isVisible) { (void) isVisible; };
+    virtual void setVisible(bool isVisible) { (void) isVisible; };
 };
 
 // Atomic juce widget
@@ -45,7 +48,9 @@ class Widget : public Box {
     void append(std::function<void(juce::Component*)> call) override;
 
     Parser::Rect getRectangle() { return rect; }
-    // void setVisible()
+    void setVisible(bool) override;
+
+    std::string getName() override;
 
   private:
     Parser::Rect rect;
@@ -61,25 +66,42 @@ class GroupBox : public Box {
 // Groups widgets and draws names border around them
 class Group : public GroupBox {
   public:
-    Group(juce::GroupComponent* _group, juce::Rectangle<float> _rect):
+    Group(juce::GroupComponent* _group, juce::Rectangle<float> _rect, bool _hasBorder):
+      rect(_rect),
       group(_group),
       children(std::vector<Box*>()),
-      rect(_rect) {}
+      hasBorder(_hasBorder)
+    {}
 
-    Group(Parser::Rect rect, std::string name)
+    Group(Parser::Rect _rect, std::string name, bool _hasBorder)
     {
-      auto group = new juce::GroupComponent();
-      if (name.size() > 0) {
-        group->setText(juce::String(name));
+      hasBorder = _hasBorder;
+
+      if (hasBorder) {
+        juce::GroupComponent* widget = new juce::GroupComponent();
+        if (name.size() > 0) {
+          widget->setText(juce::String(name));
+          widget->setName(juce::String(name));
+        }
+        group = widget;
+      } else {
+        group = new juce::Component();
+        group->setName(name);
       }
-      Group(group, rect);
+
+      children = std::vector<Box*>();
+      rect = _rect;
     }
 
     void setBounds() override;
 
     void append(std::function<void(juce::Component*)> call) override;
 
+    void setVisible(bool) override;
+
     void push_back(Box* box) override;
+
+    std::string getName() override;
 
     void end() override {};
 
@@ -87,31 +109,29 @@ class Group : public GroupBox {
 
   private:
     Parser::Rect rect;
-    juce::GroupComponent* group;
+    juce::Component* group;
     std::vector<Box*> children;
+    bool hasBorder;
 };
 
 // With panels we can switch visibility of group of widgets
 // It is useful to implement tab like functionality.
 class Panel : public GroupBox {
   public:
-    Panel(Parser::Rect _rect):
-      rect(_rect),
-      selected(0),
-      panels(std::vector<Group*>())
-    {};
-
     Panel(Parser::Rect _rect, std::string _name):
       rect(_rect),
       selected(0),
-      panels(std::vector<Group*>())
-    {}
+      panels(std::vector<Group*>()),
+      name(_name)
+    {};
 
     void setBounds() override;
 
     void append(std::function<void(juce::Component*)> call) override;
 
     void push_back(Box* box) override;
+
+    void setVisible(bool) override;
 
     void end() override
     {
@@ -120,10 +140,23 @@ class Panel : public GroupBox {
 
     void initItem();
 
+    void selectVisible(size_t choice);
+
+    std::string getName() override;
+
+    size_t getSize()
+    {
+      return panels.size();
+    };
+
   private:
+    void setVisiblePanel(size_t n, bool isVisible);
+    std::string getGroupName();
+
     Parser::Rect rect;
-    int selected;
+    size_t selected;
     std::vector<Group*> panels;
+    std::string name;
 };
 
 class Scene
@@ -148,8 +181,8 @@ public:
     void groupEnd();
 
     // panels
-    void panelBegin(Parser::Rect rect, std::string name);
-    void panelEnd();
+    Panel* panelBegin(Parser::Rect rect, std::string name);
+    Panel* panelEnd();
     void panelItemBegin();
     void panelItemEnd();
 
@@ -166,11 +199,6 @@ class App {
   public:
     App(): config(new Config()), state(new State()), scene(new Scene()) {};
     App(Config* _config, State* _state): config(_config), state(_state) {}
-
-    void setup(std::function<void(juce::Component*)> addAndMakeVisible)
-    {
-      // scene->setSize(config->windowWidth, config->windowHeight);
-    }
 
     juce::Colour findColor(Parser::Col col)
     {

@@ -2,6 +2,7 @@
 #include "../parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <plog/Log.h>
+#include "Log.h"
 
 // ------------------------------------------------------------------------------------- 
 // Palette
@@ -20,13 +21,22 @@ juce::Colour Palette::fromName(Parser::Col col)
 
 void Widget::setBounds() 
 {
-  PLOG_DEBUG << "setBounds: " << widget->getName() << "  " << rect.toString();
   widget->setBoundsRelative(rect);
 }
 
 void Widget::append(std::function<void(juce::Component*)> add)
 {
   add(widget);
+}
+
+void Widget::setVisible (bool isVisible)
+{
+  widget->setVisible(isVisible);
+}
+
+std::string Widget::getName() 
+{
+  return widget->getName().toStdString();
 }
 
 // ------------------------------------------------------------------------------------- 
@@ -49,9 +59,21 @@ void Group::append(std::function<void(juce::Component*)> add)
   });
 }
 
+void Group::setVisible (bool isVisible)
+{
+  group->setVisible(isVisible);
+}
+
 void Group::push_back(Box* box) 
 {
+  PLOG_DEBUG << "Group push_back: " << box->getName();
   children.push_back(box);
+}
+
+
+std::string Group::getName() 
+{
+  return group->getName().toStdString();
 }
 
 // ------------------------------------------------------------------------------------- 
@@ -64,7 +86,13 @@ void Panel::setBounds()
 
 void Panel::append(std::function<void(juce::Component*)> add) 
 {
-  std::for_each(panels.begin(), panels.end(), [&add](Group* item) { item->append(add); });
+  size_t index = 0;
+  PLOG_DEBUG << "PANEL SIZE: " << panels.size();
+  std::for_each(panels.begin(), panels.end(), [this,&add,&index](Group* item) { 
+    item->append(add);     
+    item->setVisible(index == this->selected);
+    index++;
+  });
 }
 
 void Panel::push_back(Box* box)
@@ -74,13 +102,46 @@ void Panel::push_back(Box* box)
   }
 
   Group* lastPanel = panels.back();
+
+  PLOG_DEBUG << "Panel push_back: " << box->getName() << " to panel " << panels.size();
   lastPanel->push_back(box);
+}
+
+std::string Panel::getGroupName()
+{
+  std::stringstream ss;
+  ss << "tab-group-" << getName() << "-" << getSize();
+  return ss.str();
 }
 
 void Panel::initItem() 
 {
-  auto group = new Group(rect, "");
+  auto group = new Group(rect, getGroupName(), false);
   panels.push_back(group);
+}
+
+void Panel::setVisiblePanel(size_t n, bool isVisible)
+{
+  panels[n]->setVisible(isVisible);
+}
+
+void Panel::setVisible (bool isVisible)
+{
+  panels[selected]->setVisible(isVisible);
+}
+
+void Panel::selectVisible(size_t choice)
+{
+  if (choice != selected && choice < panels.size()) {
+    setVisiblePanel(selected, false);
+    setVisiblePanel(choice, true);
+    selected = choice;
+  }
+}
+
+std::string Panel::getName()
+{
+  return name;
 }
 
 // ------------------------------------------------------------------------------------- 
@@ -118,7 +179,7 @@ void Scene::setup(juce::Component* parent)
 
 void Scene::groupBegin(Parser::Rect rect, std::string name)
 {
-  auto groupBox = new Group(rect, name);
+  auto groupBox = new Group(rect, name, true);
   groupStack.push_back(groupBox);
 }
 
@@ -130,29 +191,42 @@ void Scene::groupEnd()
   append(lastGroup);
 }
 
-void Scene::panelBegin(Parser::Rect rect, std::string name)
+Panel* Scene::panelBegin(Parser::Rect rect, std::string name)
 {
-  GroupBox* panel = new Panel(rect, name);
+  Panel* panel = new Panel(rect, name);
   groupStack.push_back(panel);
+  return panel;
+}
+
+Panel* toPanel(GroupBox* box, std::string errorMessage)
+{
+  try {
+    return dynamic_cast<Panel*>(box); 
+  } catch (...) {
+    PLOG_ERROR <<  errorMessage;
+  }
 }
 
 void Scene::panelItemBegin()
 {
-  try {
-    Panel* lastGroup = dynamic_cast<Panel*>(groupStack.back()); 
-    lastGroup->initItem();
-  } catch (...) {
-    PLOG_ERROR << "panel item begin: not a panel on groupStack";
-  }
+  // Panel* lastGroup = toPanel(groupStack.back(), "panel item begin: not a panel on groupStack");
+  // lastGroup->initItem();
 }
 
 void Scene::panelItemEnd()
 {
-  panelItemBegin();
+  Panel* lastGroup = toPanel(groupStack.back(), "panel item begin: not a panel on groupStack");
+  lastGroup->initItem();
 }
 
-void Scene::panelEnd()
+Panel* Scene::panelEnd()
 {
-  groupEnd();
+  Panel* lastGroup = toPanel(groupStack.back(), "panel item end: not a panel on groupStack");  
+  PLOG_DEBUG << "PANEL SIZE END PRE: " << lastGroup->getSize();
+  lastGroup->end();
+  PLOG_DEBUG << "PANEL SIZE END POST: " << lastGroup->getSize();
+  groupStack.pop_back();
+  append(lastGroup);
+  return lastGroup;
 }
 
