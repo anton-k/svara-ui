@@ -3,7 +3,7 @@
 #include "../model/Model.h"
 #include "../parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "Log.h"
+#include "../widgets/KeyPressListener.h"
 
 class Palette {
   public:
@@ -165,7 +165,8 @@ public:
     //==============================================================================
     Scene():
       widgets(std::vector<Box*>()),
-      groupStack(std::vector<GroupBox*>())
+      groupStack(std::vector<GroupBox*>()),
+      onKey(Callback<KeyEvent>())
     {};
 
     //==============================================================================
@@ -186,12 +187,16 @@ public:
     void panelItemBegin();
     void panelItemEnd();
 
+    void appendKeyListener(KeyEvent event, Procedure);
+    void onKeyEvent(KeyEvent event);
+
 private:
     //==============================================================================
     // Your private member variables go here...
     void append(Box* box);
     std::vector<Box*> widgets;
     std::vector<GroupBox*> groupStack;
+    Callback<KeyEvent> onKey;
 };
 
 

@@ -2,6 +2,8 @@
 #include "Yaml.h"
 #include <string>
 #include <plog/Log.h>
+#include "../model/Model.h"
+#include "../widgets/KeyPressListener.h"
 
 namespace Parser
 {
@@ -46,20 +48,51 @@ void InitVars::run(YAML::Node node)
   });  
 }
 
+Update UpdateVars::runUpdater(YAML::Node node)
+{  
+  Procedure res;
+  forObject(node, [&res,this](std::string key, YAML::Node x) {
+    switch (this->getType(key)) 
+    {
+      case Type::Int : 
+        {
+          if (isInt(x)) {
+            int n = getInt(x, 0);
+            Callback<int> setter = this->getSetInt(key);
+            auto proc = [this,setter,n] () { setter.apply(n); };
+            res.append(Procedure(proc));
+          } else {
+            PLOG_ERROR << "update " << key << " is defined as int, but set to non int value";
+          }
+        }
+      case Type::Double :
+        {
+          if (isDouble(x)) {
+            double d = getDouble(x, 0);          
+            Callback<double> setter = this->getSetDouble(key);
+            auto proc = [this,setter,d] () { setter.apply(d); };
+            res.append(Procedure(proc));
+          } else {
+            PLOG_ERROR << "update " << key << " is defined as double, but set to non double value";
+          }
+        }
+      case Type::String :
+        {
+          std::string str = getString(x, "");
+          Callback<std::string> setter = this->getSetString(key);
+          auto proc = [this,setter,str] () { setter.apply(str); };
+          res.append(Procedure(proc));
+        }
+    }
+  });
+  return res;
+}
+
 void UpdateVars::run(YAML::Node node)
 {  
   forObject(node, [this](std::string trigger, YAML::Node triggerNode) {
-    forObject(triggerNode, [this,trigger, triggerNode](std::string key, YAML::Node x) {
-      if (isInt(x)) { 
-        this->setInt(trigger, key, getInt(x, 0)); 
-      }      
-      else if (isDouble(x)) { 
-        this->setDouble(trigger, key, getDouble(x, 0)); 
-      }      
-      else {
-        this->setString(trigger, key, getString(x, ""));
-      }
-    });
+    Procedure setter = this->runUpdater(triggerNode);
+    insertUpdater(trigger, setter);
   });  
 }
 
@@ -67,6 +100,50 @@ void State::run(YAML::Node node)
 {
   this->init->onKey(node, "init");
   this->update->onKey(node, "update");
+  forKey(node, "keyboard", [this] (auto child) {
+    PLOG_DEBUG << "Parse keyboard";
+    this->keypress->run(this->update, child);    
+  });
+}
+
+void runKey(KeypressUpdate* parent, UpdateVars* updater, std::string tag, KeyEvent key, YAML::Node& node)
+{
+  forKey(node, tag, [parent,updater,key](auto triggerNode) {
+    PLOG_DEBUG << "KEY PARSE" << key.key.getTextDescription(); 
+    Procedure setter = updater->runUpdater(triggerNode);
+    parent->insertKey(key, setter);
+  });  
+}
+
+/*
+bool isPrefix(std::string& prefix, std::string& str)
+{
+  if prefix.size() > str.size() { return false; }
+  return std::mismatch(prefix.begin(), prefix.end(),
+    str.begin(), str.end()).first == prefix.end();
+}
+*/
+
+
+bool parseKey(std::string& str, juce::KeyPress& key)
+{
+  key = juce::KeyPress::createFromDescription(str);
+  // check if returned key is invalid. Invalid keys are constructed with empty constructor
+  return key != juce::KeyPress();
+}
+
+void KeypressUpdate::run(UpdateVars* updater, YAML::Node node)
+{
+  forObject(node, [this, updater](std::string keyStr, YAML::Node triggerNode) {
+    juce::KeyPress key;
+    bool isOk = parseKey(keyStr, key);
+    if (isOk) {
+      runKey(this, updater, "down", KeyEvent(true, key), triggerNode);
+      runKey(this, updater, "up",   KeyEvent(false, key), triggerNode);
+    } else {
+      PLOG_ERROR << "Failed to parse keyboard key: " << keyStr;
+    }
+  });
 }
 
 // -------------------------------------------------------------------
@@ -246,7 +323,7 @@ void Ui::updateStyle(YAML::Node root, Style& style)
 void Ui::run(YAML::Node node, Rect rect, Style style) 
 { 
   PLOG_DEBUG << "UI::RUN";
-  std::cout << node << "\n";
+  // std::cout << node << "\n";  // TODO how to print node body in logger?
   PLOG_DEBUG << "RECT: " << rect.toString() << "\n";
   updateStyle(node, style);
   this->widget->run(node, rect, style);

@@ -1,0 +1,42 @@
+config:
+  size:
+    width: 400
+    height: 700
+state:
+  init:
+    foo: 0.5
+    zoo: 0.5
+    tab1: 0
+  keyboard:
+    1:
+      down:
+        tab1: 0
+    2:
+      down:
+        tab1: 1
+    3:
+      down:
+        tab1: 2
+ui:
+  ver:
+    - knob: foo
+    - tabs:
+        index: tab1
+        items:
+          - hor:
+              - knob: foo
+              - knob: zoo
+            style:
+              color: red
+          - knob: zoo
+            style:
+              color: green
+          - hor:
+              - slider: zoo
+              - slider: zoo
+              - slider: zoo
+              - slider: zoo
+            style:
+              color: orange
+    - bar: foo
+      scale: 0.2

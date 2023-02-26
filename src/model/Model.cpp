@@ -15,27 +15,6 @@ Type IntVal::getType() { return Type::Int; }
 // Val* IntVal::getVal() { return this; }
 
 // ---------------------------------------------------------------------------
-// Callback
-
-template <class T>
-void Callback<T>::apply(T val)
-{
-  std::for_each(funs.begin(), funs.end(), [val](auto f) { f(val); } ) ;
-}
-
-template <class T>
-void Callback<T>::append(Callback<T> that) 
-{
-  funs.insert(funs.end(), that.funs.begin(), that.funs.end() );
-}
-
-template <class T>
-void Callback<T>::append(std::function<void(T)> f) 
-{
-  funs.push_back(f);
-}
-
-// ---------------------------------------------------------------------------
 // Var
 
 template <class T>
@@ -161,6 +140,17 @@ bool Enum::member(std::string tag)
 // ---------------------------------------------------------------------------
 // State
 
+Type State::getType(std::string name)
+{
+  if (ints.member(name)) {
+    return Type::Int;
+  } else if (doubles.member(name)) {
+    return Type::Double;
+  } else {
+    return Type::String;
+  }
+}
+
 // inserts
 
 void State::insertInt(std::string name, int init, bool needDebug)
@@ -233,6 +223,11 @@ void State::appendCallbackDouble(std::string name, std::function<void(double)> c
 void State::appendCallbackString(std::string name, std::function<void(std::string)> call)
 {
   strings.appendCallback(name, call);
+}
+
+void State::appendSetter(std::string name, Procedure call) 
+{
+  appendSetter(name, call.toFunction());
 }
 
 void State::appendSetter(std::string name, std::function<void(void)> call) 

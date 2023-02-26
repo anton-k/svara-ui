@@ -20,23 +20,7 @@ MainComponent::MainComponent()
     app.scene->setup(this);
     setSize(app.config->windowWidth, app.config->windowHeight);
 
-    onKeyEvent = [this](auto event) {
-      if (event.key.getKeyCode() == 'q' && event.isKeyDown) {
-        app.state->setInt("tab1", 0);
-      }
-      if (event.key.getKeyCode() == 'w' && event.isKeyDown) {
-        app.state->setInt("tab1", 1);
-      }
-      if (event.key.getKeyCode() == 'e' && event.isKeyDown) {
-        app.state->setInt("tab1", 2);
-      }
-      if (event.key.getKeyCode() == 'r' && event.isKeyDown) {
-        app.state->setInt("tab1", 0);
-      }
-      if (event.key.getKeyCode() == 'r' && !event.isKeyDown) {
-        app.state->setInt("tab1", 1);
-      }
-    };
+    onKeyEvent = [this](auto event) { app.scene->onKeyEvent(event); };
   };
 
 void MainComponent::resized()

@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <set>
 #include <functional>
 #include <map>
 #include <string>
@@ -52,22 +53,75 @@ class IntVal : public Val
 // ---------------------------------------------------------------------------
 // Callbacks
 
+// Callback with zero arguments
+class Procedure
+{
+  public:
+    Procedure() { funs = std::vector<std::function<void()>>(); }
+    Procedure (std::function<void()> f) { funs = std::vector<std::function<void()>>(); funs.push_back(f); };
+
+    void apply() const
+    {
+      std::for_each(funs.begin(), funs.end(), [](auto f) { f(); } ) ;
+    }
+
+    void append (Procedure that)
+    {
+      funs.insert(funs.end(), that.funs.begin(), that.funs.end() );
+    }
+
+    void append (std::function<void()> f)
+    {
+      funs.push_back(f);
+    }
+
+    std::function<void()> toFunction() const
+    {
+      return [this] { this->apply();};
+    }
+
+  private:
+    std::vector<std::function<void()>> funs;
+};
 
 // We can a append callbacks and they are accumulated
-template<class T>
+template<typename T>
 class Callback
 {
   public:
     Callback<T>() { funs = std::vector<std::function<void(T)>>(); }
     Callback<T> (std::function<void(T)> f) { funs = std::vector<std::function<void(T)>>(); funs.push_back(f); };
-    void apply(T val);
 
-    void append (Callback<T> that);
-    void append (std::function<void(T)> f);
+    void apply(T val) const
+    {
+      std::for_each(funs.begin(), funs.end(), [val](auto f) { f(val); } ) ;
+    }
+
+    void append(Callback<T> that)
+    {
+      funs.insert(funs.end(), that.funs.begin(), that.funs.end() );
+    }
+
+    void append(std::function<void(T)> f)
+    {
+      funs.push_back(f);
+    }
+
+    Procedure toProcedure(T val) const
+    {
+      auto setter = [this,val] { this->apply(val); };
+      return Procedure(setter);
+    }
+
+    std::function<void(T)> toFunction() const
+    {
+      return [this] (T val) { this->apply(val); };
+    }
 
   private:
     std::vector<std::function<void(T)>> funs;
 };
+
 
 // ---------------------------------------------------------------------------
 // Var
@@ -136,8 +190,6 @@ class Enum
 class State
 {
   public:
-
-
     State(): ints(Vars<int>(0)), doubles(Vars<double>(0)), strings(Vars<std::string>("")) {}
 
     // register new variable
@@ -146,6 +198,9 @@ class State
     void insertDouble(std::string name, double init, bool needDebug);
     void insertDoubleRange(std::string name, double init, double min, double max);
     void insertString(std::string name, std::string init, bool needDebug);
+
+    // get variable type
+    Type getType(std::string name);
 
     // get variable value
     int getInt(std::string name);
@@ -163,6 +218,7 @@ class State
     void appendCallbackString(std::string name, std::function<void(std::string)> call);
 
     void appendSetter(std::string name, std::function<void(void)> call);
+    void appendSetter(std::string name, Procedure call);
     void appendSetterInt (std::string name, std::string key, int val);
     void appendSetterDouble (std::string name, std::string key, double val);
     void appendSetterString (std::string name, std::string key, std::string val);
@@ -177,3 +233,114 @@ class State
     Vars<std::string> strings;
     std::map<std::string, Enum*> enums;
 };
+
+class Chan {
+  public:
+    Chan(std::string _name): name(_name) {}
+    std::string name;
+};
+
+// Expressions that can have dependencies on readable channels
+template<typename T>
+class Expr {
+  public:
+    Expr() {};
+    Expr(T val):
+      getter([val] { return val; }),
+      chans(std::set<Chan>())
+    {};
+
+    Expr(std::function<T()> _getter, std::set<Chan> _chan):
+      getter(_getter),
+      chans(_chan)
+    {}
+
+    static Expr<int> readIntChan(Chan chan, State* state)
+    {
+      std::set<Chan> ch;
+      ch.insert(chan);
+      auto getter = [state, chan] { return state->getInt(chan.name); };
+      return Expr<int>(getter, ch);
+    }
+
+    static Expr<double> readDoubleChan(Chan chan, State* state)
+    {
+      std::set<Chan> ch;
+      ch.insert(chan);
+      auto getter = [state, chan] { return state->getDouble(chan.name); };
+      return Expr<double>(getter, ch);
+    }
+
+    static Expr<std::string> readStringChan(Chan chan, State* state)
+    {
+      std::set<Chan> ch;
+      ch.insert(chan);
+      auto getter = [state, chan] { return state->getString(chan.name); };
+      return Expr<std::string>(getter, ch);
+    }
+
+    template <typename B>
+    Expr<B> map(std::function<B(T)> f)
+    {
+      auto getterB = [this, f] { return f(this.getter()); };
+      return Expr<B>(getterB, chans);
+    }
+
+    template <typename A, typename B>
+    static Expr<B> ap(Expr<std::function<B(A)>> f, Expr<A> a)
+    {
+      std::set<Chan> resChans;
+      resChans.insert(resChans.end(), f.chans.begin(), f.chans.end());
+      resChans.insert(resChans.end(), a.chans.begin(), a.chans.end());
+      auto resGetter = [f,a] { return f.getter()(a.getter()); };
+      return Expr<B>(resGetter, resChans);
+    }
+
+    template <typename A, typename B, typename C>
+    static Expr<C> lift2 (Expr<std::function<C(A,B)>> f, Expr<A> a, Expr<B> b)
+    {
+      std::set<Chan> resChans;
+      resChans.insert(resChans.end(), f.chans.begin(), f.chans.end());
+      resChans.insert(resChans.end(), a.chans.begin(), a.chans.end());
+      resChans.insert(resChans.end(), b.chans.begin(), b.chans.end());
+
+      auto resGetter = [f,a,b] { return f.getter()(a.getter(), b.getter()); };
+      return Expr<B>(resGetter, resChans);
+    }
+
+    template <typename A, typename B, typename C, typename D>
+    static Expr<D> lift3 (Expr<std::function<D(A,B,C)>> f, Expr<A> a, Expr<B> b, Expr<C> c)
+    {
+      std::set<Chan> resChans;
+      resChans.insert(resChans.end(), f.chans.begin(), f.chans.end());
+      resChans.insert(resChans.end(), a.chans.begin(), a.chans.end());
+      resChans.insert(resChans.end(), b.chans.begin(), b.chans.end());
+      resChans.insert(resChans.end(), c.chans.begin(), c.chans.end());
+
+      auto resGetter = [f,a,b,c] { return f.getter()(a.getter(), b.getter(), c.getter()); };
+      return Expr<B>(resGetter, resChans);
+    }
+
+    template <typename A, typename B>
+    static Expr<B> lifts (Expr<std::function<B(std::vector<A>)>> f, std::vector<Expr<A>> as)
+    {
+      std::set<Chan> resChans;
+      std::for_each(as.begin(), as.end(), [&resChans] (auto a) {
+        resChans.insert(resChans.end(), a.chans.begin(), a.chans.end());
+      });
+
+      auto resGetter = [f,as] {
+        std::vector<A> args;
+        for_each(as.begin(), as.end(), [&args](auto a) {
+          args.push_back(a.getter());
+        });
+        return f.getter()(args) ;
+      };
+      return Expr<B>(resGetter, resChans);
+    }
+
+  private:
+    std::function<T()> getter;
+    std::set<Chan> chans;
+};
+

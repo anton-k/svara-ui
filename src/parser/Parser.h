@@ -2,6 +2,8 @@
 #include "../../libs/yaml-cpp/include/yaml-cpp/yaml.h"
 #include <string>
 #include <juce_gui_extra/juce_gui_extra.h>
+#include "../model/Model.h"
+#include "../widgets/KeyPressListener.h"
 
 namespace Parser
 {
@@ -115,6 +117,8 @@ namespace Parser
       void onKey(YAML::Node node, std::string key, Rect rect, Style style);
   };
 
+  typedef Procedure Update;
+
   class InitVars : public IsYaml
   {
     public:
@@ -123,11 +127,6 @@ namespace Parser
       virtual void stringVar(std::string name, std::string val, bool needDebug) { (void)name; (void)val; (void)needDebug; };
 
       void run(YAML::Node node);
-      /*
-      void intRangeVar(std::string name, int val, int min, int max);
-      void doubleRangeVar(std::string name, double val, double min, double max);
-      void enumVar(std::string init, std::string defaultTag, std::vector<std::string> tags);
-      */
   };
 
   class UpdateVars : public IsYaml
@@ -137,19 +136,39 @@ namespace Parser
       virtual void setDouble(std::string trigger, std::string name, double val) { (void)trigger; (void)name; (void)val; };
       virtual void setString(std::string trigger, std::string name, std::string val) { (void)trigger; (void)name; (void)val; };
 
+      virtual void insertUpdater(std::string trigger, Update setter) { (void) trigger; (void) setter; };
+
+      virtual Type getType(std::string name) = 0;
+      virtual Callback<int> getSetInt(std::string name) = 0;
+      virtual Callback<double> getSetDouble(std::string name) = 0;
+      virtual Callback<std::string> getSetString(std::string name) = 0;
+
+      Update runUpdater(YAML::Node node);
       void run(YAML::Node node);
+  };
+
+  class KeypressUpdate
+  {
+    public:
+      virtual void insertKey(KeyEvent key, Procedure proc) { (void) key; (void) proc; };
+      void run(UpdateVars* updater, YAML::Node node);
   };
 
   class State : public IsYaml
   {
     public:
       State() {};
-      State(InitVars* _init, UpdateVars* _update): init(_init), update(_update) {}
+      State(InitVars* _init, UpdateVars* _update, KeypressUpdate* _keypress):
+        init(_init),
+        update(_update),
+        keypress(_keypress)
+    {}
 
       void run(YAML::Node node);
 
       InitVars* init;
       UpdateVars* update;
+      KeypressUpdate* keypress;
   };
 
   class Widget : public IsUi

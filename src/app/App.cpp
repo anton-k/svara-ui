@@ -2,7 +2,6 @@
 #include "../parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <plog/Log.h>
-#include "Log.h"
 
 // ------------------------------------------------------------------------------------- 
 // Palette
@@ -228,5 +227,22 @@ Panel* Scene::panelEnd()
   groupStack.pop_back();
   append(lastGroup);
   return lastGroup;
+}
+
+void Scene::onKeyEvent(KeyEvent key) 
+{
+  onKey.apply(key);
+}
+
+void Scene::appendKeyListener(KeyEvent key, Procedure proc)
+{
+  auto react = [key, proc] (auto event) { 
+      if (key == event) { 
+        PLOG_DEBUG << "key " << (key.isKeyDown ? "down: " : "up  : ") 
+          <<  key.key.getTextDescription();
+        proc.apply();
+      } 
+    };
+  onKey.append(react);
 }
 

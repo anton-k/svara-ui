@@ -75,15 +75,16 @@ juce_add_gui_app(GuiAppExample
 
 target_sources(GuiAppExample
     PRIVATE
+        src/model/Model.cpp
         src/app/App.cpp
         src/app/Palette.cpp
         src/app/Build.cpp
         src/Main.cpp
         src/MainComponent.cpp
-        src/model/Model.cpp
         src/parser/Debug.cpp
         src/parser/Yaml.cpp
         src/parser/Parser.cpp
+        src/parser/Expr.cpp
         src/widgets/KeyPressListener.cpp
         )
 

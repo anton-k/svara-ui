@@ -1,8 +1,10 @@
 #include "App.h"
-#include "../parser/Parser.h"
 #include <string>
 #include <iostream>
 #include <plog/Log.h>
+
+#include "../model/Model.h"
+#include "../parser/Parser.h"
 
 // Build Application from YAML-file
 
@@ -57,6 +59,49 @@ class BuildUpdates : public Parser::UpdateVars {
     { 
       app->state->appendSetterString(trigger, name, val);
     };
+
+    Type getType(std::string name) override
+    {
+      return app->state->getType(name);
+    }
+
+    void insertUpdater(std::string trigger, Procedure setter) override
+    {
+      app->state->appendSetter(trigger, setter);
+    }
+
+    Callback<int> getSetInt(std::string name) override
+    {
+      auto setter =  [this,name] (int val) { this->app->state->setInt(name, val) ;};
+      return Callback<int>(setter);
+    }
+
+    Callback<double> getSetDouble(std::string name) override
+    {
+      auto setter =  [this,name] (double val) { this->app->state->setDouble(name, val) ;};
+      return Callback<double>(setter);
+    }
+
+    Callback<std::string> getSetString(std::string name) override
+    {
+      auto setter = [this,name] (std::string val) { this->app->state->setString(name, val) ;};
+      return Callback<std::string>(setter);
+    }
+
+  private:
+    App* app;
+};
+
+class BuildKeypress : public Parser::KeypressUpdate {
+  public:
+    BuildKeypress() {};
+    BuildKeypress(App* _app): app(_app) {};
+
+    void insertKey(KeyEvent key, Procedure update) override 
+    {
+      PLOG_DEBUG << "Add key listener: " << key.key.getTextDescription();
+      app->scene->appendKeyListener(key, update);
+    }
 
   private:
     App* app;
@@ -332,8 +377,9 @@ void initApp(App* app, YAML::Node node)
   
   Parser::InitVars* buildInits = new BuildInits(app);  
   Parser::UpdateVars* buildUpdates = new BuildUpdates(app);
+  Parser::KeypressUpdate* buildKeypress = new BuildKeypress(app);
   
-  Parser::State* buildState = new Parser::State(buildInits, buildUpdates);
+  Parser::State* buildState = new Parser::State(buildInits, buildUpdates, buildKeypress);
   Parser::Config* buildConfig = new BuildConfig(app);
   Parser::Widget* buildWidget = new BuildWidget(app);
   Parser::Layout* buildLayout = new BuildLayout(app);
