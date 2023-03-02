@@ -6,14 +6,13 @@
 // you could `#include <JuceHeader.h>` here instead, to make all your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "app/App.h"
-#include "widgets/KeyPressListener.h"
 
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainComponent : public KeyPressListener
+class MainComponent   : public KeyPressListener
 {
 public:
     //==============================================================================
@@ -23,6 +22,8 @@ public:
     void resized() override;
     void checkTime ();
     juce::GroupComponent* group;
+
+    // bool keyStateChanged(bool isKeyDown) override
 
 private:
     //==============================================================================

@@ -19,11 +19,15 @@ namespace Parser
       void forString(std::string name, std::string val);
   };
 
-  class Chan {
+  class Col
+  {
     public:
-      Chan(std::string _name): name(_name) {}
-      std::string name;
+      Col(): val("") {};
+      Col(std::string v): val(v) {};
+
+      std::string val;
   };
+
 
   template <class T>
   class Val
@@ -45,15 +49,10 @@ namespace Parser
       T val;
   };
 
-
-  class Col
-  {
-    public:
-      Col(): val("") {};
-      Col(std::string v): val(v) {};
-
-      std::string val;
-  };
+  Expr<int> toIntExpr(Val<int> v, State* state);
+  Expr<double> toDoubleExpr(Val<double> v, State* state);
+  Expr<std::string> toStringExpr(Val<std::string> v, State* state);
+  Expr<Col> toColExpr(Val<Col> v, State* state);
 
   class Pad
   {
@@ -88,8 +87,8 @@ namespace Parser
     public:
       Style():
         color (Val<Col>(Col("blue"))),
-        secondaryColor (Val<Col>(Col("blue"))),
-        background (Val<Col>(Col("navy"))),
+        secondaryColor (Val<Col>(Col("navy"))),
+        background (Val<Col>(Col("grey"))),
         textSize (18),
         font (""),
         pad (Pad()),
@@ -154,11 +153,11 @@ namespace Parser
       void run(UpdateVars* updater, YAML::Node node);
   };
 
-  class State : public IsYaml
+  class InitState : public IsYaml
   {
     public:
-      State() {};
-      State(InitVars* _init, UpdateVars* _update, KeypressUpdate* _keypress):
+      InitState() {};
+      InitState(InitVars* _init, UpdateVars* _update, KeypressUpdate* _keypress):
         init(_init),
         update(_update),
         keypress(_keypress)
@@ -179,8 +178,8 @@ namespace Parser
       virtual void bar(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void)name; };
       // XYPad impl: https://github.com/seanlikeskites/SAFEJuceModule/blob/master/SAFE_juce_module/UIComponents/XYSlider.h
       virtual void xyPad(Rect rect, std::string nameX, std::string nameY) { (void) rect; (void)nameX; (void)nameY; };
-      virtual void button(Rect rect, std::string name) { (void) rect; (void)name; };
-      virtual void toggle(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void button(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
+      virtual void toggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void checkBox(Rect rect, std::string name) { (void) rect; (void)name; };
       // virtual void buttonRow(std::string name) { (void)name; };
       virtual void label(Style& style, Rect rect, std::string val) { (void)style; (void) rect; (void)val; };
@@ -244,11 +243,11 @@ namespace Parser
   {
     public:
       Window();
-      Window(State* _state, Ui* _ui, Config* _config): state(_state), ui(_ui), config(_config) {};
+      Window(InitState* _state, Ui* _ui, Config* _config): state(_state), ui(_ui), config(_config) {};
 
       void run(YAML::Node node);
 
-      State* state;
+      InitState* state;
       Ui* ui;
       Config* config;
   };

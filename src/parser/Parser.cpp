@@ -7,6 +7,65 @@
 
 namespace Parser
 {
+/*
+Expr<int> toIntExpr(Val<int> v, State* state)
+{
+  if (v.isChan()) {
+    return readIntChan(v.getChan(), state);
+  } else {
+    return Expr<int>(v.getVal());
+  }
+}
+
+Expr<double> toDoubleExpr(Val<double> v, State* state)
+{
+  if (v.isChan()) {
+    return readDoubleChan(v.getChan(), state);
+  } else {
+    return Expr<double>(v.getVal());
+  }
+}
+
+Expr<std::string> toIntExpr(Val<std::string> v, State* state)
+{
+  if (v.isChan()) {
+    return readStringChan(v.getChan(), state);
+  } else {
+    return Expr<std::string>(v.getVal());
+  }
+}
+
+Expr<Col> toColExpr(Val<Col> v, State* state)
+{
+  if (v.isChan()) {
+    std::function<Col(std::string)> toCol = [](std::string str) { return Col(str); };
+    return readStringChan(v.getChan(), state).map(toCol);
+  } else {
+    return Expr<Col>(v.getVal());
+  }
+}
+*/
+
+Expr<std::string> toStringExpr(Val<std::string> v, State* state)
+{
+  if (v.isChan()) {
+    return readStringChan(v.getChan(), state);
+  } else {
+    return Expr<std::string>(v.getVal());
+  }
+}
+
+Expr<Col> toColExpr(Val<Col> v, State* state)
+{
+  if (v.isChan()) {
+    PLOG_DEBUG << "BOO CHAN " << v.getChan().name;
+    return map<std::string, Col>([] (std::string str) { return Col(str);}, readStringChan(v.getChan(), state));
+  } else {
+    PLOG_DEBUG << "BOO 1 " << v.getVal().val;
+    return Expr<Col>(v.getVal());
+  }
+}
+
 
 // -------------------------------------------------------------------
 // IsYaml
@@ -96,7 +155,7 @@ void UpdateVars::run(YAML::Node node)
   });  
 }
 
-void State::run(YAML::Node node) 
+void InitState::run(YAML::Node node) 
 {
   this->init->onKey(node, "init");
   this->update->onKey(node, "update");
@@ -178,13 +237,23 @@ void Layout::run(YAML::Node node)
   (void) node;
 }
 
+std::string getWidgetName(YAML::Node node)
+{
+  std::string name = "";
+  forString(node, "name", [&name](auto str) { 
+    name = str; 
+  });  
+  return name;
+}
+
 void Widget::run(YAML::Node node, Rect rect, Style style) 
 {
+  std::string name = getWidgetName(node);
   forString(node, "knob", [this, rect, &style](auto chan) { this->knob(style, rect, chan);});
   forString(node, "slider", [this, rect, &style](auto chan) { this->slider(style, rect, chan); });
   forString(node, "bar", [this, rect, &style](auto chan) { this->bar(style, rect, chan); });
-  forString(node, "button", [this, rect](auto chan) { this->button(rect, chan); });
-  forString(node, "toggle", [this, rect](auto chan) { this->toggle(rect, chan); });
+  forString(node, "button", [this, name, rect, &style](auto chan) { this->button(style, rect, chan, name); });
+  forString(node, "toggle", [this, name, rect, &style](auto chan) { this->toggle(style, rect, chan, name); });
   forString(node, "label", [this, rect, &style](auto val) { this->label(style, rect, val); });
   forString(node, "text", [this, rect, &style](auto chan) { this->text(style, rect, chan); });  
   forKey(node, "xy-pad", [this, rect](auto xyNode) {
@@ -256,10 +325,7 @@ void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect, Style sty
 void runGroup(Ui* parent, YAML::Node node, Rect rect, Style style)
 {
   forKey(node, "group", [parent, rect, &style] (auto x) {
-    std::string groupName = "";
-    forString(x, "name", [&groupName](auto str) { 
-      groupName = str; 
-    });  
+    std::string groupName = getWidgetName(x);
     PLOG_DEBUG << "GROUP NAME " << groupName;
 
     parent->widget->groupBegin(style, rect, groupName);

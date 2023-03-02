@@ -236,8 +236,19 @@ class State
 
 class Chan {
   public:
+    Chan(): name("") {}
     Chan(std::string _name): name(_name) {}
     std::string name;
+
+    friend bool operator == (Chan const& l, Chan const& r) noexcept
+    {
+      return l.name == r.name;
+    };
+
+    friend bool operator < (Chan const& l, Chan const& r) noexcept
+    {
+      return l.name < r.name;
+    };
 };
 
 // Expressions that can have dependencies on readable channels
@@ -246,7 +257,7 @@ class Expr {
   public:
     Expr() {};
     Expr(T val):
-      getter([val] { return val; }),
+      getter([val] () { return val; }),
       chans(std::set<Chan>())
     {};
 
@@ -255,35 +266,14 @@ class Expr {
       chans(_chan)
     {}
 
-    static Expr<int> readIntChan(Chan chan, State* state)
+    T apply() const
     {
-      std::set<Chan> ch;
-      ch.insert(chan);
-      auto getter = [state, chan] { return state->getInt(chan.name); };
-      return Expr<int>(getter, ch);
+      return getter();
     }
 
-    static Expr<double> readDoubleChan(Chan chan, State* state)
+    std::set<Chan> getChans()
     {
-      std::set<Chan> ch;
-      ch.insert(chan);
-      auto getter = [state, chan] { return state->getDouble(chan.name); };
-      return Expr<double>(getter, ch);
-    }
-
-    static Expr<std::string> readStringChan(Chan chan, State* state)
-    {
-      std::set<Chan> ch;
-      ch.insert(chan);
-      auto getter = [state, chan] { return state->getString(chan.name); };
-      return Expr<std::string>(getter, ch);
-    }
-
-    template <typename B>
-    Expr<B> map(std::function<B(T)> f)
-    {
-      auto getterB = [this, f] { return f(this.getter()); };
-      return Expr<B>(getterB, chans);
+      return chans;
     }
 
     template <typename A, typename B>
@@ -296,6 +286,7 @@ class Expr {
       return Expr<B>(resGetter, resChans);
     }
 
+/*
     template <typename A, typename B, typename C>
     static Expr<C> lift2 (Expr<std::function<C(A,B)>> f, Expr<A> a, Expr<B> b)
     {
@@ -338,9 +329,20 @@ class Expr {
       };
       return Expr<B>(resGetter, resChans);
     }
+*/
 
   private:
     std::function<T()> getter;
     std::set<Chan> chans;
 };
+
+Expr<int> readIntChan(Chan chan, State* state);
+Expr<double> readDoubleChan(Chan chan, State* state);
+Expr<std::string> readStringChan(Chan chan, State* state);
+
+template <typename A, typename B>
+Expr<B> map(std::function<B(A)> f, Expr<A> a)
+{
+  return Expr<B>([a,f] { return f(a.apply()); }, std::set<Chan>(a.getChans()));
+}
 
