@@ -180,6 +180,8 @@ namespace Parser
       virtual void xyPad(Rect rect, std::string nameX, std::string nameY) { (void) rect; (void)nameX; (void)nameY; };
       virtual void button(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
       virtual void toggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
+      virtual void pressButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
+      virtual void checkToggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void checkBox(Rect rect, std::string name) { (void) rect; (void)name; };
       // virtual void buttonRow(std::string name) { (void)name; };
       virtual void label(Style& style, Rect rect, std::string val) { (void)style; (void) rect; (void)val; };

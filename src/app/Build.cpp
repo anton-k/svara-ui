@@ -333,7 +333,66 @@ class BuildWidget : public Parser::Widget {
       };
       app->scene->addWidget(widget, rect);
     };
-    
+
+    void pressButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
+    { 
+      padRect(rect, style.pad);
+      juce::TextButton* widget = new juce::TextButton(title);
+      
+      setColor(app, style.color, [widget] (auto c) {
+         widget->setColour(juce::TextButton::buttonColourId, c);
+      });
+     
+      std::cout << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
+      setColor(app, style.secondaryColor, [widget] (auto c) {
+         widget->setColour(juce::TextButton::buttonOnColourId, c);
+         widget->setColour(juce::TextButton::textColourOffId, c);
+      });
+
+      widget->onStateChange = [&style,this,name,widget] { 
+        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
+          this->app->state->setInt(name, 1); 
+        } else if (widget->getState() == juce::Button::ButtonState::buttonOver && this->app->state->getInt(name) == 1) {
+          this->app->state->setInt(name, 0); 
+        }
+      };
+
+      PLOG_DEBUG << "make button: " << name << " with text: " << title;
+      app->scene->addWidget(widget, rect);
+    };
+
+    void checkToggle(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
+    { 
+      padRect(rect, style.pad);
+      juce::ToggleButton* widget = new juce::ToggleButton(title);
+      widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
+      
+      auto onColor = toColExpr(style.color, this->app->state);
+      auto offColor = toColExpr(style.secondaryColor, this->app->state);
+
+      setColor(app, offColor, [widget] (auto c) {
+        widget->setColour(juce::ToggleButton::tickColourId , c);
+        });
+
+      setColor(app, onColor, [widget] (auto c) {
+        widget->setColour(juce::ToggleButton::tickDisabledColourId, c);
+        widget->setColour(juce::ToggleButton::textColourId, c);
+      });
+
+      widget->onStateChange = [&style,this,name,widget, offColor, onColor] { 
+        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
+          this->app->state->setInt(name, 1 - this->app->state->getInt(name));
+          if (widget->getToggleState()) {
+              widget->setColour(juce::ToggleButton::tickColourId, this->app->findColor(offColor.apply()));
+          } else {
+              widget->setColour(juce::ToggleButton::tickColourId, this->app->findColor(onColor.apply()));
+          }
+        }
+      };
+      app->scene->addWidget(widget, rect);
+    };
+
+   
     void label(Parser::Style& style, Parser::Rect rect, std::string val) override 
     {
       padRect(rect, style.pad);

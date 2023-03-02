@@ -254,6 +254,8 @@ void Widget::run(YAML::Node node, Rect rect, Style style)
   forString(node, "bar", [this, rect, &style](auto chan) { this->bar(style, rect, chan); });
   forString(node, "button", [this, name, rect, &style](auto chan) { this->button(style, rect, chan, name); });
   forString(node, "toggle", [this, name, rect, &style](auto chan) { this->toggle(style, rect, chan, name); });
+  forString(node, "press-button", [this, name, rect, &style](auto chan) { this->pressButton(style, rect, chan, name); });
+  forString(node, "check-toggle", [this, name, rect, &style](auto chan) { this->checkToggle(style, rect, chan, name); });
   forString(node, "label", [this, rect, &style](auto val) { this->label(style, rect, val); });
   forString(node, "text", [this, rect, &style](auto chan) { this->text(style, rect, chan); });  
   forKey(node, "xy-pad", [this, rect](auto xyNode) {
