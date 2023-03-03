@@ -74,6 +74,8 @@ namespace Parser
   Hint toHint(std::string str);
   std::string fromHint(Hint hint);
 
+  juce::Justification toJustification(std::string str);
+  std::string fromJustification(juce::Justification align);
 
   class Font
   {
@@ -90,12 +92,14 @@ namespace Parser
         secondaryColor (Val<Col>(Col("navy"))),
         background (Val<Col>(Col("grey"))),
         textSize (18),
+        textAlign ("centered"),
         font (""),
         pad (Pad()),
         border(Border()) {}
 
       Val<Col> color, secondaryColor, background;
       Val<double> textSize;
+      Val<std::string> textAlign;
       Val<std::string> font;
       Pad pad;
       Border border;

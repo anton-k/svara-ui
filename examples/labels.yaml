@@ -1,0 +1,41 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init: {}
+ui:
+  ver:
+    - group:
+        label: Label Centred
+        style:
+          text-align: centred
+    - group:
+        label: Label Left
+        style:
+          text-align: left
+    - group:
+        label: Label Right Small
+        style:
+          text-align: right
+          text-size: 12
+          color: orange
+    - group:
+        label: Label Top
+        style:
+          text-align: top
+          color: green
+    - group:
+        label: Label Bottom Big
+        style:
+          text-align: bottom
+          color: red
+          text-size: 24
+    - group:
+        label: Label Bottom right
+        style:
+          text-align: bottom-right
+          color: blue
+
+
+

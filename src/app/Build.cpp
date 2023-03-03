@@ -409,7 +409,10 @@ class BuildWidget : public Parser::Widget {
       setColor(app, style.color, [widget] (auto c) {
         widget->setColour(juce::Label::textColourId, c);
       });
-      widget->setJustificationType (juce::Justification::centred);
+
+      app->setJustificationType(style.textAlign, [widget] (auto justType) { 
+        widget->setJustificationType (justType);
+      });
       app->scene->addWidget(widget, rect);
     };
 
@@ -429,7 +432,9 @@ class BuildWidget : public Parser::Widget {
       setColor(app, style.color, [widget] (auto c) {
         widget->setColour(juce::Label::textColourId, c);
       });
-      widget->setJustificationType (juce::Justification::centred);
+      app->setJustificationType(style.textAlign, [widget] (auto justType) { 
+        widget->setJustificationType (justType);
+      });
       app->scene->addWidget(widget, rect);
       
       widget->setEditable(true);

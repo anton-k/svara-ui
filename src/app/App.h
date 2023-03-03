@@ -217,6 +217,8 @@ class App {
            Parser::toColExpr(val, this->state));
     }
 
+    void setJustificationType (Parser::Val<std::string> val, std::function<void(juce::Justification)>);
+
     void resized()
     {
       scene->resized();

@@ -232,6 +232,47 @@ std::string fromHint(Hint hint)
   return "none";
 }
 
+juce::Justification toJustification (std::string str)
+{
+  if (str == "left") { return juce::Justification(juce::Justification::left); }
+  if (str == "right") { return juce::Justification::right; }
+  if (str == "horizontally-centred") { return juce::Justification::horizontallyCentred; }
+  if (str == "top") { return juce::Justification::top; }
+  if (str == "bottom") { return juce::Justification::bottom; }
+  if (str == "vertically-centred") { return juce::Justification::verticallyCentred; }
+  if (str == "horizontally-justified") { return juce::Justification::horizontallyJustified; }
+  if (str == "centred") { return juce::Justification::centred; }
+  if (str == "centred-left") { return juce::Justification::centredLeft; }
+  if (str == "centred-right") { return juce::Justification::centredRight; }
+  if (str == "centred-top") { return juce::Justification::centredTop; }
+  if (str == "centred-bottom") { return juce::Justification::centredBottom; }
+  if (str == "top-left") { return juce::Justification::topLeft; }
+  if (str == "top-right") { return juce::Justification::topRight; }
+  if (str == "bottom-left") { return juce::Justification::bottomLeft; }
+  if (str == "bottom-right") { return juce::Justification::bottomRight; }
+  return juce::Justification(juce::Justification::centred);
+}
+
+/*   
+TODO: from justification (do we really need it?)
+     left
+      right       
+      horizontallyCentred
+      top
+      bottom
+      verticallyCentred
+      horizontallyJustified
+      centred 
+      centredLeft 
+      centredRight 
+      centredTop  
+      centredBottom 
+      topLeft  
+      topRight 
+      bottomLeft 
+      bottomRight
+*/
+
 void Layout::run(YAML::Node node) 
 {
   (void) node;
@@ -374,8 +415,9 @@ void Ui::updateStyle(YAML::Node root, Style& style)
     forValColor(node, "background", [this,&style](auto col) { style.background = col; });
     forValColor(node, "secondary-color", [this,&style](auto col) { style.secondaryColor = col; });
     forInt(node, "text-size", [this,&style](auto size) { style.textSize = size; });
+    forString(node, "text-align", [this, &style](auto align) { style.textAlign = align; });
     forValString(node, "font", [this,&style](auto f) { style.font = f; });
-    forString(node, "hints", [this,&style](auto x) { style.hint = toHint(x); });
+    forString(node, "hints", [this,&style](auto x) { style.hint = toHint(x); });    
     forDouble(node, "pad", [this,&style](double x) { style.pad = Pad(x, x, x, x); });
     forKey(node, "pad", [this,&style] (auto padNode) {
       if (padNode.IsMap()) {

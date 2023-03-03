@@ -246,3 +246,17 @@ void Scene::appendKeyListener(KeyEvent key, Procedure proc)
   onKey.append(react);
 }
 
+
+void App::setJustificationType (Parser::Val<std::string> val, std::function<void(juce::Justification)> setter)
+{
+  if (val.isChan()) {
+    std::string name = val.getChan().name;
+    setter(Parser::toJustification(this->state->getString(name)));
+    this->state->appendCallbackString(name, [this, setter] (auto str) {
+      setter(Parser::toJustification(str));
+    });
+  } else {
+    setter(Parser::toJustification(val.getVal()));
+  }
+}
+
