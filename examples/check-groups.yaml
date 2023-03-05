@@ -1,0 +1,22 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo!: 0
+    qux!: 0
+ui:
+  ver:
+    - tabs:
+        index: qux
+        items:
+          - check-group: foo
+            names: [apples, oranges, nuts]
+          - slider: boo
+    - toggle: qux
+      name: check
+      scale: 0.2
+  style:
+    color: olive
+    pad: 0.05

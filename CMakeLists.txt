@@ -85,6 +85,7 @@ target_sources(GuiAppExample
         src/parser/Yaml.cpp
         src/parser/Parser.cpp
         src/parser/Expr.cpp
+        src/widgets/ToggleGroup.cpp
         src/widgets/KeyPressListener.cpp
         )
 

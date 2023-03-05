@@ -1,0 +1,24 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo!: 0
+    qux!: 0
+ui:
+  ver:
+    - ver:
+          - ver-button-group: foo
+            names: [apples, oranges, nuts]
+            scale: 2.8
+          - hor-button-group: foo
+            names: [apples, oranges, nuts]
+      style:
+        color: olive
+        secondary-color: navy
+    - button-group: qux
+      names: ["", ""]
+      scale: 0.2
+  style:
+    pad: 0.02

@@ -138,11 +138,11 @@ class Var
 
     T get();
     void set(T);
-    void appendCallback(std::function<void(T)> call);
+    void appendCallback(Callback<T>* call);
 
   private:
     T val;
-    Callback<T> update;
+    Callback<T>* update;
     std::string name;
     bool hasDebug;
 };
@@ -164,7 +164,7 @@ class Vars
 
     void set(std::string name, T v);
 
-    void appendCallback(std::string name, std::function<void(T)> call);
+    void appendCallback(std::string name, Callback<T>* call);
 
     void print();
 
@@ -213,12 +213,11 @@ class State
     void setString(std::string name, std::string v);
 
     // append callback to variable
-    void appendCallbackInt(std::string name, std::function<void(int)> call);
-    void appendCallbackDouble(std::string name, std::function<void(double)> call);
-    void appendCallbackString(std::string name, std::function<void(std::string)> call);
+    void appendCallbackInt(std::string name, Callback<int>* call);
+    void appendCallbackDouble(std::string name, Callback<double>* call);
+    void appendCallbackString(std::string name, Callback<std::string>* call);
 
-    void appendSetter(std::string name, std::function<void(void)> call);
-    void appendSetter(std::string name, Procedure call);
+    void appendSetter(std::string name, Procedure* call);
     void appendSetterInt (std::string name, std::string key, int val);
     void appendSetterDouble (std::string name, std::string key, double val);
     void appendSetterString (std::string name, std::string key, std::string val);
@@ -228,6 +227,7 @@ class State
     void printInts();
 
   private:
+    void appendSetter(std::string name, std::function<void(void)> call);
     Vars<int> ints;
     Vars<double> doubles;
     Vars<std::string> strings;
@@ -271,7 +271,7 @@ class Expr {
       return getter();
     }
 
-    std::set<Chan> getChans()
+    std::set<Chan> getChans() const
     {
       return chans;
     }

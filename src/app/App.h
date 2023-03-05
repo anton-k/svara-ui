@@ -107,6 +107,8 @@ class Group : public GroupBox {
 
     Parser::Rect getRectangle() { return rect; }
 
+    juce::Component* getGroupWidget() { return group; }
+
   private:
     Parser::Rect rect;
     juce::Component* group;
@@ -162,6 +164,8 @@ class Panel : public GroupBox {
 class Scene
 {
 public:
+    friend class App;
+
     //==============================================================================
     Scene():
       widgets(std::vector<Box*>()),
@@ -177,17 +181,7 @@ public:
 
     void setup(juce::Component* parent);
 
-    // groups
-    void groupBegin(Parser::Rect rect, std::string name = "");
-    void groupEnd();
-
-    // panels
-    Panel* panelBegin(Parser::Rect rect, std::string name);
-    Panel* panelEnd();
-    void panelItemBegin();
-    void panelItemEnd();
-
-    void appendKeyListener(KeyEvent event, Procedure);
+    void appendKeyListener(KeyEvent event, Procedure*);
     void onKeyEvent(KeyEvent event);
 
 private:
@@ -217,7 +211,18 @@ class App {
            Parser::toColExpr(val, this->state));
     }
 
+    // groups
+    juce::Component* groupBegin(Parser::Rect rect, std::string name = "");
+    void groupEnd();
+
+    // panels
+    Panel* panelBegin(Parser::Rect rect, std::string name);
+    Panel* panelEnd();
+    void panelItemBegin();
+    void panelItemEnd();
+
     void setJustificationType (Parser::Val<std::string> val, std::function<void(juce::Justification)>);
+    void setColor(Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter);
 
     void resized()
     {

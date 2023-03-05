@@ -5,6 +5,7 @@
 
 #include "../model/Model.h"
 #include "../parser/Parser.h"
+#include "../widgets/ToggleGroup.h"
 
 // Build Application from YAML-file
 
@@ -65,27 +66,27 @@ class BuildUpdates : public Parser::UpdateVars {
       return app->state->getType(name);
     }
 
-    void insertUpdater(std::string trigger, Procedure setter) override
+    void insertUpdater(std::string trigger, Procedure* setter) override
     {
       app->state->appendSetter(trigger, setter);
     }
 
-    Callback<int> getSetInt(std::string name) override
+    Callback<int>* getSetInt(std::string name) override
     {
       auto setter =  [this,name] (int val) { this->app->state->setInt(name, val) ;};
-      return Callback<int>(setter);
+      return new Callback<int>(setter);
     }
 
-    Callback<double> getSetDouble(std::string name) override
+    Callback<double>* getSetDouble(std::string name) override
     {
       auto setter =  [this,name] (double val) { this->app->state->setDouble(name, val) ;};
-      return Callback<double>(setter);
+      return new Callback<double>(setter);
     }
 
-    Callback<std::string> getSetString(std::string name) override
+    Callback<std::string>* getSetString(std::string name) override
     {
       auto setter = [this,name] (std::string val) { this->app->state->setString(name, val) ;};
-      return Callback<std::string>(setter);
+      return new Callback<std::string>(setter);
     }
 
   private:
@@ -97,7 +98,7 @@ class BuildKeypress : public Parser::KeypressUpdate {
     BuildKeypress() {};
     BuildKeypress(App* _app): app(_app) {};
 
-    void insertKey(KeyEvent key, Procedure update) override 
+    void insertKey(KeyEvent key, Procedure* update) override 
     {
       PLOG_DEBUG << "Add key listener: " << key.key.getTextDescription();
       app->scene->appendKeyListener(key, update);
@@ -146,23 +147,23 @@ void padRect(Parser::Rect& rect, Parser::Pad pad)
   rect.setWidth(w);
 }
 
-void setColor(App* app, Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter)
+void App::setColor(Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter)
 {
   if (col.isVal()) {
-    juce::Colour c = app->findColor(col.getVal());
+    juce::Colour c = this->findColor(col.getVal());
     setter(c);
   } else {
     std::cout << "SETTING COLOR\n";
     Chan chn = col.getChan();
-    setter(app->findColor(app->state->getString(chn.name)));
-    app->state->appendCallbackString(chn.name, [app,setter](auto newCol) { 
-      juce::Colour c = app->findColor(newCol);
+    setter(this->findColor(this->state->getString(chn.name)));
+    this->state->appendCallbackString(chn.name, new Callback<std::string>([this,setter](auto newCol) { 
+      juce::Colour c = this->findColor(newCol);
       setter(c);
-    });               
+    }));               
   }
 }
 
-void setColor(App* app, Expr<Parser::Col>& col, std::function<void(juce::Colour)> setter)
+void setColor(App* app, const Expr<Parser::Col>& col, std::function<void(juce::Colour)> setter)
 {
   PLOG_DEBUG << "A 1";
   setter(app->findColor(col.apply()));
@@ -171,10 +172,10 @@ void setColor(App* app, Expr<Parser::Col>& col, std::function<void(juce::Colour)
   PLOG_DEBUG << "A 2";
   std::for_each(chans.begin(), chans.end(), [app, setter] (auto chn) {
     PLOG_DEBUG << "A 3";
-    app->state->appendCallbackString(chn.name, [app,setter](auto newCol) { 
+    app->state->appendCallbackString(chn.name, new Callback<std::string>([app,setter](auto newCol) { 
       juce::Colour c = app->findColor(newCol);
       setter(c);
-    });               
+    }));               
   });
   PLOG_DEBUG << "A 4";
 }
@@ -187,11 +188,11 @@ void setTextSize(App* app, Parser::Val<double> textSize, std::function<juce::Fon
     setFont(font);
   } else {
     Chan chan = textSize.getChan();
-    app->state->appendCallbackDouble(chan.name, [&getFont,&setFont] (auto size) {
+    app->state->appendCallbackDouble(chan.name, new Callback<double>([&getFont,&setFont] (auto size) {
       juce::Font font = getFont();
       font.setHeight(size);
       setFont(font);
-    ;} );
+    ;}));
   }
 }
 
@@ -203,11 +204,11 @@ void setFont(App* app, Parser::Val<std::string> typeface, std::function<juce::Fo
     setFont(font);
   } else {
     Chan chan = typeface.getChan();
-    app->state->appendCallbackString(chan.name, [&getFont,&setFont] (auto face) {
+    app->state->appendCallbackString(chan.name, new Callback<std::string>([&getFont,&setFont] (auto face) {
       juce::Font font = getFont();
       font.setTypefaceName(face);
       setFont(font);
-    ;} );
+    ;}));
   }
 }
 
@@ -222,14 +223,14 @@ void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string
   widget->onValueChange = [app, name, widget] { app->state->setDouble(name, widget->getValue()); };
   
   // Callback to update slider on value change
-  app->state->appendCallbackDouble(name, [widget](double val) {
+  app->state->appendCallbackDouble(name, new Callback<double>([widget](double val) {
       float v = val;
       if (widget->getValue() != v) {
         widget->setValue(v);
       }
-  });
+  }));
 
-  setColor(app, style.color, [widget, colourId] (auto c) {
+  app->setColor(style.color, [widget, colourId] (auto c) {
     widget->setColour(colourId, c);
     widget->setColour(juce::Slider::thumbColourId, c);          
   });
@@ -279,12 +280,12 @@ class BuildWidget : public Parser::Widget {
       padRect(rect, style.pad);
       juce::TextButton* widget = new juce::TextButton(title);
       
-      setColor(app, style.color, [widget] (auto c) {
+      app->setColor(style.color, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonColourId, c);
       });
      
       std::cout << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
-      setColor(app, style.secondaryColor, [widget] (auto c) {
+      app->setColor(style.secondaryColor, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonOnColourId, c);
          widget->setColour(juce::TextButton::textColourOffId, c);
       });
@@ -339,12 +340,12 @@ class BuildWidget : public Parser::Widget {
       padRect(rect, style.pad);
       juce::TextButton* widget = new juce::TextButton(title);
       
-      setColor(app, style.color, [widget] (auto c) {
+      app->setColor(style.color, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonColourId, c);
       });
      
       std::cout << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
-      setColor(app, style.secondaryColor, [widget] (auto c) {
+      app->setColor(style.secondaryColor, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonOnColourId, c);
          widget->setColour(juce::TextButton::textColourOffId, c);
       });
@@ -392,6 +393,72 @@ class BuildWidget : public Parser::Widget {
       app->scene->addWidget(widget, rect);
     };
 
+    void checkGroup(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<std::string> names, bool isVertical) override
+    { 
+      padRect(rect, style.pad);
+      ToggleGroup* widget = new ToggleGroup(isVertical);
+      std::for_each(names.begin(), names.end(), [this, widget] (auto name) {
+        juce::ToggleButton* button = new juce::ToggleButton(name);
+        widget->addItem(button);
+      });
+
+      widget->setValue((size_t) app->state->getInt(chan));
+      app->state->appendCallbackInt(chan, new Callback<int>([this, widget] (auto n) {
+        size_t current = widget->getValue();
+        size_t choice = (size_t) n;
+        if (choice != current) {
+          widget->setValue((size_t) n);
+        }
+      }));
+
+      widget->onChange = [this,widget, chan] (size_t n) {
+        this->app->state->setInt(chan, n);
+      };
+
+      app->scene->addWidget(widget, rect);
+    };
+
+    void buttonGroup(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<std::string> names, bool isVertical) override
+    { 
+      padRect(rect, style.pad);
+      auto onColor = toColExpr(style.color, this->app->state);
+      auto offColor = toColExpr(style.secondaryColor, this->app->state);
+
+      ToggleGroup* widget = new ToggleGroup(isVertical);
+      std::for_each(names.begin(), names.end(), [this, widget, onColor, offColor] (auto name) {
+        juce::TextButton* button = new juce::TextButton(name);
+        button->setToggleable(true);
+        button->setClickingTogglesState(true);
+        button->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
+
+        setColor(app, offColor, [button] (auto c) {
+          button->setColour(juce::TextButton::buttonColourId, c);
+          });
+
+        setColor(app, onColor, [button] (auto c) {
+          button->setColour(juce::TextButton::textColourOffId, c);
+          button->setColour(juce::TextButton::buttonOnColourId, c);
+        });
+
+        widget->addItem(button);
+      });
+
+      widget->setValue((size_t) app->state->getInt(chan));
+      app->state->appendCallbackInt(chan, new Callback<int>([this, widget] (auto n) {
+        size_t current = widget->getValue();
+        size_t choice = (size_t) n;
+        if (choice != current) {
+          widget->setValue((size_t) n);
+        }
+      }));
+
+      widget->onChange = [this,widget, chan] (size_t n) {
+        this->app->state->setInt(chan, n);
+      };
+
+      app->scene->addWidget(widget, rect);
+    };
+
    
     void label(Parser::Style& style, Parser::Rect rect, std::string val) override 
     {
@@ -406,13 +473,22 @@ class BuildWidget : public Parser::Widget {
           [widget] (auto font) { return widget->setFont(font); }
       );
 
-      setColor(app, style.color, [widget] (auto c) {
+      app->setColor(style.color, [widget] (auto c) {
         widget->setColour(juce::Label::textColourId, c);
       });
 
       app->setJustificationType(style.textAlign, [widget] (auto justType) { 
         widget->setJustificationType (justType);
       });
+      app->scene->addWidget(widget, rect);
+    };
+
+    void image(Parser::Style& style, Parser::Rect rect, std::string file) 
+    { 
+      padRect(rect, style.pad);
+      juce::Image image = juce::ImageFileFormat::loadFrom(juce::File(file));
+      juce::ImageComponent* widget = new juce::ImageComponent(file);
+      widget->setImage(image); 
       app->scene->addWidget(widget, rect);
     };
 
@@ -429,7 +505,7 @@ class BuildWidget : public Parser::Widget {
           [widget] (auto font) { return widget->setFont(font); }
       );
 
-      setColor(app, style.color, [widget] (auto c) {
+      app->setColor(style.color, [widget] (auto c) {
         widget->setColour(juce::Label::textColourId, c);
       });
       app->setJustificationType(style.textAlign, [widget] (auto justType) { 
@@ -441,51 +517,101 @@ class BuildWidget : public Parser::Widget {
       widget->onTextChange = [this, name, widget] {
         this->app->state->setString(name, widget->getText().toStdString());
       };
-      app->state->appendCallbackString(name, [widget](std::string str) {
+      app->state->appendCallbackString(name, new Callback<std::string>([widget](std::string str) {
         juce::String jstr = (const std::string & ) str;
         if (jstr.compare(widget->getText()) != 0) {
           widget->setText(jstr, juce::dontSendNotification);
         }
-      });
+      }));
     };
+
+    
+    void comboBox(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<std::string> names) override
+    { 
+      padRect(rect, style.pad);
+      juce::ComboBox* widget = new juce::ComboBox(chan);
+      int counter = 1;
+      std::for_each(names.begin(), names.end(), [widget, &counter] (auto name) {
+        widget->addItem(name, counter);
+        counter++;
+      });
+
+      widget->onChange = [this, widget, chan] {
+        this->app->state->setInt(chan, widget->getSelectedItemIndex());
+      };
+      widget->setSelectedItemIndex(app->state->getInt(chan));
+      app->state->appendCallbackInt(chan, new Callback<int>([chan, this, widget] (int choice) {
+        int current = widget->getSelectedItemIndex();
+        PLOG_DEBUG << "set combo " << chan << ": choice: " << choice << ", index: " << current;
+        if (current != choice) {
+          widget->setSelectedItemIndex(choice);
+        }
+      })); 
+
+      app->setJustificationType(style.textAlign, [widget] (auto align) {
+        widget->setJustificationType(align);
+      });
+
+      app->setColor(style.color, [widget] (auto c) {
+        widget->setColour(juce::ComboBox::textColourId, c);
+      });
+
+      app->setColor(style.background, [widget] (auto c) {
+        widget->setColour(juce::ComboBox::backgroundColourId, c);
+      });
+
+      app->scene->addWidget(widget, rect);      
+    };
+
     void space(Parser::Rect rect) override { (void) rect; };
 
     void groupBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
     {
       padRect(rect, style.pad);
-      app->scene->groupBegin(rect, name);
+      juce::Component* group = app->groupBegin(rect, name);
+      try {
+        juce::GroupComponent* widget = dynamic_cast<juce::GroupComponent*>(group);
+        app->setJustificationType(style.textAlign, [widget] (auto align) {
+          widget->setTextLabelPosition(align);
+        });
+
+        app->setColor(style.color, [widget] (auto c) {
+          widget->setColour(juce::GroupComponent::outlineColourId, c);
+          widget->setColour(juce::GroupComponent::textColourId, c);
+        });
+      } catch (...) {}
     }
 
     void groupEnd() override
     {
-      app->scene->groupEnd();
+      app->groupEnd();
     }
 
     void panelBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
     {
       PLOG_DEBUG << "panelBegin: " << rect.toString() << " , name: " << name;
       padRect(rect, style.pad);
-      Panel* panel = app->scene->panelBegin(rect, name);    
-      app->state->appendCallbackInt(name, [panel] (int n) { panel->selectVisible((size_t) n); });
+      Panel* panel = app->panelBegin(rect, name);    
+      app->state->appendCallbackInt(name, new Callback<int>([panel] (int n) { panel->selectVisible((size_t) n); }));
     }
 
     void panelEnd(std::string name) override
     {
       PLOG_DEBUG << "panelEnd: " << name;
-      Panel* panel = app->scene->panelEnd();
+      Panel* panel = app->panelEnd();
       panel->selectVisible((size_t) app->state->getInt(name));
     }
 
     void panelItemBegin() override
     {
       PLOG_DEBUG << "panelItemBegin";
-      app->scene->panelItemBegin();
+      app->panelItemBegin();
     }
 
     void panelItemEnd() override
     {
       PLOG_DEBUG << "panelItemEnd";
-      app->scene->panelItemEnd();
+      app->panelItemEnd();
     }
 
   private:

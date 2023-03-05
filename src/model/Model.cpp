@@ -21,7 +21,7 @@ template <class T>
 Var<T>::Var(T init, std::string str, bool debug) 
 {
   val = init;
-  update = Callback<T>( [this](T v) { this->val = v; } );
+  update = new Callback<T>( [this](T v) { this->val = v; } );
   name = str;
   hasDebug = debug;
 }
@@ -36,7 +36,7 @@ Var<int>* Var<int>::makeRange(int init, int min, int max)
 {
   Var<int>* res = new Var<int>();
   res->val = within(init, min, max);
-  res->update.append(Callback<int>( [res,min,max](int v) { res->val = within(v, min, max); } ));
+  res->update->append(Callback<int>( [res,min,max](int v) { res->val = within(v, min, max); } ));
   return res;  
 }
 
@@ -49,16 +49,16 @@ T Var<T>::get()
 template <class T>
 void Var<T>::set(T v)
 {
-  update.apply(v);
+  update->apply(v);
   if (hasDebug) {
     PLOG_INFO << "set-var: " << name << ": " << v;
   }
 }
 
 template <class T>
-void Var<T>::appendCallback(std::function<void(T)> call)
+void Var<T>::appendCallback(Callback<T>* call)
 {
-  update.append(call);
+  update->append(*call);
 }
 
 // ---------------------------------------------------------------------------
@@ -91,7 +91,7 @@ void Vars<T>::set(std::string name, T val)
 }
 
 template <class T>
-void Vars<T>::appendCallback(std::string name, std::function<void(T)> call)
+void Vars<T>::appendCallback(std::string name, Callback<T>* call)
 {
   auto it = vars.find(name);
   if (it != vars.end()) {
@@ -210,34 +210,34 @@ void State::setString(std::string name, std::string v)
 
 // append callbacks
 
-void State::appendCallbackInt(std::string name, std::function<void(int)> call)
+void State::appendCallbackInt(std::string name, Callback<int>* call)
 {
   ints.appendCallback(name, call);
 }
 
-void State::appendCallbackDouble(std::string name, std::function<void(double)> call)
+void State::appendCallbackDouble(std::string name, Callback<double>* call)
 {
   doubles.appendCallback(name, call);
 }
 
-void State::appendCallbackString(std::string name, std::function<void(std::string)> call)
+void State::appendCallbackString(std::string name, Callback<std::string>* call)
 {
   strings.appendCallback(name, call);
 }
 
-void State::appendSetter(std::string name, Procedure call) 
+void State::appendSetter(std::string name, Procedure* call) 
 {
-  appendSetter(name, call.toFunction());
+  appendSetter(name, call->toFunction());
 }
 
 void State::appendSetter(std::string name, std::function<void(void)> call) 
 {
   if (ints.member(name)) {
-    appendCallbackInt(name, [this,call](auto x) { (void)x; call(); } );
+    appendCallbackInt(name, new Callback<int>([this,call](auto x) { (void)x; call(); }));
   } else if (doubles.member(name)) {
-    appendCallbackDouble(name, [this,call](auto x) { (void)x; call(); } );
+    appendCallbackDouble(name, new Callback<double>([this,call](auto x) { (void)x; call(); } ));
   } else if (strings.member(name)) {
-    appendCallbackString(name, [this,call](auto x) { (void)x; call(); } );
+    appendCallbackString(name, new Callback<std::string>([this,call](auto x) { (void)x; call(); } ));
   }
 
 }
@@ -321,9 +321,9 @@ int check_model()
   st.insertInt("y", 2, true);
   st.insertIntRange("z", 0, 0, 5);
 
-  st.appendCallbackInt("x", [&st](int v) { st.setInt("z", v + st.getInt("y")); });
-  st.appendCallbackInt("y", [&st](int v) { st.setInt("z", v + st.getInt("x")); });
-  st.appendCallbackInt("z", [&st](int v) { (void)v; std::cout << "Z was updated with " << st.getInt("z") << "\n"; });
+  st.appendCallbackInt("x", new Callback<int>([&st](int v) { st.setInt("z", v + st.getInt("y")); }));
+  st.appendCallbackInt("y", new Callback<int>([&st](int v) { st.setInt("z", v + st.getInt("x")); }));
+  st.appendCallbackInt("z", new Callback<int>([&st](int v) { (void)v; std::cout << "Z was updated with " << st.getInt("z") << "\n"; }));
 
   st.printInts();
   st.setInt("x", 2);

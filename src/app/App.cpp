@@ -176,24 +176,25 @@ void Scene::setup(juce::Component* parent)
   std::for_each(widgets.begin(), widgets.end(), [parent, call] (Box* box) { box->append(call); });
 }
 
-void Scene::groupBegin(Parser::Rect rect, std::string name)
+juce::Component* App::groupBegin(Parser::Rect rect, std::string name)
 {
   auto groupBox = new Group(rect, name, true);
-  groupStack.push_back(groupBox);
+  scene->groupStack.push_back(groupBox);
+  return groupBox->getGroupWidget();
 }
 
-void Scene::groupEnd()
+void App::groupEnd()
 {
-  GroupBox* lastGroup = groupStack.back();  
+  GroupBox* lastGroup = scene->groupStack.back();  
   lastGroup->end();
-  groupStack.pop_back();
-  append(lastGroup);
+  scene->groupStack.pop_back();
+  scene->append(lastGroup);
 }
 
-Panel* Scene::panelBegin(Parser::Rect rect, std::string name)
+Panel* App::panelBegin(Parser::Rect rect, std::string name)
 {
   Panel* panel = new Panel(rect, name);
-  groupStack.push_back(panel);
+  scene->groupStack.push_back(panel);
   return panel;
 }
 
@@ -206,26 +207,26 @@ Panel* toPanel(GroupBox* box, std::string errorMessage)
   }
 }
 
-void Scene::panelItemBegin()
+void App::panelItemBegin()
 {
   // Panel* lastGroup = toPanel(groupStack.back(), "panel item begin: not a panel on groupStack");
   // lastGroup->initItem();
 }
 
-void Scene::panelItemEnd()
+void App::panelItemEnd()
 {
-  Panel* lastGroup = toPanel(groupStack.back(), "panel item begin: not a panel on groupStack");
+  Panel* lastGroup = toPanel(scene->groupStack.back(), "panel item begin: not a panel on groupStack");
   lastGroup->initItem();
 }
 
-Panel* Scene::panelEnd()
+Panel* App::panelEnd()
 {
-  Panel* lastGroup = toPanel(groupStack.back(), "panel item end: not a panel on groupStack");  
+  Panel* lastGroup = toPanel(scene->groupStack.back(), "panel item end: not a panel on groupStack");  
   PLOG_DEBUG << "PANEL SIZE END PRE: " << lastGroup->getSize();
   lastGroup->end();
   PLOG_DEBUG << "PANEL SIZE END POST: " << lastGroup->getSize();
-  groupStack.pop_back();
-  append(lastGroup);
+  scene->groupStack.pop_back();
+  scene->append(lastGroup);
   return lastGroup;
 }
 
@@ -234,13 +235,13 @@ void Scene::onKeyEvent(KeyEvent key)
   onKey.apply(key);
 }
 
-void Scene::appendKeyListener(KeyEvent key, Procedure proc)
+void Scene::appendKeyListener(KeyEvent key, Procedure* proc)
 {
   auto react = [key, proc] (auto event) { 
       if (key == event) { 
         PLOG_DEBUG << "key " << (key.isKeyDown ? "down: " : "up  : ") 
           <<  key.key.getTextDescription();
-        proc.apply();
+        proc->apply();
       } 
     };
   onKey.append(react);
@@ -252,9 +253,9 @@ void App::setJustificationType (Parser::Val<std::string> val, std::function<void
   if (val.isChan()) {
     std::string name = val.getChan().name;
     setter(Parser::toJustification(this->state->getString(name)));
-    this->state->appendCallbackString(name, [this, setter] (auto str) {
+    this->state->appendCallbackString(name, new Callback<std::string>([this, setter] (auto str) {
       setter(Parser::toJustification(str));
-    });
+    }));
   } else {
     setter(Parser::toJustification(val.getVal()));
   }

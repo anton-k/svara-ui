@@ -1,0 +1,26 @@
+config:
+  size:
+    width: 500
+    height: 300
+state:
+  init:
+    foo!: 0
+    zoo!: 0
+    bar!: 0
+    qux!: 1
+ui:
+  ver:
+    - toggle: foo
+      name: plain
+      scale: 0.15
+    - tabs:
+        index: foo
+        items:
+          - image: "/home/anton/flow/lestv-1.jpg"
+          - image: "/home/anton/flow/lestv-2.png"
+  style:
+    color: green
+    secondary-color: olive
+    pad: 0.05
+
+

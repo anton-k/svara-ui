@@ -90,7 +90,7 @@ namespace Parser
       Style():
         color (Val<Col>(Col("blue"))),
         secondaryColor (Val<Col>(Col("navy"))),
-        background (Val<Col>(Col("grey"))),
+        background (Val<Col>(Col("black"))),
         textSize (18),
         textAlign ("centered"),
         font (""),
@@ -139,21 +139,21 @@ namespace Parser
       virtual void setDouble(std::string trigger, std::string name, double val) { (void)trigger; (void)name; (void)val; };
       virtual void setString(std::string trigger, std::string name, std::string val) { (void)trigger; (void)name; (void)val; };
 
-      virtual void insertUpdater(std::string trigger, Update setter) { (void) trigger; (void) setter; };
+      virtual void insertUpdater(std::string trigger, Update* setter) { (void) trigger; (void) setter; };
 
       virtual Type getType(std::string name) = 0;
-      virtual Callback<int> getSetInt(std::string name) = 0;
-      virtual Callback<double> getSetDouble(std::string name) = 0;
-      virtual Callback<std::string> getSetString(std::string name) = 0;
+      virtual Callback<int>* getSetInt(std::string name) = 0;
+      virtual Callback<double>* getSetDouble(std::string name) = 0;
+      virtual Callback<std::string>* getSetString(std::string name) = 0;
 
-      Update runUpdater(YAML::Node node);
+      Update* runUpdater(YAML::Node node);
       void run(YAML::Node node);
   };
 
   class KeypressUpdate
   {
     public:
-      virtual void insertKey(KeyEvent key, Procedure proc) { (void) key; (void) proc; };
+      virtual void insertKey(KeyEvent key, Procedure* proc) { (void) key; (void) proc; };
       void run(UpdateVars* updater, YAML::Node node);
   };
 
@@ -186,11 +186,15 @@ namespace Parser
       virtual void toggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void pressButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void checkToggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
-      virtual void checkBox(Rect rect, std::string name) { (void) rect; (void)name; };
+      virtual void checkGroup(Style& style, Rect rect, std::string chan, std::vector<std::string> names, bool isVer) { (void) style; (void) rect; (void) chan; (void)names; (void) isVer; };
+      virtual void buttonGroup(Style& style, Rect rect, std::string chan, std::vector<std::string> names, bool isVer) { (void) style; (void) rect; (void) chan; (void)names; (void) isVer; };
       // virtual void buttonRow(std::string name) { (void)name; };
       virtual void label(Style& style, Rect rect, std::string val) { (void)style; (void) rect; (void)val; };
       virtual void text(Style& style, Rect rect, std::string name) { (void)style; (void) rect; (void)name; };
       virtual void space(Rect rect) { (void)rect; };
+      virtual void image(Style& style, Rect rect, std::string file) { (void)style; (void) rect; (void) file; };
+
+      virtual void comboBox(Style& style, Rect rect, std::string chan, std::vector<std::string> names) { (void)style; (void)rect; (void) chan; (void) names; };
 
       // groups: set of items
       virtual void groupBegin(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void) name; };
@@ -203,6 +207,14 @@ namespace Parser
       virtual void panelEnd(std::string name) { (void) name; };
 
       void run(YAML::Node node, Rect rect, Style style) override;
+      void parseComboBox(YAML::Node node, Rect rect, Style style);
+      void parseCheckGroup(YAML::Node node, Rect rect, Style style);
+      void parseButtonGroup(YAML::Node node, Rect rect, Style style);
+      void parseHorCheckGroup(YAML::Node node, Rect rect, Style style);
+      void parseHorButtonGroup(YAML::Node node, Rect rect, Style style);
+      void parseVerCheckGroup(YAML::Node node, Rect rect, Style style);
+      void parseVerButtonGroup(YAML::Node node, Rect rect, Style style);
+      void parseRadioGroupBy(std::string tag, std::function<void(Style&,Rect,std::string,std::vector<std::string>)> call, YAML::Node node, Rect rect, Style style);
   };
 
   class Layout : public IsYaml

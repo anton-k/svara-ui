@@ -1,0 +1,63 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo!: 0.5
+    zoo!: 0.5
+    meal!: 0
+    go-cucumbers!: 0
+    go-nuts!: 0
+  update:
+    go-cucumbers:
+      meal: 2
+    go-nuts:
+      meal: 3
+ui:
+  ver:
+    - combo-box: meal
+      names: ["apples", "oranges", "cucumbers", "nuts"]
+      style:
+        text-align: left
+        color: white
+      scale: 0.3
+    - tabs:
+        index: meal
+        items:
+          - ver:
+            - button: go-cucumbers
+              name: Go cucmbers
+            - button: go-nuts
+              name: Go nuts
+              style:
+                color: olive
+            - toggle: zoo
+              name: toggle
+              style:
+                color: green
+            style:
+              color: red
+          - hor:
+              - knob: foo
+              - knob: zoo
+            style:
+              color: yellow
+          - ver:
+              - slider: foo
+              - slider: zoo
+              - slider: foo
+              - slider: zoo
+            style:
+              color: olive
+          - hor:
+              - slider: zoo
+              - slider: foo
+              - slider: zoo
+            style:
+              color: purple
+
+
+
+
+

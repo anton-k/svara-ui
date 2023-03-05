@@ -1,0 +1,31 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo!: 0
+    zoo!: 0
+    bar!: 0
+    qux!: 1
+    tog-col: "aqua"
+  keyboard:
+    a:
+      down:
+        tog-col: orange
+ui:
+  ver:
+    - button: foo
+      name: plain
+    - toggle: zoo
+      name: toggle
+    - press-button: bar
+      name: press
+    - check-toggle: qux
+      name: check
+  style:
+    color: ".tog-col"
+    secondary-color: olive
+    pad: 0.05
+
+

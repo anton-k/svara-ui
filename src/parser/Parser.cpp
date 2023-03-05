@@ -7,44 +7,6 @@
 
 namespace Parser
 {
-/*
-Expr<int> toIntExpr(Val<int> v, State* state)
-{
-  if (v.isChan()) {
-    return readIntChan(v.getChan(), state);
-  } else {
-    return Expr<int>(v.getVal());
-  }
-}
-
-Expr<double> toDoubleExpr(Val<double> v, State* state)
-{
-  if (v.isChan()) {
-    return readDoubleChan(v.getChan(), state);
-  } else {
-    return Expr<double>(v.getVal());
-  }
-}
-
-Expr<std::string> toIntExpr(Val<std::string> v, State* state)
-{
-  if (v.isChan()) {
-    return readStringChan(v.getChan(), state);
-  } else {
-    return Expr<std::string>(v.getVal());
-  }
-}
-
-Expr<Col> toColExpr(Val<Col> v, State* state)
-{
-  if (v.isChan()) {
-    std::function<Col(std::string)> toCol = [](std::string str) { return Col(str); };
-    return readStringChan(v.getChan(), state).map(toCol);
-  } else {
-    return Expr<Col>(v.getVal());
-  }
-}
-*/
 
 Expr<std::string> toStringExpr(Val<std::string> v, State* state)
 {
@@ -107,9 +69,9 @@ void InitVars::run(YAML::Node node)
   });  
 }
 
-Update UpdateVars::runUpdater(YAML::Node node)
+Update* UpdateVars::runUpdater(YAML::Node node)
 {  
-  Procedure res;
+  Procedure* res = new Procedure();
   forObject(node, [&res,this](std::string key, YAML::Node x) {
     switch (this->getType(key)) 
     {
@@ -117,9 +79,9 @@ Update UpdateVars::runUpdater(YAML::Node node)
         {
           if (isInt(x)) {
             int n = getInt(x, 0);
-            Callback<int> setter = this->getSetInt(key);
-            auto proc = [this,setter,n] () { setter.apply(n); };
-            res.append(Procedure(proc));
+            Callback<int>* setter = this->getSetInt(key);
+            auto proc = [this,setter,n] () { setter->apply(n); };
+            res->append(Procedure(proc));
           } else {
             PLOG_ERROR << "update " << key << " is defined as int, but set to non int value";
           }
@@ -128,9 +90,9 @@ Update UpdateVars::runUpdater(YAML::Node node)
         {
           if (isDouble(x)) {
             double d = getDouble(x, 0);          
-            Callback<double> setter = this->getSetDouble(key);
-            auto proc = [this,setter,d] () { setter.apply(d); };
-            res.append(Procedure(proc));
+            Callback<double>* setter = this->getSetDouble(key);
+            auto proc = [this,setter,d] () { setter->apply(d); };
+            res->append(Procedure(proc));
           } else {
             PLOG_ERROR << "update " << key << " is defined as double, but set to non double value";
           }
@@ -138,9 +100,9 @@ Update UpdateVars::runUpdater(YAML::Node node)
       case Type::String :
         {
           std::string str = getString(x, "");
-          Callback<std::string> setter = this->getSetString(key);
-          auto proc = [this,setter,str] () { setter.apply(str); };
-          res.append(Procedure(proc));
+          Callback<std::string>* setter = this->getSetString(key);
+          auto proc = [this,setter,str] () { setter->apply(str); };
+          res->append(Procedure(proc));
         }
     }
   });
@@ -150,7 +112,7 @@ Update UpdateVars::runUpdater(YAML::Node node)
 void UpdateVars::run(YAML::Node node)
 {  
   forObject(node, [this](std::string trigger, YAML::Node triggerNode) {
-    Procedure setter = this->runUpdater(triggerNode);
+    Procedure* setter = this->runUpdater(triggerNode);
     insertUpdater(trigger, setter);
   });  
 }
@@ -169,7 +131,7 @@ void runKey(KeypressUpdate* parent, UpdateVars* updater, std::string tag, KeyEve
 {
   forKey(node, tag, [parent,updater,key](auto triggerNode) {
     PLOG_DEBUG << "KEY PARSE" << key.key.getTextDescription(); 
-    Procedure setter = updater->runUpdater(triggerNode);
+    Procedure* setter = updater->runUpdater(triggerNode);
     parent->insertKey(key, setter);
   });  
 }
@@ -287,6 +249,83 @@ std::string getWidgetName(YAML::Node node)
   return name;
 }
 
+std::vector<std::string> getNames(YAML::Node node)
+{
+  std::vector<std::string> names;
+  forNodes(node["names"], [&names] (auto x) {
+    names.push_back(getString(x, ""));      
+  }); 
+  return names;
+}
+
+void Widget::parseRadioGroupBy(std::string tag, std::function<void(Style&,Rect,std::string,std::vector<std::string>)> call, YAML::Node node, Rect rect, Style style)
+{
+  if (hasKey(node, tag) && hasKey(node, "names")) {
+    std::vector<std::string> names = getNames(node);
+
+    forString(node, tag, [this, rect, &style, names, call] (auto chan) {
+      call(style, rect, chan, names);
+    });
+  }  
+}
+
+void Widget::parseComboBox(YAML::Node node, Rect rect, Style style) 
+{
+  this->parseRadioGroupBy(
+      "combo-box", 
+      [this] (Style& s, Rect r, std::string ch, std::vector<std::string> names) { this->comboBox(s, r, ch, names);}, 
+      node, rect, style);
+}
+
+void Widget::parseCheckGroup(YAML::Node node, Rect rect, Style style) 
+{
+  this->parseRadioGroupBy(
+      "check-group", 
+      [this] (Style& s, Rect r, std::string ch, std::vector<std::string> names) { this->checkGroup(s, r, ch, names, r.getWidth() < r.getHeight());}, 
+      node, rect, style);
+}
+
+void Widget::parseButtonGroup(YAML::Node node, Rect rect, Style style) 
+{
+  this->parseRadioGroupBy(
+      "button-group", 
+      [this] (Style& s, Rect r, std::string ch, std::vector<std::string> names) { this->buttonGroup(s, r, ch, names, r.getWidth() < r.getHeight());}, 
+      node, rect, style);
+}
+
+void Widget::parseHorCheckGroup(YAML::Node node, Rect rect, Style style) 
+{
+  this->parseRadioGroupBy(
+      "hor-check-group", 
+      [this] (Style& s, Rect r, std::string ch, std::vector<std::string> names) { this->checkGroup(s, r, ch, names, false);}, 
+      node, rect, style);
+}
+
+void Widget::parseHorButtonGroup(YAML::Node node, Rect rect, Style style) 
+{
+  this->parseRadioGroupBy(
+      "hor-button-group", 
+      [this] (Style& s, Rect r, std::string ch, std::vector<std::string> names) { this->buttonGroup(s, r, ch, names, false);}, 
+      node, rect, style);
+}
+
+void Widget::parseVerCheckGroup(YAML::Node node, Rect rect, Style style) 
+{
+  this->parseRadioGroupBy(
+      "ver-check-group", 
+      [this] (Style& s, Rect r, std::string ch, std::vector<std::string> names) { this->checkGroup(s, r, ch, names, true);}, 
+      node, rect, style);
+}
+
+void Widget::parseVerButtonGroup(YAML::Node node, Rect rect, Style style) 
+{
+  this->parseRadioGroupBy(
+      "ver-button-group", 
+      [this] (Style& s, Rect r, std::string ch, std::vector<std::string> names) { this->buttonGroup(s, r, ch, names, true);}, 
+      node, rect, style);
+}
+
+
 void Widget::run(YAML::Node node, Rect rect, Style style) 
 {
   std::string name = getWidgetName(node);
@@ -305,7 +344,15 @@ void Widget::run(YAML::Node node, Rect rect, Style style)
     });
   });
   forKey(node, "space", [this, rect] (auto x) { (void)x; this->space(rect); });
-
+  forString(node, "image", [this, rect, &style](auto file) { this->image(style, rect, file); });  
+  
+  this->parseComboBox(node, rect, style);
+  this->parseCheckGroup(node, rect, style);
+  this->parseButtonGroup(node, rect, style);
+  this->parseHorCheckGroup(node, rect, style);
+  this->parseHorButtonGroup(node, rect, style);
+  this->parseVerCheckGroup(node, rect, style);
+  this->parseVerButtonGroup(node, rect, style);
 }
 
 std::string getLayoutListTag(bool isHor) 
@@ -419,6 +466,7 @@ void Ui::updateStyle(YAML::Node root, Style& style)
     forValString(node, "font", [this,&style](auto f) { style.font = f; });
     forString(node, "hints", [this,&style](auto x) { style.hint = toHint(x); });    
     forDouble(node, "pad", [this,&style](double x) { style.pad = Pad(x, x, x, x); });
+
     forKey(node, "pad", [this,&style] (auto padNode) {
       if (padNode.IsMap()) {
         forDouble(padNode, "left", [this,&style](double x) { style.pad.left = x; });
