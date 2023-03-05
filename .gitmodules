@@ -4,3 +4,6 @@
 [submodule "libs/plog"]
 	path = libs/plog
 	url = https://github.com/SergiusTheBest/plog
+[submodule "libs/fontaudio"]
+	path = libs/fontaudio
+	url = git@github.com:fefanto/fontaudio.git

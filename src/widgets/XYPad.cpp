@@ -6,15 +6,17 @@ void XYPad::paint(juce::Graphics& g)
     width = getWidth(), 
     height = getHeight(),
     diam = std::min(width, height),
-    cursorSize = 0.04 * diam;
+    cursorSize = 0.036 * diam;
   
+  float frameWidth = 0.017 * diam;
+  g.setColour(cursorColor.darker());
+  g.drawLine(x * width, 0.8 * frameWidth, x * width, height - frameWidth * 0.8, 0.01f * diam);
+  g.drawLine(0.8 * frameWidth, y * height, width - frameWidth * 0.8, y * height, 0.01f * diam);
   g.setColour(cursorColor);
-  g.drawLine(x * width, 0.0f + 0.017 * diam, x * width, height - 0.017 * diam, 0.01f * diam);
-  g.drawLine(0.017 * diam, y * height, width - 0.017 * diam, y * height, 0.01f * diam);
   g.fillEllipse(x * width - cursorSize, y * height - cursorSize, cursorSize * 2, cursorSize * 2);
   
   g.setColour(frameColor);
-  g.drawRoundedRectangle(0.0, 0.0, width, height, 0.035 * diam, 0.017 * diam);
+  g.drawRoundedRectangle(0.0, 0.0, width, height, 0.035 * diam, frameWidth);
 }
     
 void XYPad::setMousePoint(const juce::MouseEvent &event)

@@ -44,6 +44,10 @@ add_library(plog INTERFACE)
 target_sources(plog INTERFACE "libs/plog/include")
 target_include_directories(plog SYSTEM INTERFACE "libs/plog/include")
 
+# include_directories(libs/fontaudio/wrappers/juce)
+# target_link_libraries(fontaudio libs/fontaudio/wrappers/juce/fontaudio.a )
+# target_include_directories(fontaudio PUBLIC libs/fontaudio/wrappers/juce/)
+
 juce_add_gui_app(GuiAppExample
     # VERSION ...                       # Set this if the app version is different to the project version
     # ICON_BIG ...                      # ICON_* arguments specify a path to an image file to use as an icon
@@ -107,7 +111,18 @@ target_compile_definitions(GuiAppExample
 # static library. These source files can be of any kind (wav data, images, fonts, icons etc.).
 # Conversion to binary-data will happen when your target is built.
 
+# example
+# https://git.iem.at/audioplugins/IEMPluginSuite/-/blob/master/SimpleDecoder/CMakeLists.txt
 # juce_add_binary_data(GuiAppData SOURCES ...)
+juce_add_binary_data(FontaudioIcons
+  HEADER_NAME "Icons.h"
+  NAMESPACE Icons
+  SOURCES
+  resources/Icons/fad-ADR.svg
+  #  libs/fontaudio/svgs/fad-ADSR.svg
+)
+
+target_include_directories(GuiAppExample PRIVATE resources/Icons)
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
 # we're linking our executable target to the `juce::juce_gui_extra` module. Inter-module
@@ -119,6 +134,7 @@ target_link_libraries(GuiAppExample
     PRIVATE
         # GuiAppData            # If we'd created a binary data target, we'd link to it here
         juce::juce_gui_extra
+        FontaudioIcons
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
@@ -130,4 +146,7 @@ target_link_libraries(GuiAppExample
 include_directories("../MyStaticLibrary")
 
 target_compile_options(GuiAppExample PRIVATE -Werror -Wall -Wextra)
+
+# How to load images on linux
+# https://github.com/monocasual/giada/blob/master/CMakeLists.txt
 

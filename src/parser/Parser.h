@@ -191,6 +191,7 @@ namespace Parser
       // XYPad impl: https://github.com/seanlikeskites/SAFEJuceModule/blob/master/SAFE_juce_module/UIComponents/XYSlider.h
       virtual void xyPad(Style& style, Rect rect, std::string nameX, std::string nameY) { (void) style; (void) rect; (void)nameX; (void)nameY; };
       virtual void button(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
+      virtual void iconButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
       virtual void toggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void pressButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void checkToggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };

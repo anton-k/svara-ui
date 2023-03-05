@@ -14,7 +14,7 @@ MainComponent::MainComponent()
     plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
     PLOG_INFO << "Start app";
     
-    YAML::Node node = YAML::LoadFile("examples/xy-pad.yaml");
+    YAML::Node node = YAML::LoadFile("examples/icon-button.yaml");
     initApp(&app, node);
 
     app.scene->setup(this);

@@ -1,0 +1,41 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo!: 0
+    zoo!: 0
+    bar!: 0
+    qux!: 1
+ui:
+  ver:
+    - button: foo
+      name: plain
+    - hor:
+        - icon-button: bar
+          name: press
+          style:
+            color: red
+        - icon-button: bar
+          name: press
+          style:
+            color: orange
+        - icon-button: bar
+          name: press
+          style:
+            color: yellow
+        - icon-button: bar
+          name: press
+          style:
+            color: green
+        - icon-button: bar
+          name: press
+          style:
+            color: blue
+  style:
+    color: olive
+    secondary-color: navy
+    pad: 0.05
+
+
