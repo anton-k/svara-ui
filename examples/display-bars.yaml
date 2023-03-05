@@ -1,0 +1,46 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo!: 0
+    qux!: 0
+    baz!: 0.2
+    dot-col!: olive
+  update:
+    foo:
+      dot-col: orange
+    qux:
+      dot-col: olive
+ui:
+  hor:
+    - bar-meter: baz
+      scale: 0.2
+    - bar-display: baz
+      scale: 0.2
+      style:
+        color: olive
+    - ver:
+      - hor:
+          - dot: []
+            style:
+              color: .dot-col
+          - dot-meter: baz
+      - bar-meter: baz
+        scale: 0.7
+      - slider: baz
+        scale: 0.3
+      - ver-button-group: foo
+        names: [apples, oranges, nuts]
+        scale: 2.8
+      - hor-button-group: foo
+        names: [apples, oranges, nuts]
+      - button-group: qux
+        names: ["", ""]
+        scale: 0.5
+      style:
+        color: olive
+        secondary-color: navy
+  style:
+    pad: 0.1

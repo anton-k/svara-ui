@@ -177,9 +177,17 @@ namespace Parser
   class Widget : public IsUi
   {
     public:
+      enum Type
+      {
+        Input,
+        Output,
+        Through,
+        Auto
+      };
+
       virtual void knob(Style& style, Rect rect, std::string name) { (void) style, (void) rect; (void)name; };
       virtual void slider(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void)name; };
-      virtual void bar(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void)name; };
+      virtual void bar(Style& style, Rect rect, std::string name, Widget::Type widgetType) { (void) style; (void) rect; (void)name; (void) widgetType; };
       // XYPad impl: https://github.com/seanlikeskites/SAFEJuceModule/blob/master/SAFE_juce_module/UIComponents/XYSlider.h
       virtual void xyPad(Rect rect, std::string nameX, std::string nameY) { (void) rect; (void)nameX; (void)nameY; };
       virtual void button(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
@@ -193,6 +201,10 @@ namespace Parser
       virtual void text(Style& style, Rect rect, std::string name) { (void)style; (void) rect; (void)name; };
       virtual void space(Rect rect) { (void)rect; };
       virtual void image(Style& style, Rect rect, std::string file) { (void)style; (void) rect; (void) file; };
+      virtual void dot(Style& style, Rect rect) { (void) style; (void) rect; }
+      virtual void barDisplay(Style& style, Rect rect, std::string chan) { (void) style; (void) rect; (void) chan; }
+      virtual void dotMeter(Style& style, Rect rect, std::string chan, std::vector<Col> colors) { (void) style; (void) rect; (void) chan; (void) colors; };
+      virtual void barMeter(Style& style, Rect rect, std::string chan, std::vector<Col> colors) { (void) style; (void) rect; (void) chan; (void) colors; };
 
       virtual void comboBox(Style& style, Rect rect, std::string chan, std::vector<std::string> names) { (void)style; (void)rect; (void) chan; (void) names; };
 
@@ -215,6 +227,10 @@ namespace Parser
       void parseVerCheckGroup(YAML::Node node, Rect rect, Style style);
       void parseVerButtonGroup(YAML::Node node, Rect rect, Style style);
       void parseRadioGroupBy(std::string tag, std::function<void(Style&,Rect,std::string,std::vector<std::string>)> call, YAML::Node node, Rect rect, Style style);
+
+      void parseMeterBy(std::string tag, std::function<void(Style&, Rect, std::string, std::vector<Col>)> call, YAML::Node node, Rect rect, Style style);
+      void parseDotMeter(YAML::Node node, Rect rect, Style style);
+      void parseBarMeter(YAML::Node node, Rect rect, Style style);
   };
 
   class Layout : public IsYaml

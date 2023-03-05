@@ -26,4 +26,5 @@ class ToggleGroup : public juce::Component
     bool isVertical;
     size_t selected;
     std::vector<juce::Button*> buttons;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ToggleGroup)
 };

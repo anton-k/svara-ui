@@ -325,13 +325,77 @@ void Widget::parseVerButtonGroup(YAML::Node node, Rect rect, Style style)
       node, rect, style);
 }
 
+Widget::Type toWidgetType (std::string str)
+{
+  if (str == "auto") { return Widget::Auto; }
+  else if (str == "display") { return Widget::Output; }
+  else if (str == "input") { return Widget::Input; }
+  else if (str == "through") { return Widget::Through; }
+  else { return Widget::Auto; }
+}
+
+Widget::Type getWidgetType(YAML::Node node)
+{
+  if (hasKey(node, "type")) {
+    return toWidgetType(getString(node["type"], "auto"));
+  } else {
+    return Widget::Auto;
+  }
+}
+
+void Widget::parseMeterBy(
+  std::string tag, 
+  std::function<void(Style&, Rect, std::string, std::vector<Col>)> call, 
+  YAML::Node node, Rect rect, Style style)
+{
+  if (hasKey(node, tag)) {
+    std::string chan = "";
+    forString(node, tag, [&chan] (auto x) { chan = x; });
+
+    std::vector<Col> colors;
+    forNodes(node["colors"], [&colors] (auto col) {
+      colors.push_back(Col(getString(col, "green")));
+    });
+
+    std::vector<Col> defColors;
+    defColors.push_back(Col("olive"));
+    defColors.push_back(Col("olive"));
+    defColors.push_back(Col("olive"));
+    defColors.push_back(Col("green"));
+    defColors.push_back(Col("green"));
+    defColors.push_back(Col("green"));
+    defColors.push_back(Col("green"));
+    defColors.push_back(Col("yellow"));
+    defColors.push_back(Col("orange"));
+    defColors.push_back(Col("red"));
+    if (colors.size() == 0) {
+      colors = defColors;
+    }
+    
+    call(style, rect, chan, colors);
+  }
+}
+
+void Widget::parseDotMeter(YAML::Node node, Rect rect, Style style)
+{
+  this->parseMeterBy("dot-meter", [this] (Style& s, Rect r, std::string chan, std::vector<Col> colors) { this->dotMeter(s, r, chan, colors);},
+      node, rect, style);
+}
+
+void Widget::parseBarMeter(YAML::Node node, Rect rect, Style style)
+{
+  this->parseMeterBy("bar-meter", [this] (Style& s, Rect r, std::string chan, std::vector<Col> colors) { this->barMeter(s, r, chan, colors);},
+      node, rect, style);
+}
+
 
 void Widget::run(YAML::Node node, Rect rect, Style style) 
 {
   std::string name = getWidgetName(node);
+  Widget::Type widgetType = getWidgetType(node);
   forString(node, "knob", [this, rect, &style](auto chan) { this->knob(style, rect, chan);});
   forString(node, "slider", [this, rect, &style](auto chan) { this->slider(style, rect, chan); });
-  forString(node, "bar", [this, rect, &style](auto chan) { this->bar(style, rect, chan); });
+  forString(node, "bar", [this, rect, widgetType, &style](auto chan) { this->bar(style, rect, chan, widgetType); });
   forString(node, "button", [this, name, rect, &style](auto chan) { this->button(style, rect, chan, name); });
   forString(node, "toggle", [this, name, rect, &style](auto chan) { this->toggle(style, rect, chan, name); });
   forString(node, "press-button", [this, name, rect, &style](auto chan) { this->pressButton(style, rect, chan, name); });
@@ -345,7 +409,9 @@ void Widget::run(YAML::Node node, Rect rect, Style style)
   });
   forKey(node, "space", [this, rect] (auto x) { (void)x; this->space(rect); });
   forString(node, "image", [this, rect, &style](auto file) { this->image(style, rect, file); });  
-  
+  forKey(node, "dot", [this, rect, &style] (auto x) { (void) x; this->dot(style, rect); });
+  forString(node, "bar-display", [this, rect, &style] (auto chan) { this->barDisplay(style, rect, chan); });
+
   this->parseComboBox(node, rect, style);
   this->parseCheckGroup(node, rect, style);
   this->parseButtonGroup(node, rect, style);
@@ -353,6 +419,8 @@ void Widget::run(YAML::Node node, Rect rect, Style style)
   this->parseHorButtonGroup(node, rect, style);
   this->parseVerCheckGroup(node, rect, style);
   this->parseVerButtonGroup(node, rect, style);
+  this->parseDotMeter(node, rect, style);
+  this->parseBarMeter(node, rect, style);
 }
 
 std::string getLayoutListTag(bool isHor) 

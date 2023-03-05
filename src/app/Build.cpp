@@ -6,6 +6,8 @@
 #include "../model/Model.h"
 #include "../parser/Parser.h"
 #include "../widgets/ToggleGroup.h"
+#include "../widgets/Dot.h"
+#include "../widgets/Meter.h"
 
 // Build Application from YAML-file
 
@@ -213,22 +215,26 @@ void setFont(App* app, Parser::Val<std::string> typeface, std::function<juce::Fo
 }
 
 
-void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string name, juce::Slider::ColourIds colourId)
+void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string name, juce::Slider::ColourIds colourId, Parser::Widget::Type widgetType = Parser::Widget::Auto)
 {
   widget->setRange(0, 1.0);
   widget->setValue(app->state->getDouble(name));
   PLOG_DEBUG << "setSlider: widget name: " << app->state->getDouble(name);
   
   // Callback to update channel value on change in slider
-  widget->onValueChange = [app, name, widget] { app->state->setDouble(name, widget->getValue()); };
+  if (widgetType != Parser::Widget::Output) {
+    widget->onValueChange = [app, name, widget] { app->state->setDouble(name, widget->getValue()); };
+  }
   
   // Callback to update slider on value change
-  app->state->appendCallbackDouble(name, new Callback<double>([widget](double val) {
-      float v = val;
-      if (widget->getValue() != v) {
-        widget->setValue(v);
-      }
-  }));
+  if (widgetType != Parser::Widget::Input) {
+    app->state->appendCallbackDouble(name, new Callback<double>([widget](double val) {
+        float v = val;
+        if (widget->getValue() != v) {
+          widget->setValue(v);
+        }
+    }));
+  }
 
   app->setColor(style.color, [widget, colourId] (auto c) {
     widget->setColour(colourId, c);
@@ -261,7 +267,7 @@ class BuildWidget : public Parser::Widget {
       app->scene->addWidget(slider, rect);
     };
     
-    void bar(Parser::Style& style, Parser::Rect rect, std::string name) override 
+    void bar(Parser::Style& style, Parser::Rect rect, std::string name, Parser::Widget::Type widgetType) override 
     {
       padRect(rect, style.pad);
       juce::Slider::SliderStyle sliderStyle = (rect.getWidth() < rect.getHeight()) 
@@ -269,7 +275,7 @@ class BuildWidget : public Parser::Widget {
           : juce::Slider::SliderStyle::LinearBar;
       juce::Slider* slider = new juce::Slider(sliderStyle, juce::Slider::TextEntryBoxPosition::NoTextBox);
       slider->setName(name);
-      setSlider(app, slider, style, name, juce::Slider::trackColourId);
+      setSlider(app, slider, style, name, juce::Slider::trackColourId, widgetType);
       app->scene->addWidget(slider, rect);
     };
 
@@ -491,6 +497,62 @@ class BuildWidget : public Parser::Widget {
       widget->setImage(image); 
       app->scene->addWidget(widget, rect);
     };
+
+    void dot(Parser::Style& style, Parser::Rect rect)
+    {
+      padRect(rect, style.pad);
+      Dot* widget = new Dot();
+      app->setColor(style.color, [widget] (auto c) {
+        widget->setColor(c);
+      });
+      
+      app->scene->addWidget(widget, rect);
+    }
+
+    void barDisplay(Parser::Style& style, Parser::Rect rect, std::string chan)
+    {
+      padRect(rect, style.pad);
+      BarDisplay* widget = new BarDisplay();
+      app->setColor(style.color, [widget] (auto c) {
+        widget->setColor(c);
+      });
+
+      app->state->appendCallbackDouble(chan, new Callback<double>([widget] (double x) {
+        widget->setValue((float) x);
+      }));
+      
+      app->scene->addWidget(widget, rect);
+    }
+
+
+    virtual void dotMeter(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<Parser::Col> colors) 
+    { 
+      padRect(rect, style.pad);
+      DotMeter* widget = new DotMeter();
+      std::vector<juce::Colour> cols;
+      std::for_each(colors.begin(), colors.end(), [this, &cols] (auto c) {
+        cols.push_back(this->app->findColor(c));
+      });
+      widget->setColors(cols);
+      widget->setValue((float) app->state->getDouble(chan));
+      app->state->appendCallbackDouble(chan, new Callback<double>([widget] (double v) { widget->setValue((float) v);}));
+      app->scene->addWidget(widget, rect);
+    };
+
+    virtual void barMeter(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<Parser::Col> colors) 
+    { 
+      padRect(rect, style.pad);
+      BarMeter* widget = new BarMeter();
+      std::vector<juce::Colour> cols;
+      std::for_each(colors.begin(), colors.end(), [this, &cols] (auto c) {
+        cols.push_back(this->app->findColor(c));
+      });
+      widget->setColors(cols);
+      widget->setValue((float) app->state->getDouble(chan));
+      app->state->appendCallbackDouble(chan, new Callback<double>([widget] (double v) { widget->setValue((float) v);}));
+      app->scene->addWidget(widget, rect);
+    };
+
 
     void text(Parser::Style& style, Parser::Rect rect, std::string name) override 
     {
