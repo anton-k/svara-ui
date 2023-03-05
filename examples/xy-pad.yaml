@@ -1,0 +1,28 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo: 0
+    foo-x!: 0.5
+    foo-y!: 0.5
+  update:
+    foo:
+      foo-x: 0.5
+      foo-y: 0.5
+ui:
+  ver:
+    - button: foo
+      name: set center
+      scale: 0.2
+    - xy-pad:
+        x: foo-x
+        y: foo-y
+    - slider: foo-x
+      scale: 0.2
+    - slider: foo-y
+      scale: 0.2
+  style:
+    color: olive
+    pad: 0.05

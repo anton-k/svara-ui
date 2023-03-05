@@ -8,6 +8,7 @@
 #include "../widgets/ToggleGroup.h"
 #include "../widgets/Dot.h"
 #include "../widgets/Meter.h"
+#include "../widgets/XYPad.h"
 
 // Build Application from YAML-file
 
@@ -279,7 +280,44 @@ class BuildWidget : public Parser::Widget {
       app->scene->addWidget(slider, rect);
     };
 
-    void xyPad(Parser::Rect rect, std::string nameX, std::string nameY) override { (void) rect; std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
+    void xyPad(Parser::Style& style, Parser::Rect rect, std::string nameX, std::string nameY) override 
+    { 
+      (void) nameX; (void) nameY;
+      padRect(rect, style.pad);
+      XYPad* widget = new XYPad();
+
+      widget->setValue(juce::Point<float>(app->state->getDouble(nameX), app->state->getDouble(nameY)), false);
+      widget->onValueChange = [this, widget, nameX, nameY] (juce::Point<float> p) {
+        this->app->state->setDouble(nameX, p.x);
+        this->app->state->setDouble(nameY, p.y);
+      };
+
+      this->app->state->appendCallbackDouble(nameX, new Callback<double>([widget] (double x) {
+        float currentX = widget->getX();
+        float choiceX = (float) x;
+        if (currentX != choiceX) {
+          widget->setX(choiceX, true);
+        }
+      }));
+
+      this->app->state->appendCallbackDouble(nameY, new Callback<double>([widget] (double y) {
+        float currentY = widget->getY();
+        float choiceY = (float) y;
+        if (currentY != choiceY) {
+          widget->setY(choiceY, true);
+        }
+      }));
+
+      app->setColor(style.color, [widget] (auto c) {
+         widget->setCursorColor(c);
+      });
+
+      app->setColor(style.secondaryColor, [widget] (auto c) {
+         widget->setFrameColor(c);
+      });
+
+      app->scene->addWidget(widget, rect);
+    };
 
     void button(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 

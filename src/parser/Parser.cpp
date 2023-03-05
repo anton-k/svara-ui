@@ -402,9 +402,9 @@ void Widget::run(YAML::Node node, Rect rect, Style style)
   forString(node, "check-toggle", [this, name, rect, &style](auto chan) { this->checkToggle(style, rect, chan, name); });
   forString(node, "label", [this, rect, &style](auto val) { this->label(style, rect, val); });
   forString(node, "text", [this, rect, &style](auto chan) { this->text(style, rect, chan); });  
-  forKey(node, "xy-pad", [this, rect](auto xyNode) {
-    forString(xyNode, "x", [this, rect, &xyNode] (auto x) {
-      forString(xyNode, "y", [this, rect, x](auto y) { this->xyPad(rect, x, y); });
+  forKey(node, "xy-pad", [this, rect, &style](auto xyNode) {
+    forString(xyNode, "x", [this, rect, &xyNode, &style] (auto x) {
+      forString(xyNode, "y", [this, rect, x, &style](auto y) { this->xyPad(style, rect, x, y); });
     });
   });
   forKey(node, "space", [this, rect] (auto x) { (void)x; this->space(rect); });

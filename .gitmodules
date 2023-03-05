@@ -1,0 +1,6 @@
+[submodule "libs/yaml-cpp"]
+	path = libs/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp
+[submodule "libs/plog"]
+	path = libs/plog
+	url = https://github.com/SergiusTheBest/plog

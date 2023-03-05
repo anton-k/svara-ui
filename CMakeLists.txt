@@ -37,20 +37,12 @@ find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your sys
 # up by default. This function accepts many optional arguments. Check the readme at
 # `docs/CMake API.md` in the JUCE repo for the full list.
 
-find_package(c4core REQUIRED)
-
 add_subdirectory("libs/yaml-cpp")
 
 # How to include HEADER only libs so that hey do not produce warnings
 add_library(plog INTERFACE)
 target_sources(plog INTERFACE "libs/plog/include")
 target_include_directories(plog SYSTEM INTERFACE "libs/plog/include")
-
-# include_directories("/usr/local/include/ryml")
-# include_directories("/usr/local/include/c4")
-# include_directories("/usr/include/ryml")
-# find_library(c4core NAMES c4core)
-# find_library(RYML NAMES ryml)
 
 juce_add_gui_app(GuiAppExample
     # VERSION ...                       # Set this if the app version is different to the project version
@@ -87,6 +79,7 @@ target_sources(GuiAppExample
         src/parser/Expr.cpp
         src/widgets/Dot.cpp
         src/widgets/Meter.cpp
+        src/widgets/XYPad.cpp
         src/widgets/ToggleGroup.cpp
         src/widgets/KeyPressListener.cpp
         )

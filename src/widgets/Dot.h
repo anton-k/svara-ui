@@ -32,5 +32,6 @@ class DotMeter : public juce::Component {
   private:
     float val;
     std::vector<juce::Colour> colors;
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DotMeter)
 };
 

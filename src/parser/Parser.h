@@ -189,7 +189,7 @@ namespace Parser
       virtual void slider(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void)name; };
       virtual void bar(Style& style, Rect rect, std::string name, Widget::Type widgetType) { (void) style; (void) rect; (void)name; (void) widgetType; };
       // XYPad impl: https://github.com/seanlikeskites/SAFEJuceModule/blob/master/SAFE_juce_module/UIComponents/XYSlider.h
-      virtual void xyPad(Rect rect, std::string nameX, std::string nameY) { (void) rect; (void)nameX; (void)nameY; };
+      virtual void xyPad(Style& style, Rect rect, std::string nameX, std::string nameY) { (void) style; (void) rect; (void)nameX; (void)nameY; };
       virtual void button(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
       virtual void toggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void pressButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
