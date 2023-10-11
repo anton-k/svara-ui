@@ -6,6 +6,7 @@
 #include <iostream>
 #include <plog/Log.h>
 #include "csound.hpp"
+#include <juce_gui_extra/juce_gui_extra.h>
 
 #include "../model/Model.h"
 #include "../parser/Parser.h"
@@ -137,9 +138,48 @@ class BuildConfig : public Parser::Config {
 //------------------------------------------------------------------------------------- 
 // Build Csound UI
 
+class CsoundChannelReader : public juce::Timer {
+  public:
+    CsoundChannelReader(App* _app, Csound* _csound): 
+        app(_app), csound(_csound), 
+        doubleChannels(std::vector<std::string>()),
+        intChannels(std::vector<std::string>()) {}
+
+    void timerCallback() override {
+      // update doubles
+      std::for_each(doubleChannels.begin(), doubleChannels.end(), [this](std::string name) {
+        const char* channelName = name.c_str();
+        double val = this->csound->GetControlChannel(channelName);
+        this->app->state->setDouble(name, val);
+      });
+
+      // update ints
+      std::for_each(intChannels.begin(), intChannels.end(), [this](std::string name) {
+        const char* channelName = name.c_str();
+        double val = this->csound->GetControlChannel(channelName);
+        this->app->state->setInt(name, floor(val));
+      });
+    };
+
+    void insertDouble(std::string name) {
+      doubleChannels.push_back(name);
+    }
+
+    void insertInt(std::string name) {
+      intChannels.push_back(name);
+    }
+
+  private:
+    App* app;
+    Csound* csound;
+    std::vector<std::string> doubleChannels;
+    std::vector<std::string> intChannels;
+};
+
 class BuildCsoundUi : public Parser::CsoundUi {
   public:
-    BuildCsoundUi(App* _app, Csound* _csound): app(_app), csound(_csound) {}
+    BuildCsoundUi(App* _app, Csound* _csound, CsoundChannelReader* _channelReader): 
+        app(_app), csound(_csound), channelReader(_channelReader) {}
     
     void initWriteChannel(std::string name) override {
       PLOG_DEBUG << "Init csound write channel: " << name;
@@ -176,17 +216,26 @@ class BuildCsoundUi : public Parser::CsoundUi {
             );
             app->state->appendCallbackString(name, setter);
           }
- 
       }
     };
 
     void initReadChannel(std::string name) override {
       PLOG_DEBUG << "Init csound read channel: " << name;
+      if (app->state->getType(name) == Type::Double) {
+        channelReader->insertDouble(name);
+      }
+      if (app->state->getType(name) == Type::Int) {
+        channelReader->insertInt(name);
+      }
+      if (app->state->getType(name) == Type::String) {
+        PLOG_ERROR << "String read channels are not supported for Csound";
+      }
     };
 
   private:
     App* app;
-    Csound* csound;
+    Csound* csound;  
+    CsoundChannelReader* channelReader;
 };
 
 
@@ -849,8 +898,10 @@ void initApp(App* app, Csound* csound, YAML::Node node)
   Parser::Widget* buildWidget = new BuildWidget(app);
   Parser::Layout* buildLayout = new BuildLayout(app);
   Parser::Ui* buildUi = new Parser::Ui(buildWidget, buildLayout);
-  Parser::CsoundUi* buildCsoundUi = new BuildCsoundUi(app, csound);
+  CsoundChannelReader* csoundChannelReader = new CsoundChannelReader(app, csound);
+  Parser::CsoundUi* buildCsoundUi = new BuildCsoundUi(app, csound, csoundChannelReader);
   Parser::Window* buildWindow = new Parser::Window(buildState, buildUi, buildConfig, buildCsoundUi);
   buildWindow->run(node);
+  csoundChannelReader->startTimerHz(4);
 }
 

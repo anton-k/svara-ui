@@ -7,6 +7,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "app/App.h"
 #include "csound.hpp"
+#include "csPerfThread.hpp"
 
 //==============================================================================
 /*
@@ -17,7 +18,8 @@ class MainComponent   : public KeyPressListener
 {
 public:
     //==============================================================================
-    MainComponent();
+    MainComponent(Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread);
+
 
     //==============================================================================
     void resized() override;
@@ -33,6 +35,7 @@ private:
     // juce::Label timeLabel;
     App app;
     Csound* csound;
+    CsoundPerformanceThread* csoundPerformanceThread;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

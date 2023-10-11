@@ -268,8 +268,8 @@ namespace Parser
   {
     public:
       CsoundUi() {};
-      virtual void initWriteChannel(std::string name) {};
-      virtual void initReadChannel(std::string name) {};
+      virtual void initWriteChannel(std::string name) { (void)name; };
+      virtual void initReadChannel(std::string name) {(void)name; };
       void run(YAML::Node node);
   };
 

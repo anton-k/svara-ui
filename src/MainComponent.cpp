@@ -11,23 +11,12 @@
 
 //==============================================================================
 
-MainComponent::MainComponent()
+MainComponent::MainComponent(Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread)
+  : csound(_csound), csoundPerformanceThread(_csoundPerformanceThread)
   {
     setWantsKeyboardFocus(true);
     plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
     PLOG_INFO << "Start app";
-
-    //Create an instance of Csound
-    csound = new Csound();
-    csound->SetOption("-odac");
-
-    //compile instance of csound.
-    csound->Compile("test1.csd");
-    //prepare Csound for performance
-    csound->Start();
-    CsoundPerformanceThread* perfThread = new CsoundPerformanceThread(csound);
-    //perform entire score
-    perfThread->Play();
 
     YAML::Node node = YAML::LoadFile("examples/gain-csound.yaml");
     initApp(&app, csound, node);

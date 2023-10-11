@@ -567,6 +567,11 @@ void CsoundUi::run(YAML::Node node)
         this->initWriteChannel(getString(channel, "unknown-channel"));
     });       
   });
+  forKey(node, "read", [this](auto readNode) {
+    forNodes(readNode, [this](auto channel) {
+        this->initReadChannel(getString(channel, "unknown-channel"));
+    });       
+  });
 }
 
 // -------------------------------------------------------------------

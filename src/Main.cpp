@@ -1,5 +1,8 @@
 #include "MainComponent.h"
 
+#include "csound.hpp"
+#include "csPerfThread.hpp"
+
 //==============================================================================
 class GuiAppApplication  : public juce::JUCEApplication
 {
@@ -13,19 +16,36 @@ public:
     const juce::String getApplicationName() override       { return "svara-ui";/* JUCE_APPLICATION_NAME_STRING;*/ }
     const juce::String getApplicationVersion() override    { return JUCE_APPLICATION_VERSION_STRING; }
     bool moreThanOneInstanceAllowed() override             { return true; }
+    Csound* csound;
+    CsoundPerformanceThread* csoundPerformanceThread;
 
     //==============================================================================
     void initialise (const juce::String& commandLine) override
     {
         // This method is where you should put your application's initialisation code..
         juce::ignoreUnused (commandLine);
+      
+        //Create an instance of Csound
+        csound = new Csound();
+        csound->SetOption("-odac");
 
-        mainWindow.reset (new MainWindow (getApplicationName()));
+        //compile instance of csound.
+        csound->Compile("test1.csd");
+        //prepare Csound for performance
+        csound->Start();
+        csoundPerformanceThread = new CsoundPerformanceThread(csound);
+        //perform entire score
+        csoundPerformanceThread->Play();
+
+        mainWindow.reset (new MainWindow (getApplicationName(), csound, csoundPerformanceThread));
     }
 
     void shutdown() override
     {
         // Add your application's shutdown code here..
+        csoundPerformanceThread->Stop();
+        delete csoundPerformanceThread;
+        delete csound;
 
         mainWindow = nullptr; // (deletes our window)
     }
@@ -54,14 +74,16 @@ public:
     class MainWindow    : public juce::DocumentWindow
     {
     public:
-        explicit MainWindow (juce::String name)
+        explicit MainWindow (juce::String name, Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread)
             : DocumentWindow (name,
                               juce::Desktop::getInstance().getDefaultLookAndFeel()
                                                           .findColour (ResizableWindow::backgroundColourId),
-                              DocumentWindow::allButtons)
+                              DocumentWindow::allButtons),
+              csound(_csound),
+              csoundPerformanceThread(_csoundPerformanceThread)
         {
             setUsingNativeTitleBar (true);
-            setContentOwned (new MainComponent(), true);
+            setContentOwned (new MainComponent(csound, csoundPerformanceThread), true);
 
            #if JUCE_IOS || JUCE_ANDROID
             setFullScreen (true);
@@ -91,7 +113,9 @@ public:
         */
 
     private:
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)
+        Csound* csound;
+        CsoundPerformanceThread* csoundPerformanceThread;
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)        
     };
 
 private:
