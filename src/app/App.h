@@ -5,6 +5,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "../widgets/KeyPressListener.h"
 
+// Palette is a map from string names to colors
 class Palette {
   public:
     Palette();
@@ -15,6 +16,7 @@ class Palette {
     juce::Colour defaultColor;
 };
 
+// Application config
 class Config {
   public:
     Config(): windowWidth(200), windowHeight(100), palette(Palette()) {};
@@ -23,7 +25,7 @@ class Config {
     Palette palette;
 };
 
-
+// Box is a container for UI-widget. It has bounding rectangle and visibility
 class Box {
   public:
     virtual std::string getName() = 0;
@@ -57,6 +59,8 @@ class Widget : public Box {
     juce::Component* widget;
 };
 
+
+// Container of widgets for layout
 class GroupBox : public Box {
   public:
     virtual void push_back(Box* box) { (void) box; };
