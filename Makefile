@@ -6,7 +6,6 @@ build:
 run: build
 	./cmake-build/GuiAppExample_artefacts/Gui\ App\ Example
 
-
 config:
 	cmake -B cmake-build-install -DCMAKE_INSTALL_PREFIX=/home/anton/dev/cpp/JUCE/install
 

@@ -2,6 +2,7 @@
 
 #include "csound.hpp"
 #include "csPerfThread.hpp"
+#include <cxxopts.hpp>
 
 //==============================================================================
 class GuiAppApplication  : public juce::JUCEApplication
@@ -18,16 +19,24 @@ public:
     bool moreThanOneInstanceAllowed() override             { return true; }
     Csound* csound;
     CsoundPerformanceThread* csoundPerformanceThread;
+    cxxopts::Options* options;
 
     //==============================================================================
     void initialise (const juce::String& commandLine) override
     {
         // This method is where you should put your application's initialisation code..
         juce::ignoreUnused (commandLine);
+        options = new cxxopts::Options("svara-ui", "Creates UIs for Csound");
+        options->add_options()
+          ("d,debug", "Enable debugging")
+          ("f,file", "File name", cxxopts::value<std::string>())
+        ;
+        auto parsedOptions = options->parse(argc, argv);
       
         //Create an instance of Csound
         csound = new Csound();
         csound->SetOption("-odac");
+
 
         //compile instance of csound.
         csound->Compile("test1.csd");
