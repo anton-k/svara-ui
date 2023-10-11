@@ -264,6 +264,15 @@ namespace Parser
       void run(YAML::Node node, Rect rect, Style style) override;
   };
 
+  class CsoundUi : public IsYaml
+  {
+    public:
+      CsoundUi() {};
+      virtual void initWriteChannel(std::string name) {};
+      virtual void initReadChannel(std::string name) {};
+      void run(YAML::Node node);
+  };
+
   class Config : public IsYaml
   {
     public:
@@ -278,13 +287,14 @@ namespace Parser
   {
     public:
       Window();
-      Window(InitState* _state, Ui* _ui, Config* _config): state(_state), ui(_ui), config(_config) {};
+      Window(InitState* _state, Ui* _ui, Config* _config, CsoundUi* _csoundUi): state(_state), ui(_ui), config(_config), csoundUi(_csoundUi) {};
 
       void run(YAML::Node node);
 
       InitState* state;
       Ui* ui;
       Config* config;
+      CsoundUi* csoundUi;
   };
 
   void run(Window win, YAML::Node node);

@@ -6,6 +6,7 @@
 // you could `#include <JuceHeader.h>` here instead, to make all your module headers visible.
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "app/App.h"
+#include "csound.hpp"
 
 //==============================================================================
 /*
@@ -31,6 +32,7 @@ private:
     //  juce::TextButton checkTheTimeButton;
     // juce::Label timeLabel;
     App app;
+    Csound* csound;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

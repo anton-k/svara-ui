@@ -130,6 +130,8 @@ target_include_directories(GuiAppExample PRIVATE resources/Icons)
 # linked automatically. If we'd generated a binary data target above, we would need to link to it
 # here too. This is a standard CMake command.
 
+include_directories("/usr/include/csound")
+
 target_link_libraries(GuiAppExample
     PRIVATE
         # GuiAppData            # If we'd created a binary data target, we'd link to it here
@@ -141,11 +143,13 @@ target_link_libraries(GuiAppExample
         juce::juce_recommended_warning_flags
         plog
         yaml-cpp
+        csound64
+        csnd6
         )
 
-include_directories("../MyStaticLibrary")
+      include_directories("../MyStaticLibrary")
 
-target_compile_options(GuiAppExample PRIVATE -Werror -Wall -Wextra)
+      target_compile_options(GuiAppExample PRIVATE -Wall -Wextra)
 
 # How to load images on linux
 # https://github.com/monocasual/giada/blob/master/CMakeLists.txt

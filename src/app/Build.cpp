@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <plog/Log.h>
+#include "csound.hpp"
 
 #include "../model/Model.h"
 #include "../parser/Parser.h"
@@ -132,6 +133,62 @@ class BuildConfig : public Parser::Config {
   private:
     App* app;
 };
+
+//------------------------------------------------------------------------------------- 
+// Build Csound UI
+
+class BuildCsoundUi : public Parser::CsoundUi {
+  public:
+    BuildCsoundUi(App* _app, Csound* _csound): app(_app), csound(_csound) {}
+    
+    void initWriteChannel(std::string name) override {
+      PLOG_DEBUG << "Init csound write channel: " << name;
+      switch (app->state->getType(name)) 
+      {
+        case Type::Int: 
+          {
+            this->csound->SetControlChannel(name.c_str(), (double) app->state->getInt(name));
+            Callback<int>* setter = new Callback<int>(
+              [this, name](int val) { this->csound->SetControlChannel(name.c_str(), (double) val); }
+            );
+            app->state->appendCallbackInt(name, setter);
+          }
+        case Type::Double:
+          {
+            this->csound->SetControlChannel(name.c_str(), app->state->getDouble(name));
+            Callback<double>* setter = new Callback<double>(
+              [this, name](double val) { 
+                  this->csound->SetControlChannel(name.c_str(), val); 
+                }
+            );
+            app->state->appendCallbackDouble(name, setter);
+          }
+ 
+        case Type::String: 
+          {
+            char *initVal = &(app->state->getString(name))[0];
+            this->csound->SetChannel(name.c_str(), initVal);
+            Callback<std::string>* setter = new Callback<std::string>(
+              [this, name](std::string val) { 
+                  char *charVal = &val[0];
+                  this->csound->SetChannel(name.c_str(), charVal); 
+                }
+            );
+            app->state->appendCallbackString(name, setter);
+          }
+ 
+      }
+    };
+
+    void initReadChannel(std::string name) override {
+      PLOG_DEBUG << "Init csound read channel: " << name;
+    };
+
+  private:
+    App* app;
+    Csound* csound;
+};
+
 
 //------------------------------------------------------------------------------------- 
 // Build UI
@@ -779,7 +836,7 @@ class BuildLayout : public Parser::Layout {
 //------------------------------------------------------------------------------------- 
 // Build App from YAML file
 
-void initApp(App* app, YAML::Node node) 
+void initApp(App* app, Csound* csound, YAML::Node node) 
 {
   // assemble builders
   
@@ -792,7 +849,8 @@ void initApp(App* app, YAML::Node node)
   Parser::Widget* buildWidget = new BuildWidget(app);
   Parser::Layout* buildLayout = new BuildLayout(app);
   Parser::Ui* buildUi = new Parser::Ui(buildWidget, buildLayout);
-  Parser::Window* buildWindow = new Parser::Window(buildState, buildUi, buildConfig);
+  Parser::CsoundUi* buildCsoundUi = new BuildCsoundUi(app, csound);
+  Parser::Window* buildWindow = new Parser::Window(buildState, buildUi, buildConfig, buildCsoundUi);
   buildWindow->run(node);
 }
 

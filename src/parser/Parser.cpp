@@ -558,6 +558,18 @@ void Ui::run(YAML::Node node, Rect rect, Style style)
 }
 
 // -------------------------------------------------------------------
+// Csound UI
+
+void CsoundUi::run(YAML::Node node)
+{
+  forKey(node, "write", [this](auto writeNode) {
+    forNodes(writeNode, [this](auto channel) {
+        this->initWriteChannel(getString(channel, "unknown-channel"));
+    });       
+  });
+}
+
+// -------------------------------------------------------------------
 // Config
 
 void Config::run(YAML::Node node) 
@@ -577,6 +589,7 @@ void Window::run(YAML::Node node)
   this->config->onKey(node, "config");
   this->state->onKey(node, "state");
   this->ui->onKey(node, "ui", Rect(0.0, 0.0, 1.0, 1.0), Style());
+  this->csoundUi->onKey(node, "csound");
 }
 
 
