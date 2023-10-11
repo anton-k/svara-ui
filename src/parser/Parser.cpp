@@ -562,9 +562,12 @@ void Ui::run(YAML::Node node, Rect rect, Style style)
 
 void CsoundUi::run(YAML::Node node)
 {
+  std::cout << "Step: X\n";
   forKey(node, "write", [this](auto writeNode) {
     forNodes(writeNode, [this](auto channel) {
+        std::cout << "Step: X-X\n";
         this->initWriteChannel(getString(channel, "unknown-channel"));
+        std::cout << "Step: X-Y\n";
     });       
   });
   forKey(node, "read", [this](auto readNode) {

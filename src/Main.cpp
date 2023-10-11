@@ -2,7 +2,7 @@
 
 #include "csound.hpp"
 #include "csPerfThread.hpp"
-#include <cxxopts.hpp>
+#include <plog/Log.h>
 
 //==============================================================================
 class GuiAppApplication  : public juce::JUCEApplication
@@ -19,34 +19,31 @@ public:
     bool moreThanOneInstanceAllowed() override             { return true; }
     Csound* csound;
     CsoundPerformanceThread* csoundPerformanceThread;
-    cxxopts::Options* options;
+    App* app;
 
     //==============================================================================
     void initialise (const juce::String& commandLine) override
     {
         // This method is where you should put your application's initialisation code..
         juce::ignoreUnused (commandLine);
-        options = new cxxopts::Options("svara-ui", "Creates UIs for Csound");
-        options->add_options()
-          ("d,debug", "Enable debugging")
-          ("f,file", "File name", cxxopts::value<std::string>())
-        ;
-        auto parsedOptions = options->parse(argc, argv);
-      
+
+       	InitApp args = InitApp(juce::ArgumentList("svara-ui", getCommandLineParameterArray()));
+
         //Create an instance of Csound
         csound = new Csound();
-        csound->SetOption("-odac");
+        app = new App();
 
+        YAML::Node node = YAML::LoadFile(args.uiFile);
+        initApp(app, csound, node);
 
-        //compile instance of csound.
-        csound->Compile("test1.csd");
+        csound->Compile(args.csoundFile.c_str());
         //prepare Csound for performance
         csound->Start();
         csoundPerformanceThread = new CsoundPerformanceThread(csound);
         //perform entire score
         csoundPerformanceThread->Play();
 
-        mainWindow.reset (new MainWindow (getApplicationName(), csound, csoundPerformanceThread));
+        mainWindow.reset (new MainWindow ("ui", app, csound, csoundPerformanceThread));
     }
 
     void shutdown() override
@@ -55,6 +52,7 @@ public:
         csoundPerformanceThread->Stop();
         delete csoundPerformanceThread;
         delete csound;
+        delete app;
 
         mainWindow = nullptr; // (deletes our window)
     }
@@ -83,16 +81,17 @@ public:
     class MainWindow    : public juce::DocumentWindow
     {
     public:
-        explicit MainWindow (juce::String name, Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread)
+        explicit MainWindow (juce::String name, App* _app, Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread)
             : DocumentWindow (name,
                               juce::Desktop::getInstance().getDefaultLookAndFeel()
                                                           .findColour (ResizableWindow::backgroundColourId),
                               DocumentWindow::allButtons),
+              app(_app),
               csound(_csound),
               csoundPerformanceThread(_csoundPerformanceThread)
         {
             setUsingNativeTitleBar (true);
-            setContentOwned (new MainComponent(csound, csoundPerformanceThread), true);
+            setContentOwned (new MainComponent(app, csound, csoundPerformanceThread), true);
 
            #if JUCE_IOS || JUCE_ANDROID
             setFullScreen (true);
@@ -122,6 +121,7 @@ public:
         */
 
     private:
+        App* app;
         Csound* csound;
         CsoundPerformanceThread* csoundPerformanceThread;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)        

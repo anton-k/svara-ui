@@ -888,7 +888,6 @@ class BuildLayout : public Parser::Layout {
 void initApp(App* app, Csound* csound, YAML::Node node) 
 {
   // assemble builders
-  
   Parser::InitVars* buildInits = new BuildInits(app);  
   Parser::UpdateVars* buildUpdates = new BuildUpdates(app);
   Parser::KeypressUpdate* buildKeypress = new BuildKeypress(app);

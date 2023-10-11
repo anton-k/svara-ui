@@ -26,6 +26,14 @@ class Config {
     Palette palette;
 };
 
+class InitApp {
+  public:
+    InitApp(juce::ArgumentList args);
+
+    std::string csoundFile;
+    std::string uiFile;
+};
+
 // Box is a container for UI-widget. It has bounding rectangle and visibility
 class Box {
   public:

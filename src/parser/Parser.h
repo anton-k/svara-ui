@@ -268,8 +268,8 @@ namespace Parser
   {
     public:
       CsoundUi() {};
-      virtual void initWriteChannel(std::string name) { (void)name; };
-      virtual void initReadChannel(std::string name) {(void)name; };
+      virtual void initWriteChannel(std::string name) = 0; // { (void)name; };
+      virtual void initReadChannel(std::string name) = 0 ;// {(void)name; };
       void run(YAML::Node node);
   };
 
@@ -286,7 +286,7 @@ namespace Parser
   class Window : public IsYaml
   {
     public:
-      Window();
+      // Window();
       Window(InitState* _state, Ui* _ui, Config* _config, CsoundUi* _csoundUi): state(_state), ui(_ui), config(_config), csoundUi(_csoundUi) {};
 
       void run(YAML::Node node);

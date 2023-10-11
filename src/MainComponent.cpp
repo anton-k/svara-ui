@@ -11,24 +11,21 @@
 
 //==============================================================================
 
-MainComponent::MainComponent(Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread)
-  : csound(_csound), csoundPerformanceThread(_csoundPerformanceThread)
+MainComponent::MainComponent(App* _app, Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread)
+  : app(_app), csound(_csound), csoundPerformanceThread(_csoundPerformanceThread)
   {
     setWantsKeyboardFocus(true);
     plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
     PLOG_INFO << "Start app";
 
-    YAML::Node node = YAML::LoadFile("examples/gain-csound.yaml");
-    initApp(&app, csound, node);
+    app->scene->setup(this);
+    setSize(app->config->windowWidth, app->config->windowHeight);
 
-    app.scene->setup(this);
-    setSize(app.config->windowWidth, app.config->windowHeight);
-
-    onKeyEvent = [this](auto event) { app.scene->onKeyEvent(event); };
+    onKeyEvent = [this](auto event) { app->scene->onKeyEvent(event); };
   };
 
 void MainComponent::resized()
 {
   setBounds (0, 0, getWidth(), getHeight());
-  app.resized();
+  app->resized();
 };

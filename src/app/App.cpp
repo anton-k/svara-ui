@@ -16,6 +16,24 @@ juce::Colour Palette::fromName(Parser::Col col)
 }
 
 // ------------------------------------------------------------------------------------- 
+// init app argument list
+
+InitApp::InitApp(juce::ArgumentList args)
+{
+  if (args.containsOption("--csound")) {
+    csoundFile = std::string(args.getValueForOption("--csound").toRawUTF8());
+  } else {
+    PLOG_ERROR << "No csound file in args\n";
+  }
+
+  if (args.containsOption("--ui")) {
+    uiFile = std::string(args.getValueForOption("--ui").toRawUTF8());
+  } else {
+    PLOG_ERROR << "No UI file in args\n";
+  }
+}
+
+// ------------------------------------------------------------------------------------- 
 // Atomic widget
 
 void Widget::setBounds() 

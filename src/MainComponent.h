@@ -18,7 +18,7 @@ class MainComponent   : public KeyPressListener
 {
 public:
     //==============================================================================
-    MainComponent(Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread);
+    MainComponent(App* _app, Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread);
 
 
     //==============================================================================
@@ -33,7 +33,7 @@ private:
     // Your private member variables go here...
     //  juce::TextButton checkTheTimeButton;
     // juce::Label timeLabel;
-    App app;
+    App* app;
     Csound* csound;
     CsoundPerformanceThread* csoundPerformanceThread;
 

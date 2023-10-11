@@ -44,11 +44,6 @@ add_library(plog INTERFACE)
 target_sources(plog INTERFACE "libs/plog/include")
 target_include_directories(plog SYSTEM INTERFACE "libs/plog/include")
 
-# How to include HEADER only libs so that hey do not produce warnings
-add_library(cxxopts INTERFACE)
-target_sources(cxxopts INTERFACE "libs/cxxopts/include")
-target_include_directories(cxxopts SYSTEM INTERFACE "libs/cxxopts/include")
-
 # include_directories(libs/fontaudio/wrappers/juce)
 # target_link_libraries(fontaudio libs/fontaudio/wrappers/juce/fontaudio.a )
 # target_include_directories(fontaudio PUBLIC libs/fontaudio/wrappers/juce/)
@@ -147,7 +142,6 @@ target_link_libraries(GuiAppExample
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
         plog
-        cxxopts
         yaml-cpp
         csound64
         csnd6
