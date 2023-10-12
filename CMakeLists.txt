@@ -71,6 +71,7 @@ juce_add_gui_app(GuiAppExample
 
 target_sources(GuiAppExample
     PRIVATE
+        src/audio/CsoundProcessor.cpp
         src/model/Model.cpp
         src/app/App.cpp
         src/app/Palette.cpp
@@ -132,10 +133,12 @@ target_include_directories(GuiAppExample PRIVATE resources/Icons)
 
 include_directories("/usr/include/csound")
 
+# see JUCE/examples/DemoRunner/CmakeLists.txt for examples of extra flags and utils
 target_link_libraries(GuiAppExample
     PRIVATE
         # GuiAppData            # If we'd created a binary data target, we'd link to it here
         juce::juce_gui_extra
+        juce::juce_audio_utils
         FontaudioIcons
     PUBLIC
         juce::juce_recommended_config_flags

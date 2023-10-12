@@ -188,17 +188,21 @@ class BuildCsoundUi : public Parser::CsoundUi {
         case Type::Int: 
           {
             this->csound->SetControlChannel(name.c_str(), (double) app->state->getInt(name));
+            MYFLT *channelPtr;
+            csound->GetChannelPtr(channelPtr, name.c_str(), CSOUND_CONTROL_CHANNEL);
             Callback<int>* setter = new Callback<int>(
-              [this, name](int val) { this->csound->SetControlChannel(name.c_str(), (double) val); }
+              [this, channelPtr](int val) { *channelPtr = (double) val; }
             );
             app->state->appendCallbackInt(name, setter);
           }
         case Type::Double:
           {
             this->csound->SetControlChannel(name.c_str(), app->state->getDouble(name));
+            MYFLT *channelPtr;
+            csound->GetChannelPtr(channelPtr, name.c_str(), CSOUND_CONTROL_CHANNEL);
             Callback<double>* setter = new Callback<double>(
-              [this, name](double val) { 
-                  this->csound->SetControlChannel(name.c_str(), val); 
+              [this, channelPtr](double val) { 
+                  *channelPtr = val; 
                 }
             );
             app->state->appendCallbackDouble(name, setter);
