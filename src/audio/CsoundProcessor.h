@@ -4,15 +4,76 @@
 #include "csound.hpp"
 #include "csPerfThread.hpp"
 
+class CsdIndex {
+  public:
+    CsdIndex(Csound* _csound): index(0), ksmps(_csound->GetKsmps()), csound(_csound)
+    {
+      index = _csound->GetKsmps();
+      ksmps = index;
+    }
+
+    void next() {
+      index++;
+      if (index >= ksmps) {
+        index = 0;
+        csound->PerformKsmps();
+      }
+    }
+
+    int getIndex() {
+      return index;
+    }
+
+  private:
+    int index = 0;
+    int ksmps = 0;
+    Csound* csound;
+};
+
+class CsdBuffer {
+  public:
+    CsdBuffer (Csound* csound)
+    {
+		  spout = csound->GetSpout();
+		  spin = csound->GetSpin();
+		  scale = csound->Get0dBFS();
+		  pos = 0;
+    };
+
+    template<typename Type>
+    void writeInput(juce::AudioBuffer<Type> &buffer, int samplePosition);
+
+    template<typename Type>
+    void readOutput(juce::AudioBuffer<Type> &buffer, int samplePosition);
+
+    void setPos(int _pos);
+
+  private:
+    MYFLT *spin = nullptr;
+    MYFLT *spout = nullptr;
+    MYFLT scale = 1.0;
+    int pos = 0;
+};
+
+class CsdMidi {
+  public:
+    CsdMidi() {};
+
+    void writeInput(juce::MidiBuffer::Iterator &iter, int samplePosition);
+    void readOutput(juce::MidiBuffer&);
+    juce::MidiBuffer midiOutputBuffer = {};
+    juce::MidiBuffer midiBuffer = {};
+};
+
+
 // cabbage : Source/Audio/Plugins/CsoundPluginProcessor.h
-class CsoundProcessor : public juce::AudioProcessor, public juce::AsyncUpdater
+class CsdProcessor : public juce::AudioProcessor, public juce::AsyncUpdater
 {
   public:
-    CsoundProcessor(Csound* _csound): csound(_csound)
-    {
-      numCsoundInputs = csound->GetNchnlsInput();
-      numCsoundOutputs = csound->GetNchnls();
-    };
+    CsdProcessor(Csound* _csound): csound(_csound) {};
+
+    virtual juce::AudioProcessorEditor* createEditor() override;
+    virtual bool hasEditor() const override;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -26,25 +87,56 @@ class CsoundProcessor : public juce::AudioProcessor, public juce::AsyncUpdater
       juce::ignoreUnused(buffer, midiMessages);
     }
 
-  private:
+    virtual void getStateInformation (juce::MemoryBlock& destData) override;
+    virtual void setStateInformation (const void* data, int sizeInBytes) override;
+
+    bool supportsSidechain = false;
+    int numSideChainChannels = 0;
+
+    void setup();
+    void resetCsound();
+
+    //Csound API functions for deailing with midi input
+    static int OpenMidiInputDevice (CSOUND* csnd, void** userData, const char* devName);
+    static int OpenMidiOutputDevice (CSOUND* csnd, void** userData, const char* devName);
+    static int ReadMidiData (CSOUND* csound, void* userData, unsigned char* mbuf, int nbytes);
+    static int WriteMidiData (CSOUND* csound, void* userData, const unsigned char* mbuf, int nbytes);
+
     bool hasFile() {
-      return true; // TODO - check that Csound has successfuly compiled file
+      return compileResult;
     }
 
     template<typename Type>
     void muteExtraChannels(int outputCount, juce::AudioBuffer<Type> &buffer);
 
-    void performCsoundKsmps();
-    void sendHostDataToCsound();
-
-    Csound* csound;
+    std::unique_ptr<Csound> csound;
+    std::unique_ptr<CSOUND_PARAMS> csoundParams;
     int numCsoundInputs;
     int numCsoundOutputs;
-    int index = 0;
-    int ksmps = 0;
-    int polling = 1;
-    int guiCycles = 0;
-    int guiRefreshRate = 128;
+    int preferredLatency = 32;
+    CsdBuffer* ioBuffer;
+    CsdMidi* midi;
+    CsdIndex* index;
+    int csdSampleRate;
+    juce::File csdFile = {}, csdFilePath = {};
+    bool compileResult;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CsdProcessor)
+};
+
+class CsdEditor : public juce::AudioProcessorEditor {
+ public:
+     explicit CsdEditor (CsdProcessor&);
+     ~CsdEditor() override;
+
+     //==============================================================================
+     void paint (juce::Graphics&) override;
+     void resized() override;
+
+ private:
+     CsdProcessor& csoundProcessor;
+
+     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CsdEditor)
 };
 
 
