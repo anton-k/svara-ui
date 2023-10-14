@@ -2,8 +2,6 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "CsoundApp.h"
 #include <plog/Log.h>
-#include <plog/Initializers/ConsoleInitializer.h>
-#include <plog/Formatters/MessageOnlyFormatter.h>
 
 CsdApp::CsdApp(CsdProcessor* csdProcessor) : mainProcessor(csdProcessor) {
   auto inputDevice  = juce::MidiInput::getDefaultDevice();
@@ -21,14 +19,13 @@ CsdApp::CsdApp(CsdProcessor* csdProcessor) : mainProcessor(csdProcessor) {
   juce::String result = "";
 
   bool isOk = Parser::readUiDef (mainProcessor->csdFile, result);
-  std::cout << "Parse YAML: " << isOk << "\n";
+  PLOG_INFO << "Parse YAML: " << isOk << "\n";
   if (isOk) {
-    std::cout << result << "\n";
+    PLOG_INFO << result << "\n";
     YAML::Node node = YAML::Load(result.toRawUTF8());
     initApp(mainProcessor->app.get(), mainProcessor->csound.get(), node);
 
     setWantsKeyboardFocus(true);
-    plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
     PLOG_INFO << "Start app";
 
     mainProcessor->app->scene->setup(this);

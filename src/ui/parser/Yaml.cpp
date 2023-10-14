@@ -1,4 +1,5 @@
 #include "Yaml.h"
+#include <plog/Log.h>
 
 namespace Parser
 {
@@ -60,7 +61,7 @@ Val<std::string> getValString (YAML::Node node, std::string def)
   std::string res = getString(node, def);
   if (res.size() > 0 && res[0] ==  '.') {
     res.erase(0, 1);
-    std::cout << "CHAN STRING: " << res  << "\n";
+    PLOG_DEBUG << "CHAN STRING: " << res  << "\n";
     return Val<std::string>(Chan(res));
   } else {
     return Val<std::string>(res);

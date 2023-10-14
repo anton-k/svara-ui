@@ -21,7 +21,7 @@
 template<class T>
 void printVar(std::string name, T val)
 {
-  std::cout << name << ": " << val << "\n";
+  PLOG_DEBUG << name << ": " << val << "\n";
 }
 
 //------------------------------------------------------------------------------------- 
@@ -126,7 +126,7 @@ class BuildConfig : public Parser::Config {
 
     void windowSize(int height, int width) override 
     {
-      std::cout << "set sizes\n";
+      PLOG_DEBUG << "set sizes\n";
       app->config->windowHeight = height;
       app->config->windowWidth = width;
     }
@@ -270,7 +270,7 @@ void App::setColor(Parser::Val<Parser::Col> col, std::function<void(juce::Colour
     juce::Colour c = this->findColor(col.getVal());
     setter(c);
   } else {
-    std::cout << "SETTING COLOR\n";
+    PLOG_DEBUG << "SETTING COLOR\n";
     Chan chn = col.getChan();
     setter(this->findColor(this->state->getString(chn.name)));
     this->state->appendCallbackString(chn.name, new Callback<std::string>([this,setter](auto newCol) { 
@@ -442,7 +442,7 @@ class BuildWidget : public Parser::Widget {
          widget->setColour(juce::TextButton::buttonColourId, c);
       });
      
-      std::cout << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
+      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
       app->setColor(style.secondaryColor, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonOnColourId, c);
          widget->setColour(juce::TextButton::textColourOffId, c);
@@ -481,7 +481,7 @@ class BuildWidget : public Parser::Widget {
       widget->setImages(svg_drawable_play.get()); 
 
      
-      std::cout << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
+      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
       app->setColor(style.secondaryColor, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonOnColourId, c);
          widget->setColour(juce::TextButton::textColourOffId, c);
@@ -542,7 +542,7 @@ class BuildWidget : public Parser::Widget {
          widget->setColour(juce::TextButton::buttonColourId, c);
       });
      
-      std::cout << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
+      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
       app->setColor(style.secondaryColor, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonOnColourId, c);
          widget->setColour(juce::TextButton::textColourOffId, c);

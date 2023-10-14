@@ -345,10 +345,9 @@ CsdEditor::CsdEditor (CsdProcessor& p)
   juce::String result = "";
 
   bool isOk = Parser::readUiDef (csoundProcessor.csdFile, result);
-  std::cout << "Parse YAML: " << isOk << "\n";
-  std::cout << "Is resizable" << isResizable() << "\n";
+  PLOG_DEBUG << "Parse YAML: " << isOk << "\n";
   if (isOk) {
-    std::cout << result << "\n";
+    PLOG_DEBUG << result << "\n";
     YAML::Node node = YAML::Load(result.toRawUTF8());
     initApp(csoundProcessor.app.get(), csoundProcessor.csound.get(), node);
 

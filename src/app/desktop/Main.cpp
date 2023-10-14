@@ -3,6 +3,8 @@
 
 #include "csound.hpp"
 #include <plog/Log.h>
+#include <plog/Initializers/ConsoleInitializer.h>
+#include <plog/Formatters/MessageOnlyFormatter.h>
 
 //==============================================================================
 class GuiAppApplication  : public juce::JUCEApplication
@@ -23,6 +25,8 @@ public:
     {
         // This method is where you should put your application's initialisation code..
         juce::ignoreUnused (commandLine);
+    
+        plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
 
        	InitApp args = InitApp(juce::ArgumentList("svara-ui", getCommandLineParameterArray()));
 
