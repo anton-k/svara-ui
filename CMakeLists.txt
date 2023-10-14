@@ -74,20 +74,20 @@ target_sources(GuiAppExample
         src/audio/CsoundApp.cpp
         src/audio/CsoundProcessor.cpp
         src/model/Model.cpp
-        src/app/App.cpp
-        src/app/Palette.cpp
-        src/app/Build.cpp
         src/Main.cpp
         src/MainComponent.cpp
-        src/parser/Debug.cpp
-        src/parser/Yaml.cpp
-        src/parser/Parser.cpp
-        src/parser/Expr.cpp
-        src/widgets/Dot.cpp
-        src/widgets/Meter.cpp
-        src/widgets/XYPad.cpp
-        src/widgets/ToggleGroup.cpp
-        src/widgets/KeyPressListener.cpp
+        src/ui/App.cpp
+        src/ui/Palette.cpp
+        src/ui/Build.cpp
+        src/ui/parser/Debug.cpp
+        src/ui/parser/Yaml.cpp
+        src/ui/parser/Parser.cpp
+        src/ui/parser/Expr.cpp
+        src/ui/widgets/Dot.cpp
+        src/ui/widgets/Meter.cpp
+        src/ui/widgets/XYPad.cpp
+        src/ui/widgets/ToggleGroup.cpp
+        src/ui/widgets/KeyPressListener.cpp
         )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer

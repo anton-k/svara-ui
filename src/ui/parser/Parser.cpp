@@ -2,11 +2,40 @@
 #include "Yaml.h"
 #include <string>
 #include <plog/Log.h>
-#include "../model/Model.h"
+#include "../../model/Model.h"
 #include "../widgets/KeyPressListener.h"
 
 namespace Parser
 {
+
+// Reads YAML definition of UI from csound file. 
+// Definition should be in XML-element <SvaraUi> ... </SvaraUi>.
+bool readUiDef (juce::File csdFile, juce::String &result) {
+  bool hasUi = false;
+  bool collectLines = false;
+  juce::StringArray def;
+
+  if (csdFile.existsAsFile()) {
+    juce::StringArray linesFromCsd;
+    linesFromCsd.addLines(csdFile.loadFileAsString());
+
+    for (const auto& line : linesFromCsd) {
+      if (line.startsWith("</SvaraUi>")) {
+        result = def.joinIntoString("\n");
+        return collectLines; // if we stated to collect lines then result is ok
+      }
+
+      if (collectLines) {
+        def.add(line);
+      }
+
+      if (!collectLines && line.startsWith("<SvaraUi>")) {
+        collectLines = true;
+      } 
+    }
+  }
+  return hasUi;
+}
 
 Expr<std::string> toStringExpr(Val<std::string> v, State* state)
 {
@@ -550,7 +579,6 @@ void Ui::updateStyle(YAML::Node root, Style& style)
 void Ui::run(YAML::Node node, Rect rect, Style style) 
 { 
   PLOG_DEBUG << "UI::RUN";
-  // std::cout << node << "\n";  // TODO how to print node body in logger?
   PLOG_DEBUG << "RECT: " << rect.toString() << "\n";
   updateStyle(node, style);
   this->widget->run(node, rect, style);
@@ -562,12 +590,9 @@ void Ui::run(YAML::Node node, Rect rect, Style style)
 
 void CsoundUi::run(YAML::Node node)
 {
-  std::cout << "Step: X\n";
   forKey(node, "write", [this](auto writeNode) {
     forNodes(writeNode, [this](auto channel) {
-        std::cout << "Step: X-X\n";
         this->initWriteChannel(getString(channel, "unknown-channel"));
-        std::cout << "Step: X-Y\n";
     });       
   });
   forKey(node, "read", [this](auto readNode) {

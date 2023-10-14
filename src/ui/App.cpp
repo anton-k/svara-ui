@@ -1,5 +1,5 @@
 #include "App.h"
-#include "../parser/Parser.h"
+#include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <plog/Log.h>
 
@@ -277,5 +277,9 @@ void App::setJustificationType (Parser::Val<std::string> val, std::function<void
   } else {
     setter(Parser::toJustification(val.getVal()));
   }
+}
+
+void App::setup(Csound* csound, YAML::Node &node) {
+  initApp(this, csound, node);
 }
 

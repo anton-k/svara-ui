@@ -1,10 +1,10 @@
 #include "MainComponent.h"
 #include "model/Model.h"
-#include "parser/Parser.h"
+#include "ui/parser/Parser.h"
 #include <plog/Log.h>
 #include <plog/Initializers/ConsoleInitializer.h>
 #include <plog/Formatters/MessageOnlyFormatter.h>
-#include "widgets/KeyPressListener.h"
+#include "ui/widgets/KeyPressListener.h"
 
 #include "csound.hpp"
 #include "csPerfThread.hpp"

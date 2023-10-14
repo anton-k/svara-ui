@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../model/Model.h"
-#include "../parser/Parser.h"
+#include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "../widgets/KeyPressListener.h"
+#include "widgets/KeyPressListener.h"
 #include "csound.hpp"
 
 // Palette is a map from string names to colors
@@ -242,9 +242,11 @@ class App {
       scene->resized();
     };
 
+    void setup(Csound* csound, YAML::Node &node);
+
     Config* config;
     State* state;
     Scene* scene;
 };
 
-void initApp(App* app, Csound* csound, YAML::Node node);
+void initApp(App* app, Csound* csound, YAML::Node &node);

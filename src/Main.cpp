@@ -24,37 +24,23 @@ public:
     //==============================================================================
     void initialise (const juce::String& commandLine) override
     {
-        // This method is where you should put your application's initialisation code..
-        juce::ignoreUnused (commandLine);
+      // This method is where you should put your application's initialisation code..
+      juce::ignoreUnused (commandLine);
 
-       	InitApp args = InitApp(juce::ArgumentList("svara-ui", getCommandLineParameterArray()));
+      InitApp args = InitApp(juce::ArgumentList("svara-ui", getCommandLineParameterArray()));
 
-        //Create an instance of Csound
-        // csound = new Csound();
-        // app = new App();
-        player = std::make_unique<CsdProcessor> ();
-        player->setup(juce::File(args.csoundFile.c_str()));
+      //Create an instance of Csound
+      // csound = new Csound();
+      player = std::make_unique<CsdProcessor> ();
+      player->setup(juce::File(args.csoundFile.c_str()));
 
-        // YAML::Node node = YAML::LoadFile(args.uiFile);
-        // initApp(app, csound, node);
 
-        // csound->Compile(args.csoundFile.c_str());
-        //prepare Csound for performance
-        // csound->Start();
-        // csoundPerformanceThread = new CsoundPerformanceThread(csound);
-        //perform entire score
-        
-        // csoundPerformanceThread->Play();
-        mainWindow.reset (new MainWindow ("ui", player.get()));
+      mainWindow.reset (new MainWindow ("ui", player.get()));
     }
 
     void shutdown() override
     {
         // Add your application's shutdown code here..
-        // csoundPerformanceThread->Stop();
-        // delete csoundPerformanceThread;
-        // delete csound;
-        // delete app;
         mainWindow = nullptr; // (deletes our window)
     }
 

@@ -4,6 +4,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "csound.hpp"
 #include "csPerfThread.hpp"
+#include "../ui/App.h"
 
 class CsdIndex {
   public:
@@ -117,6 +118,8 @@ class CsdProcessor : public juce::AudioProcessor /*, public juce::AsyncUpdater *
     void setup(juce::File);
     void resetCsound();
     void stop() { index->stop(); csound->Stop(); }
+    Csound* getCsound() { return csound.get(); }
+    App* getUi() { return ui.get(); }
 
     //Csound API functions for deailing with midi input
     static int OpenMidiInputDevice (CSOUND* csnd, void** userData, const char* devName);
@@ -150,11 +153,12 @@ class CsdProcessor : public juce::AudioProcessor /*, public juce::AsyncUpdater *
     int csdSampleRate = 44100;
     juce::File csdFile = {};
     bool compileResult = false;
+    std::unique_ptr<App> ui = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CsdProcessor)
 };
 
-class CsdEditor : public juce::AudioProcessorEditor {
+class CsdEditor : public juce::AudioProcessorEditor /*, public KeyPressListener */ {
  public:
      explicit CsdEditor (CsdProcessor&);
 //     ~CsdEditor() override;
@@ -164,7 +168,7 @@ class CsdEditor : public juce::AudioProcessorEditor {
      void resized() override;
 
  private:
-     CsdProcessor& csoundProcessor;
+     CsdProcessor& csdProcessor;
 
      JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CsdEditor)
 };

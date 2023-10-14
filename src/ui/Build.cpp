@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------------- 
-// Build App from YAML file
+// Build App UI from YAML file
 
 #include "App.h"
 #include <string>
@@ -9,11 +9,11 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include "../model/Model.h"
-#include "../parser/Parser.h"
-#include "../widgets/ToggleGroup.h"
-#include "../widgets/Dot.h"
-#include "../widgets/Meter.h"
-#include "../widgets/XYPad.h"
+#include "parser/Parser.h"
+#include "widgets/ToggleGroup.h"
+#include "widgets/Dot.h"
+#include "widgets/Meter.h"
+#include "widgets/XYPad.h"
 #include <Icons.h>
 
 // Build Application from YAML-file
@@ -889,7 +889,7 @@ class BuildLayout : public Parser::Layout {
 //------------------------------------------------------------------------------------- 
 // Build App from YAML file
 
-void initApp(App* app, Csound* csound, YAML::Node node) 
+void initApp(App* app, Csound* csound, YAML::Node &node) 
 {
   // assemble builders
   Parser::InitVars* buildInits = new BuildInits(app);  

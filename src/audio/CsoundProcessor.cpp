@@ -2,6 +2,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <algorithm>
 #include <plog/Log.h>
+#include <plog/Initializers/ConsoleInitializer.h>
+#include <plog/Formatters/MessageOnlyFormatter.h>
 
 void CsdProcessor::processBlock(juce::AudioBuffer< float >& buffer, juce::MidiBuffer& midiMessages)
 {
@@ -101,23 +103,30 @@ void CsdProcessor::resetCsound()
    if (csound) {
      csound = nullptr;
      csoundParams = nullptr;
+     ui = nullptr;
      editorBeingDeleted(this->getActiveEditor());
 	   csound = std::make_unique<Csound> ();
 	   csoundParams = nullptr;
 	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
+	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
+	   ui = std::make_unique<App> ();
    } else {
 	   csound = std::make_unique<Csound> ();
 	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
+	   ui = std::make_unique<App> ();
    }
 }
 
 void CsdProcessor::setup(juce::File file)
 {
+  std::cout << "CSD SETUP: 0\n";
   resetCsound();
   csdFile = file;
-  
+  std::cout << "CSD SETUP: 1\n";
+
   compileCsdFile(csdFile);
   if (compileResult) {
+  std::cout << "CSD SETUP: 2\n";
     ioBuffer = new CsdBuffer(csound.get());
     index = new CsdIndex(csound.get());
     delete midi;
@@ -138,6 +147,7 @@ void CsdProcessor::setup(juce::File file)
     csound->SetOption((char*)"-n");
     csound->SetOption((char*)"-d");
     csound->SetOption((char*)"-b0");
+  std::cout << "CSD SETUP: 3\n";
       
     // set params
 	  csoundParams->displays = 0;
@@ -156,12 +166,25 @@ void CsdProcessor::setup(juce::File file)
         // csoundParams->nchnls_i_override = numCsoundInputChannels;
     }
 	
+    juce::String uiDef;
+    YAML::Node node;
+    bool csdHasUi = Parser::readUiDef(file, uiDef);
+    if (csdHasUi) {
+      node = YAML::Load(uiDef.toRawUTF8());
+    } else {
+//      node = YAML::LoadFile(args.uiFile);
+    }
+    ui = std::make_unique<App> ();
+    ui->setup(csound.get(), node);
+  std::cout << "CSD SETUP: 4\n";
+    
 	  csoundParams->sample_rate_override = csdSampleRate;
     if(preferredLatency == -1)
         csoundParams->ksmps_override = 1;
 	  csound->SetParams(csoundParams.get());
 
 	  csound->Start();	  
+  std::cout << "CSD SETUP: 5\n";
   } else {
     PLOG_ERROR << "Failed to compile Csound file";
   }
@@ -333,24 +356,40 @@ void CsdProcessor::setStateInformation (const void* data, int sizeInBytes)
 //------------------------------------------------------------------------------------- 
 // UI Editor
 
+/*
 CsdEditor::CsdEditor (CsdProcessor& p)
-    : juce::AudioProcessorEditor (&p), csoundProcessor(p)
+    : juce::AudioProcessorEditor (&p), csdProcessor(p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (400, 300);
 }
-
-// CsdEditor::~CsdEditor(){}
+*/
 
 //==============================================================================
-void CsdEditor::paint (juce::Graphics& g)
+CsdEditor::CsdEditor (CsdProcessor &p):  juce::AudioProcessorEditor(&p), csdProcessor(p)
 {
-    g.fillAll (juce::Colours::white);
+    std::cout << "SETUP 0\n";
+    App* app = csdProcessor.getUi();
+    setWantsKeyboardFocus(true);
+    plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
+    PLOG_INFO << "Start app";
+
+    std::cout << "SETUP 1\n";
+    app->scene->setup(this);
+    std::cout << "SETUP 2\n";
+    setSize(app->config->windowWidth, app->config->windowHeight);
+    std::cout << "SETUP 3\n";
+
+// todo: onKeyEvent = [this](auto event) { this->csdProcessor.getUi()->scene->onKeyEvent(event); };
+}
+void CsdEditor::CsdEditor::paint(juce::Graphics &g) {
+  std::cout << "Paint me 0\n";
 }
 
 void CsdEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
-}
+  std::cout << "RESIZED 0\n";
+  this->setBounds (0, 0, getWidth(), getHeight());
+  csdProcessor.getUi()->resized();
+};

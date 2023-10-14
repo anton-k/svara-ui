@@ -2,12 +2,14 @@
 #include "../../libs/yaml-cpp/include/yaml-cpp/yaml.h"
 #include <string>
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "../model/Model.h"
+#include "../../model/Model.h"
 #include "../widgets/KeyPressListener.h"
 
 namespace Parser
 {
   void check_parser();
+
+  bool readUiDef(juce::File csd, juce::String &result);
 
   typedef juce::Rectangle<float> Rect;
 
