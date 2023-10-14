@@ -1,3 +1,5 @@
+#include "audio/CsoundApp.h"
+#include "audio/CsoundProcessor.h"
 #include "MainComponent.h"
 
 #include "csound.hpp"
@@ -17,9 +19,7 @@ public:
     const juce::String getApplicationName() override       { return "svara-ui";/* JUCE_APPLICATION_NAME_STRING;*/ }
     const juce::String getApplicationVersion() override    { return JUCE_APPLICATION_VERSION_STRING; }
     bool moreThanOneInstanceAllowed() override             { return true; }
-    Csound* csound;
-    CsoundPerformanceThread* csoundPerformanceThread;
-    App* app;
+    std::unique_ptr<CsdProcessor> player;
 
     //==============================================================================
     void initialise (const juce::String& commandLine) override
@@ -30,30 +30,31 @@ public:
        	InitApp args = InitApp(juce::ArgumentList("svara-ui", getCommandLineParameterArray()));
 
         //Create an instance of Csound
-        csound = new Csound();
-        app = new App();
+        // csound = new Csound();
+        // app = new App();
+        player = std::make_unique<CsdProcessor> ();
+        player->setup(juce::File(args.csoundFile.c_str()));
 
-        YAML::Node node = YAML::LoadFile(args.uiFile);
-        initApp(app, csound, node);
+        // YAML::Node node = YAML::LoadFile(args.uiFile);
+        // initApp(app, csound, node);
 
-        csound->Compile(args.csoundFile.c_str());
+        // csound->Compile(args.csoundFile.c_str());
         //prepare Csound for performance
-        csound->Start();
-        csoundPerformanceThread = new CsoundPerformanceThread(csound);
+        // csound->Start();
+        // csoundPerformanceThread = new CsoundPerformanceThread(csound);
         //perform entire score
-        csoundPerformanceThread->Play();
-
-        mainWindow.reset (new MainWindow ("ui", app, csound, csoundPerformanceThread));
+        
+        // csoundPerformanceThread->Play();
+        mainWindow.reset (new MainWindow ("ui", player.get()));
     }
 
     void shutdown() override
     {
         // Add your application's shutdown code here..
-        csoundPerformanceThread->Stop();
-        delete csoundPerformanceThread;
-        delete csound;
-        delete app;
-
+        // csoundPerformanceThread->Stop();
+        // delete csoundPerformanceThread;
+        // delete csound;
+        // delete app;
         mainWindow = nullptr; // (deletes our window)
     }
 
@@ -81,17 +82,16 @@ public:
     class MainWindow    : public juce::DocumentWindow
     {
     public:
-        explicit MainWindow (juce::String name, App* _app, Csound* _csound, CsoundPerformanceThread* _csoundPerformanceThread)
+        explicit MainWindow (juce::String name, CsdProcessor* _player)
             : DocumentWindow (name,
                               juce::Desktop::getInstance().getDefaultLookAndFeel()
                                                           .findColour (ResizableWindow::backgroundColourId),
                               DocumentWindow::allButtons),
-              app(_app),
-              csound(_csound),
-              csoundPerformanceThread(_csoundPerformanceThread)
+              player(_player)
         {
             setUsingNativeTitleBar (true);
-            setContentOwned (new MainComponent(app, csound, csoundPerformanceThread), true);
+            // setContentOwned (new MainComponent(app, csound, csoundPerformanceThread), true);
+            setContentOwned (new CsdApp(player), true);
 
            #if JUCE_IOS || JUCE_ANDROID
             setFullScreen (true);
@@ -110,6 +110,7 @@ public:
             // This is called when the user tries to close this window. Here, we'll just
             // ask the app to quit when this happens, but you can change this to do
             // whatever you need.
+            player->stop();
             JUCEApplication::getInstance()->systemRequestedQuit();
         }
 
@@ -121,9 +122,7 @@ public:
         */
 
     private:
-        App* app;
-        Csound* csound;
-        CsoundPerformanceThread* csoundPerformanceThread;
+        CsdProcessor* player;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)        
     };
 

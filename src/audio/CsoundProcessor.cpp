@@ -43,20 +43,23 @@ void CsdProcessor::processSamples(juce::AudioBuffer<Type>& buffer, juce::MidiBuf
     for (int samplePosition = 0; samplePosition < numSamples; samplePosition++) {
       index->next();
 
+      /*
       midi->writeInput(iter, samplePosition);
       // process input samples
       ioBuffer->setPos(index->getIndex() * inputCount);
       for (int busIndex = 0; busIndex < numInputBuses; busIndex++) {
           auto inputBus = getBusBuffer(buffer, true, busIndex);
-          ioBuffer->writeInput(inputBus, samplePosition);
+          ioBuffer->writeInput(inputBus, samplePosition, index->isActive());
       }
+      */
 
       // process output samples
       ioBuffer->setPos(index->getIndex() * outputCount);
       for (int busIndex = 0; busIndex < numOutputBuses; busIndex++) {
           auto outputBus = getBusBuffer(buffer, false, busIndex);
-          ioBuffer->readOutput(outputBus, samplePosition);
+          ioBuffer->readOutput(outputBus, samplePosition, index->isActive());
       }
+      
     }
   } //if not compiled just mute output
   else {
@@ -69,6 +72,7 @@ void CsdProcessor::processSamples(juce::AudioBuffer<Type>& buffer, juce::MidiBuf
 
 void CsdProcessor::releaseResources() 
 {
+  stop();
 }
 
 void CsdProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) 
@@ -83,7 +87,7 @@ void CsdProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
   {
     //if sampling rate is other than default or has been changed, recompile..
     this->csdSampleRate = (double)sampleRate;
-    setup();
+    setup(csdFile);
   }
 
   if (preferredLatency == -1)
@@ -101,16 +105,18 @@ void CsdProcessor::resetCsound()
 	   csound = std::make_unique<Csound> ();
 	   csoundParams = nullptr;
 	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
+   } else {
+	   csound = std::make_unique<Csound> ();
+	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
    }
 }
 
-void CsdProcessor::setup()
+void CsdProcessor::setup(juce::File file)
 {
-  juce::String csdFileText;
-  csdFileText = csdFile.loadFileAsString();
   resetCsound();
+  csdFile = file;
   
-  compileResult = csound->Compile(csdFile.getFileName().toRawUTF8()) == 0;
+  compileCsdFile(csdFile);
   if (compileResult) {
     ioBuffer = new CsdBuffer(csound.get());
     index = new CsdIndex(csound.get());
@@ -133,7 +139,7 @@ void CsdProcessor::setup()
     csound->SetOption((char*)"-d");
     csound->SetOption((char*)"-b0");
       
-	  // set params
+    // set params
 	  csoundParams->displays = 0;
 
     bool hostRequestedMono = getBusesLayout().getMainOutputChannelSet() == juce::AudioChannelSet::mono();
@@ -155,7 +161,7 @@ void CsdProcessor::setup()
         csoundParams->ksmps_override = 1;
 	  csound->SetParams(csoundParams.get());
 
-	  csound->Start();
+	  csound->Start();	  
   } else {
     PLOG_ERROR << "Failed to compile Csound file";
   }
@@ -246,8 +252,10 @@ void CsdBuffer::setPos(int _pos) {
 }
 
 template<typename Type>
-void CsdBuffer::writeInput(juce::AudioBuffer<Type> &buffer, int samplePosition)
+void CsdBuffer::writeInput(juce::AudioBuffer<Type> &buffer, int samplePosition, bool isActive)
 {
+  if (!isActive) { return; }
+
   Type** inputBuffer = (Type**) buffer.getArrayOfWritePointers();
 
   for (int channel = 0; channel < buffer.getNumChannels(); channel++) {
@@ -263,13 +271,20 @@ void CsdBuffer::writeInput(juce::AudioBuffer<Type> &buffer, int samplePosition)
 }
 
 template<typename Type>
-void CsdBuffer::readOutput(juce::AudioBuffer<Type> &outputBus, int samplePosition)
+void CsdBuffer::readOutput(juce::AudioBuffer<Type> &outputBus, int samplePosition, bool isActive)
 {
   Type** outputBuffer = (Type**) outputBus.getArrayOfWritePointers();
-
-  for (int channel = 0; channel < outputBus.getNumChannels(); channel++) {
-    outputBuffer[channel][samplePosition] = (spout[pos] / scale);
-    pos++;
+  
+  if (isActive) {
+    for (int channel = 0; channel < outputBus.getNumChannels(); channel++) {
+      outputBuffer[channel][samplePosition] = (spout[pos] / scale);
+      pos++;
+    }
+  } else {
+    for (int channel = 0; channel < outputBus.getNumChannels(); channel++) {
+      outputBuffer[channel][samplePosition] = 0;
+      pos++;
+    }
   }
 }
 
@@ -326,7 +341,7 @@ CsdEditor::CsdEditor (CsdProcessor& p)
     setSize (400, 300);
 }
 
-CsdEditor::~CsdEditor(){}
+// CsdEditor::~CsdEditor(){}
 
 //==============================================================================
 void CsdEditor::paint (juce::Graphics& g)

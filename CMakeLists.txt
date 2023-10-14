@@ -71,6 +71,7 @@ juce_add_gui_app(GuiAppExample
 
 target_sources(GuiAppExample
     PRIVATE
+        src/audio/CsoundApp.cpp
         src/audio/CsoundProcessor.cpp
         src/model/Model.cpp
         src/app/App.cpp
@@ -139,6 +140,7 @@ target_link_libraries(GuiAppExample
         # GuiAppData            # If we'd created a binary data target, we'd link to it here
         juce::juce_gui_extra
         juce::juce_audio_utils
+        juce::juce_audio_devices
         FontaudioIcons
     PUBLIC
         juce::juce_recommended_config_flags
