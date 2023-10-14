@@ -9,46 +9,41 @@ CsdApp::CsdApp(CsdProcessor* csdProcessor) : mainProcessor(csdProcessor) {
   auto inputDevice  = juce::MidiInput::getDefaultDevice();
   auto outputDevice = juce::MidiOutput::getDefaultDevice();
 
-  deviceManager.initialiseWithDefaultDevices (2, 2);                          // [1]
-  deviceManager.addAudioCallback (&player);                                   // [2]
+  deviceManager.initialiseWithDefaultDevices (2, 2);                        
+  deviceManager.addAudioCallback (&player);                                   
   deviceManager.setMidiInputDeviceEnabled (inputDevice.identifier, true);
-  deviceManager.addMidiInputDeviceCallback (inputDevice.identifier, &player); // [3]
+  deviceManager.addMidiInputDeviceCallback (inputDevice.identifier, &player); 
   deviceManager.setDefaultMidiOutputDevice (outputDevice.identifier);
 
-  player.setProcessor (mainProcessor);                                  // [4]
+  player.setProcessor (mainProcessor);                                
 
   setSize (600, 400);
-  auto csoundProcessor = static_cast<CsdProcessor*>(mainProcessor);
   juce::String result = "";
 
-  bool isOk = Parser::readUiDef (csoundProcessor->csdFile, result);
+  bool isOk = Parser::readUiDef (mainProcessor->csdFile, result);
   std::cout << "Parse YAML: " << isOk << "\n";
   if (isOk) {
     std::cout << result << "\n";
     YAML::Node node = YAML::Load(result.toRawUTF8());
-    initApp(csoundProcessor->app.get(), csoundProcessor->csound.get(), node);
+    initApp(mainProcessor->app.get(), mainProcessor->csound.get(), node);
 
     setWantsKeyboardFocus(true);
     plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
     PLOG_INFO << "Start app";
 
-    csoundProcessor->app->scene->setup(this);
-    setSize(csoundProcessor->app->config->windowWidth, csoundProcessor->app->config->windowHeight);
+    mainProcessor->app->scene->setup(this);
+    setSize(mainProcessor->app->config->windowWidth, mainProcessor->app->config->windowHeight);
 
-    // onKeyEvent = [this](auto event) { app->scene->onKeyEvent(event); };
+    onKeyEvent = [this](auto event) { this->mainProcessor->app->scene->onKeyEvent(event); };
   }
-    
-  setSize (400, 300);
 }
     
 void CsdApp::paint(juce::Graphics& g) {
-  // editor->paint(g);
 }
     
 void CsdApp::resized() {
-  auto csoundProcessor = static_cast<CsdProcessor*>(mainProcessor);
   setBounds (0, 0, getWidth(), getHeight());
-  csoundProcessor->app->resized();
+  mainProcessor->app->resized();
 }
 
 CsdApp::~CsdApp() 

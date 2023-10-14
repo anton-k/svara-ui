@@ -379,8 +379,8 @@ void CsdEditor::paint (juce::Graphics& g)
 
 void CsdEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+  // This is generally where you'll want to lay out the positions of any
+  // subcomponents in your editor..
   setBounds (0, 0, getWidth(), getHeight());
-  // csoundProcessor.app->resized();
+  csoundProcessor.app->resized();
 }
