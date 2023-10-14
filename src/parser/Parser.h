@@ -8,6 +8,7 @@
 namespace Parser
 {
   void check_parser();
+  bool readUiDef (juce::File csdFile, juce::String &result);
 
   typedef juce::Rectangle<float> Rect;
 

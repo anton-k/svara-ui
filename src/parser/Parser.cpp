@@ -7,6 +7,34 @@
 
 namespace Parser
 {
+// Reads YAML definition of UI from csound file. 
+// Definition should be in XML-element <SvaraUi> ... </SvaraUi>.
+bool readUiDef (juce::File csdFile, juce::String &result) {
+  bool hasUi = false;
+  bool collectLines = false;
+  juce::StringArray def;
+
+  if (csdFile.existsAsFile()) {
+    juce::StringArray linesFromCsd;
+    linesFromCsd.addLines(csdFile.loadFileAsString());
+
+    for (const auto& line : linesFromCsd) {
+      if (line.startsWith("</SvaraUi>")) {
+        result = def.joinIntoString("\n");
+        return collectLines; // if we stated to collect lines then result is ok
+      }
+
+      if (collectLines) {
+        def.add(line);
+      }
+
+      if (!collectLines && line.startsWith("<SvaraUi>")) {
+        collectLines = true;
+      } 
+    }
+  }
+  return hasUi;
+}
 
 Expr<std::string> toStringExpr(Val<std::string> v, State* state)
 {
