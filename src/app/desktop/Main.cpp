@@ -1,8 +1,7 @@
-#include "audio/CsoundApp.h"
-#include "audio/CsoundProcessor.h"
+#include "../../audio/CsoundApp.h"
+#include "../../audio/CsoundProcessor.h"
 
 #include "csound.hpp"
-#include "csPerfThread.hpp"
 #include <plog/Log.h>
 
 //==============================================================================
@@ -18,7 +17,6 @@ public:
     const juce::String getApplicationName() override       { return "svara-ui";/* JUCE_APPLICATION_NAME_STRING;*/ }
     const juce::String getApplicationVersion() override    { return JUCE_APPLICATION_VERSION_STRING; }
     bool moreThanOneInstanceAllowed() override             { return true; }
-    std::unique_ptr<CsdProcessor> player;
 
     //==============================================================================
     void initialise (const juce::String& commandLine) override
@@ -29,31 +27,15 @@ public:
        	InitApp args = InitApp(juce::ArgumentList("svara-ui", getCommandLineParameterArray()));
 
         //Create an instance of Csound
-        // csound = new Csound();
-        // app = new App();
         player = std::make_unique<CsdProcessor> ();
         player->setup(juce::File(args.csoundFile.c_str()));
 
-        // YAML::Node node = YAML::LoadFile(args.uiFile);
-        // initApp(app, csound, node);
-
-        // csound->Compile(args.csoundFile.c_str());
-        //prepare Csound for performance
-        // csound->Start();
-        // csoundPerformanceThread = new CsoundPerformanceThread(csound);
-        //perform entire score
-        
-        // csoundPerformanceThread->Play();
         mainWindow.reset (new MainWindow ("ui", player.get()));
     }
 
     void shutdown() override
     {
         // Add your application's shutdown code here..
-        // csoundPerformanceThread->Stop();
-        // delete csoundPerformanceThread;
-        // delete csound;
-        // delete app;
         mainWindow = nullptr; // (deletes our window)
     }
 
@@ -126,6 +108,7 @@ public:
 
 private:
     std::unique_ptr<MainWindow> mainWindow;
+    std::unique_ptr<CsdProcessor> player;
 };
 
 //==============================================================================

@@ -45,7 +45,7 @@ void CsdProcessor::processSamples(juce::AudioBuffer<Type>& buffer, juce::MidiBuf
     for (int samplePosition = 0; samplePosition < numSamples; samplePosition++) {
       index->next();
 
-      /*
+      /* TODO: input buffer and midi
       midi->writeInput(iter, samplePosition);
       // process input samples
       ioBuffer->setPos(index->getIndex() * inputCount);
@@ -157,8 +157,6 @@ void CsdProcessor::setup(juce::File file)
     } else {
         csoundParams->nchnls_override = numCsoundOutputs;
         csoundParams->nchnls_i_override = numCsoundInputs;
-        // csoundParams->nchnls_override = numCsoundOutputChannels;
-        // csoundParams->nchnls_i_override = numCsoundInputChannels;
     }
 	
 	  csoundParams->sample_rate_override = csdSampleRate;
@@ -361,7 +359,7 @@ CsdEditor::CsdEditor (CsdProcessor& p)
     csoundProcessor.app->scene->setup(this);
     setSize(csoundProcessor.app->config->windowWidth, csoundProcessor.app->config->windowHeight);
 
-    // onKeyEvent = [this](auto event) { app->scene->onKeyEvent(event); };
+    // TODO: onKeyEvent = [this](auto event) { app->scene->onKeyEvent(event); };
   }
     
   setResizable(true, true);

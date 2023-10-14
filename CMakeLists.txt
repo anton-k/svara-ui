@@ -71,13 +71,13 @@ juce_add_gui_app(GuiAppExample
 
 target_sources(GuiAppExample
     PRIVATE
+        src/app/desktop/Main.cpp
         src/audio/CsoundApp.cpp
         src/audio/CsoundProcessor.cpp
         src/ui/model/Model.cpp
         src/ui/App.cpp
         src/ui/Palette.cpp
         src/ui/Build.cpp
-        src/Main.cpp
         src/ui/parser/Debug.cpp
         src/ui/parser/Yaml.cpp
         src/ui/parser/Parser.cpp
@@ -119,8 +119,8 @@ juce_add_binary_data(FontaudioIcons
   HEADER_NAME "Icons.h"
   NAMESPACE Icons
   SOURCES
-  resources/Icons/fad-ADR.svg
-  #  libs/fontaudio/svgs/fad-ADSR.svg
+  # resources/Icons/fad-ADR.svg
+  libs/fontaudio/svgs/fad-ADR.svg
 )
 
 target_include_directories(GuiAppExample PRIVATE resources/Icons)
@@ -148,7 +148,6 @@ target_link_libraries(GuiAppExample
         plog
         yaml-cpp
         csound64
-        csnd6
         )
 
       include_directories("../MyStaticLibrary")

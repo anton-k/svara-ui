@@ -3,7 +3,6 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "csound.hpp"
-#include "csPerfThread.hpp"
 #include "../ui/App.h"
 
 class CsdIndex {
@@ -138,7 +137,6 @@ class CsdProcessor : public juce::AudioProcessor /*, public juce::AsyncUpdater *
     }
 
     std::unique_ptr<App> app;
-    std::unique_ptr<CsoundPerformanceThread> perfThread;
     std::unique_ptr<Csound> csound;
     std::unique_ptr<CSOUND_PARAMS> csoundParams;
     juce::File csdFile = {};
