@@ -78,7 +78,6 @@ target_sources(GuiAppExample
         src/ui/Palette.cpp
         src/ui/Build.cpp
         src/Main.cpp
-        src/MainComponent.cpp
         src/ui/parser/Debug.cpp
         src/ui/parser/Yaml.cpp
         src/ui/parser/Parser.cpp
