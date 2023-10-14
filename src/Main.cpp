@@ -1,6 +1,5 @@
 #include "audio/CsoundApp.h"
 #include "audio/CsoundProcessor.h"
-#include "MainComponent.h"
 
 #include "csound.hpp"
 #include "csPerfThread.hpp"
@@ -90,7 +89,6 @@ public:
               player(_player)
         {
             setUsingNativeTitleBar (true);
-            // setContentOwned (new MainComponent(app, csound, csoundPerformanceThread), true);
             setContentOwned (new CsdApp(player), true);
 
            #if JUCE_IOS || JUCE_ANDROID

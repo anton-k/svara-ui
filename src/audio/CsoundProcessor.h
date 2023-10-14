@@ -4,7 +4,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "csound.hpp"
 #include "csPerfThread.hpp"
-#include "../app/App.h"
+#include "../ui/App.h"
 
 class CsdIndex {
   public:

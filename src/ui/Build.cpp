@@ -8,12 +8,12 @@
 #include "csound.hpp"
 #include <juce_gui_extra/juce_gui_extra.h>
 
-#include "../model/Model.h"
-#include "../parser/Parser.h"
-#include "../widgets/ToggleGroup.h"
-#include "../widgets/Dot.h"
-#include "../widgets/Meter.h"
-#include "../widgets/XYPad.h"
+#include "model/Model.h"
+#include "parser/Parser.h"
+#include "widgets/ToggleGroup.h"
+#include "widgets/Dot.h"
+#include "widgets/Meter.h"
+#include "widgets/XYPad.h"
 #include <Icons.h>
 
 // Build Application from YAML-file

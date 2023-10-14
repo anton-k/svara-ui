@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../model/Model.h"
-#include "../parser/Parser.h"
+#include "model/Model.h"
+#include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "../widgets/KeyPressListener.h"
+#include "widgets/KeyPressListener.h"
 #include "csound.hpp"
 
 // Palette is a map from string names to colors

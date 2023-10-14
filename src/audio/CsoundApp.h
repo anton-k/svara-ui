@@ -4,7 +4,7 @@
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "CsoundProcessor.h"
-#include "../widgets/KeyPressListener.h"
+#include "../ui/widgets/KeyPressListener.h"
 
 using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
 using Node = juce::AudioProcessorGraph::Node;

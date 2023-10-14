@@ -1,5 +1,5 @@
 #include "App.h"
-#include "../parser/Parser.h"
+#include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <plog/Log.h>
 
