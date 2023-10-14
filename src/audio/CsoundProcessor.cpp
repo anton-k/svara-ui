@@ -2,6 +2,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <algorithm>
 #include <plog/Log.h>
+#include <plog/Initializers/ConsoleInitializer.h>
+#include <plog/Formatters/MessageOnlyFormatter.h>
 
 void CsdProcessor::processBlock(juce::AudioBuffer< float >& buffer, juce::MidiBuffer& midiMessages)
 {
@@ -101,13 +103,16 @@ void CsdProcessor::resetCsound()
    if (csound) {
      csound = nullptr;
      csoundParams = nullptr;
+     app = nullptr;
      editorBeingDeleted(this->getActiveEditor());
 	   csound = std::make_unique<Csound> ();
 	   csoundParams = nullptr;
 	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
+	   app = std::make_unique<App> ();
    } else {
 	   csound = std::make_unique<Csound> ();
 	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
+	   app = std::make_unique<App> ();
    }
 }
 
@@ -338,7 +343,30 @@ CsdEditor::CsdEditor (CsdProcessor& p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
+       
+  juce::String result = "";
+
+  bool isOk = Parser::readUiDef (csoundProcessor.csdFile, result);
+  std::cout << "Parse YAML: " << isOk << "\n";
+  std::cout << "Is resizable" << isResizable() << "\n";
+  if (isOk) {
+    std::cout << result << "\n";
+    YAML::Node node = YAML::Load(result.toRawUTF8());
+    initApp(csoundProcessor.app.get(), csoundProcessor.csound.get(), node);
+
+    setWantsKeyboardFocus(true);
+    plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
+    PLOG_INFO << "Start app";
+
+    csoundProcessor.app->scene->setup(this);
+    setSize(csoundProcessor.app->config->windowWidth, csoundProcessor.app->config->windowHeight);
+
+    // onKeyEvent = [this](auto event) { app->scene->onKeyEvent(event); };
+  }
+    
+  setResizable(true, true);
+  setResizeLimits (640, 480, 2560, 1440);
+  setSize (400, 300);
 }
 
 // CsdEditor::~CsdEditor(){}
@@ -353,4 +381,6 @@ void CsdEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+  setBounds (0, 0, getWidth(), getHeight());
+  // csoundProcessor.app->resized();
 }

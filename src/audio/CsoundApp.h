@@ -13,11 +13,12 @@ class CsdApp : public juce::Component
   public:
     CsdApp(CsdProcessor*);
     ~CsdApp();
+    void paint(juce::Graphics&) override;
+    void resized() override;
 
   private:
     juce::AudioDeviceManager deviceManager;
     juce::AudioProcessorPlayer player;
     CsdProcessor* mainProcessor;
 };
-
 

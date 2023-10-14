@@ -4,6 +4,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "csound.hpp"
 #include "csPerfThread.hpp"
+#include "../app/App.h"
 
 class CsdIndex {
   public:
@@ -136,11 +137,13 @@ class CsdProcessor : public juce::AudioProcessor /*, public juce::AsyncUpdater *
       compileResult = csound->Compile (csoundFile.getFullPathName().toUTF8().getAddress()) == 0;
     }
 
-
-  private:
+    std::unique_ptr<App> app;
     std::unique_ptr<CsoundPerformanceThread> perfThread;
     std::unique_ptr<Csound> csound;
     std::unique_ptr<CSOUND_PARAMS> csoundParams;
+    juce::File csdFile = {};
+
+  private:
     int numCsoundInputs = 0;
     int numCsoundOutputs = 0;
     int preferredLatency = 32;
@@ -148,7 +151,6 @@ class CsdProcessor : public juce::AudioProcessor /*, public juce::AsyncUpdater *
     CsdMidi* midi;
     CsdIndex* index;
     int csdSampleRate = 44100;
-    juce::File csdFile = {};
     bool compileResult = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CsdProcessor)
