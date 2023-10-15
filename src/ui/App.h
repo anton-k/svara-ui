@@ -4,7 +4,6 @@
 #include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "widgets/KeyPressListener.h"
-#include "csound.hpp"
 
 // Palette is a map from string names to colors
 class Palette {
@@ -247,4 +246,4 @@ class App {
     Scene* scene;
 };
 
-void initApp(App* app, Csound* csound, YAML::Node node);
+void initApp(App* app, CsdModel* csound, YAML::Node node);

@@ -103,16 +103,19 @@ void CsdProcessor::resetCsound()
    if (csound) {
      csound = nullptr;
      csoundParams = nullptr;
+     csoundModel = nullptr;
      app = nullptr;
      editorBeingDeleted(this->getActiveEditor());
 	   csound = std::make_unique<Csound> ();
 	   csoundParams = nullptr;
 	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
 	   app = std::make_unique<App> ();
+	   csoundModel = std::unique_ptr<RealCsdModel> (new RealCsdModel(csound.get()));
    } else {
 	   csound = std::make_unique<Csound> ();
 	   csoundParams = std::make_unique<CSOUND_PARAMS> ();
 	   app = std::make_unique<App> ();
+	   csoundModel = std::unique_ptr<RealCsdModel> (new RealCsdModel(csound.get()));
    }
 }
 
@@ -349,7 +352,7 @@ CsdEditor::CsdEditor (CsdProcessor& p)
   if (isOk) {
     PLOG_DEBUG << result << "\n";
     YAML::Node node = YAML::Load(result.toRawUTF8());
-    initApp(csoundProcessor.app.get(), csoundProcessor.csound.get(), node);
+    initApp(csoundProcessor.app.get(), csoundProcessor.csoundModel.get(), node);
 
     setWantsKeyboardFocus(true);
     plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);

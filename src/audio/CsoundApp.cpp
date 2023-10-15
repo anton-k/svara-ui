@@ -23,7 +23,7 @@ CsdApp::CsdApp(CsdProcessor* csdProcessor) : mainProcessor(csdProcessor) {
   if (isOk) {
     PLOG_INFO << result << "\n";
     YAML::Node node = YAML::Load(result.toRawUTF8());
-    initApp(mainProcessor->app.get(), mainProcessor->csound.get(), node);
+    initApp(mainProcessor->app.get(), mainProcessor->csoundModel.get(), node);
 
     setWantsKeyboardFocus(true);
     PLOG_INFO << "Start app";

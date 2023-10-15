@@ -77,14 +77,6 @@ class CsdProcessor : public juce::AudioProcessor /*, public juce::AsyncUpdater *
 {
   public:
     CsdProcessor() {};
-    /*
-    ~CsdProcessor() override {
-      if (index->isActive()) {
-        csound->Stop();
-      }
-      csound = nullptr;
-    }
-    */
 
     virtual juce::AudioProcessorEditor* createEditor() override;
     virtual bool hasEditor() const override;
@@ -139,6 +131,7 @@ class CsdProcessor : public juce::AudioProcessor /*, public juce::AsyncUpdater *
     std::unique_ptr<App> app;
     std::unique_ptr<Csound> csound;
     std::unique_ptr<CSOUND_PARAMS> csoundParams;
+    std::unique_ptr<CsdModel> csoundModel;
     juce::File csdFile = {};
 
   private:

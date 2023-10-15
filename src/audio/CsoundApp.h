@@ -5,6 +5,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "CsoundProcessor.h"
 #include "../ui/widgets/KeyPressListener.h"
+#include "../ui/model/Model.h"
 
 using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
 using Node = juce::AudioProcessorGraph::Node;
