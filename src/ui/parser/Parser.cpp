@@ -278,6 +278,16 @@ std::string getWidgetName(YAML::Node node)
   return name;
 }
 
+std::string getIconName(YAML::Node node)
+{
+  std::string name = "logojuce";
+  forString(node, "icon", [&name](auto str) { 
+    name = str; 
+  });  
+  return name;
+}
+
+
 std::vector<std::string> getNames(YAML::Node node)
 {
   std::vector<std::string> names;
@@ -426,7 +436,7 @@ void Widget::run(YAML::Node node, Rect rect, Style style)
   forString(node, "slider", [this, rect, &style](auto chan) { this->slider(style, rect, chan); });
   forString(node, "bar", [this, rect, widgetType, &style](auto chan) { this->bar(style, rect, chan, widgetType); });
   forString(node, "button", [this, name, rect, &style](auto chan) { this->button(style, rect, chan, name); });
-  forString(node, "icon-button", [this, name, rect, &style](auto chan) { this->iconButton(style, rect, chan, name); });
+  forString(node, "icon-button", [this, name, rect, &node, &style](auto chan) { this->iconButton(style, rect, chan, getIconName(node), name); });
   forString(node, "toggle", [this, name, rect, &style](auto chan) { this->toggle(style, rect, chan, name); });
   forString(node, "press-button", [this, name, rect, &style](auto chan) { this->pressButton(style, rect, chan, name); });
   forString(node, "check-toggle", [this, name, rect, &style](auto chan) { this->checkToggle(style, rect, chan, name); });

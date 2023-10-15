@@ -15,6 +15,7 @@
 #include "widgets/Meter.h"
 #include "widgets/XYPad.h"
 #include <Icons.h>
+#include "widgets/FadIcons.h"
 
 // Build Application from YAML-file
 
@@ -446,16 +447,17 @@ class BuildWidget : public Parser::Widget {
       app->scene->addWidget(widget, rect);
     };
 
-    void iconButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
+    void iconButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string iconName, std::string title) override 
     {
       (void) name; (void) title;
       PLOG_DEBUG << "ICON Button";
       padRect(rect, style.pad);
+      Icon icon = getIcon(iconName);
 //      juce::ImageButton* widget = new juce::ImageButton();
 //      auto fooImage = juce::ImageFileFormat::loadFrom (Icons::fadADR_svg, Icons::fadADR_svgSize); 
-      auto fooImage = juce::ImageCache::getFromMemory (Icons::fadADR_svg, Icons::fadADR_svgSize); 
+      auto fooImage = juce::ImageCache::getFromMemory (icon.first, icon.second); 
 
-      std::unique_ptr<juce::XmlElement> svg_xml_1(juce::XmlDocument::parse(Icons::fadADR_svg)); // GET THE SVG AS A XML
+      std::unique_ptr<juce::XmlElement> svg_xml_1(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
       // ui::helpers::changeColor(svg_xml_1, "#61f0c4"); // RECOLOUR
       auto svg_drawable_play = juce::Drawable::createFromSVG(*svg_xml_1); // GET THIS AS DRAWABLE
 //      svg_drawable_play->setStrokeThickness(0);                                                                          
