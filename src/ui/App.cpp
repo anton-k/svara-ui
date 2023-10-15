@@ -172,6 +172,17 @@ void Scene::resized()
     PLOG_DEBUG << "WIDGET SIZE: " << widgets.size();
 };
 
+void Scene::paint(juce::Graphics &g)
+{
+    // This is called when the MainComponent is resized.
+    // If you add any child components, this is where you should
+    // update their positions.
+    g.fillAll(backgroundColour);
+    std::for_each(widgets.begin(), widgets.end(), [&g](auto box) { box->paint(g); });
+    // PLOG_DEBUG << "WIDGET SIZE: " << widgets.size();
+};
+
+
 void Scene::append(Box* box)
 {
   if (groupStack.empty()) {

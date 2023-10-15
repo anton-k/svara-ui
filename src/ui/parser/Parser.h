@@ -96,7 +96,10 @@ namespace Parser
         textAlign ("centered"),
         font (""),
         pad (Pad()),
-        border(Border()) {}
+        border(Border()),
+        icon ("logojuce"),
+        secondaryIcon ("logojuce")
+      {}
 
       Val<Col> color, secondaryColor, background;
       Val<double> textSize;
@@ -105,6 +108,7 @@ namespace Parser
       Pad pad;
       Border border;
       Hint hint;
+      std::string icon, secondaryIcon;
   };
 
   class IsYaml
@@ -192,8 +196,9 @@ namespace Parser
       // XYPad impl: https://github.com/seanlikeskites/SAFEJuceModule/blob/master/SAFE_juce_module/UIComponents/XYSlider.h
       virtual void xyPad(Style& style, Rect rect, std::string nameX, std::string nameY) { (void) style; (void) rect; (void)nameX; (void)nameY; };
       virtual void button(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
-      virtual void iconButton(Style& style, Rect rect, std::string name, std::string iconName, std::string title) { (void) style; (void) rect; (void)name; (void) iconName;(void) title; };
+      virtual void iconButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
       virtual void toggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
+      virtual void iconToggleButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
       virtual void pressButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void checkToggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void checkGroup(Style& style, Rect rect, std::string chan, std::vector<std::string> names, bool isVer) { (void) style; (void) rect; (void) chan; (void)names; (void) isVer; };

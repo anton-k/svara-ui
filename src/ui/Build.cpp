@@ -447,50 +447,6 @@ class BuildWidget : public Parser::Widget {
       app->scene->addWidget(widget, rect);
     };
 
-    void iconButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string iconName, std::string title) override 
-    {
-      (void) name; (void) title;
-      PLOG_DEBUG << "ICON Button";
-      padRect(rect, style.pad);
-      Icon icon = getIcon(iconName);
-      std::unique_ptr<juce::XmlElement> svg_xml(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
-      // ui::helpers::changeColor(svg_xml, "#61f0c4"); // RECOLOUR
-      auto iconImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
-      auto iconHoverImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
-      auto iconDownImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
-      app->setColor(style.color, [&iconImage] (auto c) {
-        iconImage->replaceColour(juce::Colours::black, c);
-      });
-      
-      app->setColor(style.color, [&iconHoverImage] (auto c) {
-        iconHoverImage->replaceColour(juce::Colours::black, c.darker());
-      });
-  
-      app->setColor(style.color, [&iconDownImage] (auto c) {
-        iconDownImage->replaceColour(juce::Colours::black, c.darker().darker());
-      });
-  
-      juce::DrawableButton* widget = new juce::DrawableButton(title, juce::DrawableButton::ImageFitted);
-      widget->setImages(iconImage.get(), iconHoverImage.get(), iconDownImage.get()); 
-     
-      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
-      app->setColor(style.secondaryColor, [widget] (auto c) {
-         widget->setColour(juce::TextButton::buttonOnColourId, c);
-         widget->setColour(juce::TextButton::textColourOffId, c);
-      });
-
-      int* counter = new int(0);
-      widget->onStateChange = [&style,this,name,widget,counter] { 
-        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
-          *counter = *counter + 1;
-          this->app->state->setInt(name, *counter); 
-        }
-      };
-
-      PLOG_DEBUG << "make icon button: " << name << " with text: " << title;
-      app->scene->addWidget(widget, rect);
-    };
-     
     void toggle(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 
       padRect(rect, style.pad);
@@ -524,6 +480,136 @@ class BuildWidget : public Parser::Widget {
       
       app->scene->addWidget(widget, rect);
     };
+    
+    void iconButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
+    {
+      (void) name; (void) title;
+      PLOG_DEBUG << "ICON Button";
+      padRect(rect, style.pad);
+      Icon icon = getIcon(style.icon);
+      std::unique_ptr<juce::XmlElement> svg_xml(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
+      // ui::helpers::changeColor(svg_xml, "#61f0c4"); // RECOLOUR
+      auto iconImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
+      auto iconHoverImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
+      auto iconDownImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
+      app->setColor(style.color, [&iconImage] (auto c) {
+        iconImage->replaceColour(juce::Colours::black, c);
+      });
+      
+      app->setColor(style.color, [&iconHoverImage] (auto c) {
+        iconHoverImage->replaceColour(juce::Colours::black, c.darker());
+      });
+  
+      app->setColor(style.color, [&iconDownImage] (auto c) {
+        iconDownImage->replaceColour(juce::Colours::black, c.darker().darker());
+      });
+  
+      juce::DrawableButton* widget = new juce::DrawableButton(title, juce::DrawableButton::ImageFitted);
+      widget->setImages(iconImage.get(), iconHoverImage.get(), iconDownImage.get()); 
+     
+      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
+      app->setColor(style.secondaryColor, [widget] (auto c) {
+         widget->setColour(juce::TextButton::buttonOnColourId, c);
+         widget->setColour(juce::TextButton::textColourOffId, c);
+      });
+      app->setColor(style.background, [widget] (auto c) {
+        widget->setColour(juce::DrawableButton::backgroundColourId, c);
+        widget->setColour(juce::DrawableButton::backgroundOnColourId, c);
+      });
+
+      int* counter = new int(0);
+      widget->onStateChange = [&style,this,name,widget,counter] { 
+        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
+          *counter = *counter + 1;
+          this->app->state->setInt(name, *counter); 
+        }
+      };
+
+      PLOG_DEBUG << "make icon toggle button: " << name << " with text: " << title;
+      app->scene->addWidget(widget, rect);
+    };
+     
+    void iconToggleButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
+    {
+      (void) name; (void) title;
+      PLOG_DEBUG << "ICON Toggle Button";
+      padRect(rect, style.pad);
+      Icon icon = getIcon(style.secondaryIcon);
+      std::unique_ptr<juce::XmlElement> svg_xml(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
+      // ui::helpers::changeColor(svg_xml, "#61f0c4"); // RECOLOUR
+      auto iconImage = juce::Drawable::createFromSVG(*svg_xml); 
+      auto iconHoverImage = juce::Drawable::createFromSVG(*svg_xml); 
+      auto iconDownImage = juce::Drawable::createFromSVG(*svg_xml); 
+      auto iconDisabledImage = juce::Drawable::createFromSVG(*svg_xml); 
+      app->setColor(style.secondaryColor, [&iconImage] (auto c) {
+        iconImage->replaceColour(juce::Colours::black, c);
+      });
+      
+      app->setColor(style.secondaryColor, [&iconHoverImage] (auto c) {
+        iconHoverImage->replaceColour(juce::Colours::black, c.darker());
+      });
+  
+      app->setColor(style.secondaryColor, [&iconDownImage] (auto c) {
+        iconDownImage->replaceColour(juce::Colours::black, c.darker().darker());
+      });
+      
+      app->setColor(style.secondaryColor, [&iconDisabledImage] (auto c) {
+        iconDisabledImage->replaceColour(juce::Colours::black, c.darker().darker().darker());
+      });
+
+      Icon iconOn = getIcon(style.icon);
+      std::unique_ptr<juce::XmlElement> svg_xml_on(juce::XmlDocument::parse(iconOn.first)); // GET THE SVG AS A XML
+      auto iconImageOn = juce::Drawable::createFromSVG(*svg_xml_on); 
+      auto iconHoverImageOn = juce::Drawable::createFromSVG(*svg_xml_on); 
+      auto iconDownImageOn = juce::Drawable::createFromSVG(*svg_xml_on); 
+      auto iconDisabledImageOn = juce::Drawable::createFromSVG(*svg_xml_on); 
+      app->setColor(style.color, [&iconImageOn] (auto c) {
+        iconImageOn->replaceColour(juce::Colours::black, c);
+      });
+      
+      app->setColor(style.color, [&iconHoverImageOn] (auto c) {
+        iconHoverImageOn->replaceColour(juce::Colours::black, c.darker());
+      });
+  
+      app->setColor(style.color, [&iconDownImageOn] (auto c) {
+        iconDownImageOn->replaceColour(juce::Colours::black, c.darker().darker());
+      });
+      
+      app->setColor(style.color, [&iconDisabledImageOn] (auto c) {
+        iconDisabledImageOn->replaceColour(juce::Colours::black, c.darker().darker().darker());
+      });
+
+      juce::DrawableButton* widget = new juce::DrawableButton(title, juce::DrawableButton::ImageFitted);
+      widget->setImages(
+        iconImage.get(), iconHoverImage.get(), iconDownImage.get(), iconDisabledImage.get(), 
+        iconImageOn.get(), iconHoverImageOn.get(), iconDownImageOn.get(), iconDisabledImageOn.get()); 
+      widget->setToggleable(true);
+      widget->setClickingTogglesState(true);
+      widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
+     
+      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
+      app->setColor(style.secondaryColor, [widget] (auto c) {
+         widget->setColour(juce::TextButton::buttonOnColourId, c);
+         widget->setColour(juce::TextButton::textColourOffId, c);
+      });
+      app->setColor(style.background, [widget] (auto c) {
+        widget->setColour(juce::DrawableButton::backgroundColourId, c);
+        widget->setColour(juce::DrawableButton::backgroundOnColourId, c);
+      });
+
+
+      int* counter = new int(0);
+      widget->onStateChange = [&style,this,name,widget,counter] { 
+        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
+          *counter = *counter + 1;
+          this->app->state->setInt(name, *counter); 
+        }
+      };
+
+      PLOG_DEBUG << "make icon toggle button: " << name << " with text: " << title;
+      app->scene->addWidget(widget, rect);
+    };
+     
 
     void pressButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 

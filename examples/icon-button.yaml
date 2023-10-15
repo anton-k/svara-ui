@@ -12,61 +12,57 @@ ui:
   ver:
     - button: foo
       name: plain
+      style:
+        secondary-color: navy
     - hor:
         - icon-button: bar
-          name: press
-          icon: usb
           style:
             color: red
+            icon: usb
         - icon-button: bar
-          name: press
-          icon: adsr
           style:
             color: orange
+            icon: adsr
         - icon-button: bar
-          name: press
-          icon: play
           style:
             color: yellow
+            icon: play
         - icon-button: bar
-          icon: save
-          name: press
           style:
             color: green
+            icon: save
         - icon-button: bar
-          icon: copy
-          name: press
           style:
             color: blue
+            icon: copy
     - hor:
-        - icon-button: bar
-          name: press
-          icon: diskio
+        - icon-toggle-button: bar
           style:
             color: red
-        - icon-button: bar
-          name: press
-          icon: filterbandpass
+            secondary-color: olive
+            icon: diskio
+            secondary-icon: stop
+        - icon-toggle-button: bar
           style:
             color: orange
-        - icon-button: bar
-          name: press
-          icon: phase
+            icon: filterbandpass
+            secondary-icon: filterlowpass
+        - icon-toggle-button: bar
           style:
             color: yellow
-        - icon-button: bar
-          icon: mono
-          name: press
+            icon: phase
+            secondary-icon: mono
+        - icon-toggle-button: bar
           style:
             color: green
+            secondary-color: maroon
+            icon: caretdown
+            secondary-icon: caretup
         - icon-button: bar
-          icon: pointer
-          name: press
           style:
             color: blue
+            icon: pointer
   style:
     color: olive
-    secondary-color: navy
     pad: 0.05
-
-
+    background: navy

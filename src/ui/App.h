@@ -41,6 +41,8 @@ class Box {
 
     virtual void setBounds() {};
 
+    virtual void paint(juce::Graphics&) {};
+
     virtual void append(std::function<void(juce::Component*)> call) { (void) call; };
 
     virtual Parser::Rect getRectangle() { return Parser::Rect(0.0, 0.0, 1.0, 1.0); }
@@ -55,6 +57,8 @@ class Widget : public Box {
       widget(_widget) {};
 
     void setBounds() override;
+
+    void paint(juce::Graphics &g) { widget->paint(g); }
 
     void append(std::function<void(juce::Component*)> call) override;
 
@@ -107,6 +111,11 @@ class Group : public GroupBox {
     }
 
     void setBounds() override;
+
+    void paint(juce::Graphics& g) override {
+      group->paint(g);
+      for_each(children.begin(), children.end(), [&g](auto box) { box->paint(g); });
+    }
 
     void append(std::function<void(juce::Component*)> call) override;
 
@@ -189,6 +198,7 @@ public:
     //==============================================================================
 //    void paint (juce::Graphics&) override;
     void resized();
+    void paint(juce::Graphics&);
 
     void addWidget(juce::Component* comp, Parser::Rect rect);
 
@@ -204,6 +214,7 @@ private:
     std::vector<Box*> widgets;
     std::vector<GroupBox*> groupStack;
     Callback<KeyEvent> onKey;
+    juce::Colour backgroundColour = juce::Colour(0);
 };
 
 
@@ -240,6 +251,11 @@ class App {
     void resized()
     {
       scene->resized();
+    };
+
+    void paint(juce::Graphics &g)
+    {
+      scene->paint(g);
     };
 
     Config* config;

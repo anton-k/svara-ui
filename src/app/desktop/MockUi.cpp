@@ -23,6 +23,7 @@ MockUi::MockUi(juce::File uiFile) {
 }
     
 void MockUi::paint(juce::Graphics& g) {
+  app->paint(g);
 }
     
 void MockUi::resized() {

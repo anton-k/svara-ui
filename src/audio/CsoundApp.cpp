@@ -36,6 +36,7 @@ CsdApp::CsdApp(CsdProcessor* csdProcessor) : mainProcessor(csdProcessor) {
 }
     
 void CsdApp::paint(juce::Graphics& g) {
+  mainProcessor->app->paint(g);
 }
     
 void CsdApp::resized() {
