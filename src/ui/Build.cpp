@@ -453,21 +453,25 @@ class BuildWidget : public Parser::Widget {
       PLOG_DEBUG << "ICON Button";
       padRect(rect, style.pad);
       Icon icon = getIcon(iconName);
-//      juce::ImageButton* widget = new juce::ImageButton();
-//      auto fooImage = juce::ImageFileFormat::loadFrom (Icons::fadADR_svg, Icons::fadADR_svgSize); 
-      auto fooImage = juce::ImageCache::getFromMemory (icon.first, icon.second); 
-
-      std::unique_ptr<juce::XmlElement> svg_xml_1(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
-      // ui::helpers::changeColor(svg_xml_1, "#61f0c4"); // RECOLOUR
-      auto svg_drawable_play = juce::Drawable::createFromSVG(*svg_xml_1); // GET THIS AS DRAWABLE
-//      svg_drawable_play->setStrokeThickness(0);                                                                          
-      app->setColor(style.color, [&svg_drawable_play] (auto c) {
-        svg_drawable_play->replaceColour(juce::Colours::black, c);
+      std::unique_ptr<juce::XmlElement> svg_xml(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
+      // ui::helpers::changeColor(svg_xml, "#61f0c4"); // RECOLOUR
+      auto iconImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
+      auto iconHoverImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
+      auto iconDownImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
+      app->setColor(style.color, [&iconImage] (auto c) {
+        iconImage->replaceColour(juce::Colours::black, c);
+      });
+      
+      app->setColor(style.color, [&iconHoverImage] (auto c) {
+        iconHoverImage->replaceColour(juce::Colours::black, c.darker());
+      });
+  
+      app->setColor(style.color, [&iconDownImage] (auto c) {
+        iconDownImage->replaceColour(juce::Colours::black, c.darker().darker());
       });
   
       juce::DrawableButton* widget = new juce::DrawableButton(title, juce::DrawableButton::ImageFitted);
-      widget->setImages(svg_drawable_play.get()); 
-
+      widget->setImages(iconImage.get(), iconHoverImage.get(), iconDownImage.get()); 
      
       PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
       app->setColor(style.secondaryColor, [widget] (auto c) {
@@ -483,7 +487,7 @@ class BuildWidget : public Parser::Widget {
         }
       };
 
-      PLOG_DEBUG << "make button: " << name << " with text: " << title;
+      PLOG_DEBUG << "make icon button: " << name << " with text: " << title;
       app->scene->addWidget(widget, rect);
     };
      
