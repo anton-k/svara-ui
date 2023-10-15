@@ -31,6 +31,7 @@ class InitApp {
 
     std::string csoundFile;
     std::string uiFile;
+    bool isUiMock;
 };
 
 // Box is a container for UI-widget. It has bounding rectangle and visibility

@@ -5,6 +5,7 @@
 #include <plog/Log.h>
 #include <plog/Initializers/ConsoleInitializer.h>
 #include <plog/Formatters/MessageOnlyFormatter.h>
+#include "MockUi.h"
 
 //==============================================================================
 class GuiAppApplication  : public juce::JUCEApplication
@@ -30,16 +31,23 @@ public:
 
        	InitApp args = InitApp(juce::ArgumentList("svara-ui", getCommandLineParameterArray()));
 
-        //Create an instance of Csound
-        player = std::make_unique<CsdProcessor> ();
-        player->setup(juce::File(args.csoundFile.c_str()));
+       	if (args.isUiMock) {
+       	  component = std::unique_ptr<juce::Component> (new MockUi(juce::File(args.uiFile.c_str())));
+        } else {
+          player = std::make_unique<CsdProcessor> ();
+          player->setup(juce::File(args.csoundFile.c_str()));
+          component = std::unique_ptr<juce::Component> (new CsdApp (player.get()));
+        }
 
-        mainWindow.reset (new MainWindow ("ui", player.get()));
+        //Create an instance of Csound
+        mainWindow.reset (new MainWindow ("ui", component.get()));
     }
 
     void shutdown() override
     {
         // Add your application's shutdown code here..
+        if (player) { player->stop(); }
+        component = nullptr;
         mainWindow = nullptr; // (deletes our window)
     }
 
@@ -67,15 +75,15 @@ public:
     class MainWindow    : public juce::DocumentWindow
     {
     public:
-        explicit MainWindow (juce::String name, CsdProcessor* _player)
+        explicit MainWindow (juce::String name, juce::Component* _component)
             : DocumentWindow (name,
                               juce::Desktop::getInstance().getDefaultLookAndFeel()
                                                           .findColour (ResizableWindow::backgroundColourId),
                               DocumentWindow::allButtons),
-              player(_player)
+        component(_component)
         {
             setUsingNativeTitleBar (true);
-            setContentOwned (new CsdApp(player), true);
+            setContentOwned (component, true);
 
            #if JUCE_IOS || JUCE_ANDROID
             setFullScreen (true);
@@ -94,7 +102,6 @@ public:
             // This is called when the user tries to close this window. Here, we'll just
             // ask the app to quit when this happens, but you can change this to do
             // whatever you need.
-            player->stop();
             JUCEApplication::getInstance()->systemRequestedQuit();
         }
 
@@ -106,13 +113,14 @@ public:
         */
 
     private:
-        CsdProcessor* player;
+        juce::Component* component;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)        
     };
 
 private:
     std::unique_ptr<MainWindow> mainWindow;
     std::unique_ptr<CsdProcessor> player;
+    std::unique_ptr<juce::Component> component;
 };
 
 //==============================================================================

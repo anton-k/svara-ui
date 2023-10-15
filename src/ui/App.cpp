@@ -22,15 +22,14 @@ InitApp::InitApp(juce::ArgumentList args)
 {
   if (args.containsOption("--csound")) {
     csoundFile = std::string(args.getValueForOption("--csound").toRawUTF8());
+    isUiMock = false;
   } else {
-    PLOG_ERROR << "No csound file in args\n";
+    isUiMock = true;
   }
 
   if (args.containsOption("--ui")) {
-    uiFile = std::string(args.getValueForOption("--ui").toRawUTF8());
-  } else {
-    PLOG_ERROR << "No UI file in args\n";
-  }
+    uiFile = std::string(args.getValueForOption("--ui").toRawUTF8()); 
+  } 
 }
 
 // ------------------------------------------------------------------------------------- 

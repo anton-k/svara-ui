@@ -5,7 +5,7 @@ build:
 
 run: build
 	./cmake-build/GuiAppExample_artefacts/Gui\ App\ Example \
-			--csound=examples/gain.csd --ui=examples/gain-csound.yaml
+			--ui=examples/gain-csound.yaml
 
 config:
 	cmake -B cmake-build-install -DCMAKE_INSTALL_PREFIX=/home/anton/dev/cpp/JUCE/install

@@ -72,6 +72,7 @@ juce_add_gui_app(GuiAppExample
 target_sources(GuiAppExample
     PRIVATE
         src/app/desktop/Main.cpp
+        src/app/desktop/MockUi.cpp
         src/audio/CsoundApp.cpp
         src/audio/CsoundProcessor.cpp
         src/ui/model/Model.cpp

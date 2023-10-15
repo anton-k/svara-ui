@@ -5,6 +5,26 @@
 #include <plog/Initializers/ConsoleInitializer.h>
 #include <plog/Formatters/MessageOnlyFormatter.h>
 
+// mock csound processor
+CsdProcessor::CsdProcessor(juce::File uiFile) {
+  app = std::make_unique<App> ();
+  csound = std::make_unique<Csound> ();
+  csoundParams = std::make_unique<CSOUND_PARAMS> ();
+  csoundModel = std::unique_ptr<MockCsdModel>(new MockCsdModel ());
+    
+  numCsoundInputs = 0;
+  numCsoundOutputs = 0;
+  preferredLatency = 32;
+  ioBuffer = new CsdBuffer(csound.get());
+  midi = new CsdMidi();
+  index = new CsdIndex(csound.get());
+  csdSampleRate = 44100;
+  compileResult = false;
+
+  YAML::Node node = YAML::LoadFile(uiFile.getFullPathName().toRawUTF8());
+  initApp(app.get(), csoundModel.get(), node);
+}
+
 void CsdProcessor::processBlock(juce::AudioBuffer< float >& buffer, juce::MidiBuffer& midiMessages)
 {
   processSamples(buffer, midiMessages);
