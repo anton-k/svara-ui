@@ -7,7 +7,6 @@ class MockUi : public KeyPressListener
 {
   public:
     MockUi(juce::File);
-    void paint(juce::Graphics&) override;
     void resized() override;
 
   private:

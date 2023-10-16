@@ -22,10 +22,6 @@ MockUi::MockUi(juce::File uiFile) {
   onKeyEvent = [this](auto event) { this->app->scene->onKeyEvent(event); };
 }
     
-void MockUi::paint(juce::Graphics& g) {
-  app->paint(g);
-}
-    
 void MockUi::resized() {
   setBounds (0, 0, getWidth(), getHeight());
   app->resized();

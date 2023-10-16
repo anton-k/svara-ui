@@ -59,26 +59,30 @@ ui:
         - icon-button: bar5
           style:
             icon: copy
-    - hor:
-        - icon-toggle-button: bar6
-          style:
-            icon: diskio
-            secondary-icon: stop
-        - icon-toggle-button: bar7
-          style:
-            icon: filterbandpass
-            secondary-icon: filterlowpass
-        - icon-toggle-button: bar8
-          style:
-            icon: phase
-            secondary-icon: mono
-        - icon-toggle-button: bar9
-          style:
-            icon: caretdown
-            secondary-icon: caretup
-        - icon-toggle-button: bar10
-          style:
-            icon: pointer
+    - group:
+        name: group
+        style:
+          background: black
+        hor:
+          - icon-toggle-button: bar6
+            style:
+              icon: diskio
+              secondary-icon: stop
+          - icon-toggle-button: bar7
+            style:
+              icon: filterbandpass
+              secondary-icon: filterlowpass
+          - icon-toggle-button: bar8
+            style:
+              icon: phase
+              secondary-icon: mono
+          - icon-toggle-button: bar9
+            style:
+              icon: caretdown
+              secondary-icon: caretup
+          - icon-toggle-button: bar10
+            style:
+              icon: pointer
     - ver:
         - slider: val1
         - slider: val2

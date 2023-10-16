@@ -153,7 +153,6 @@ class CsdEditor : public juce::AudioProcessorEditor {
 //     ~CsdEditor() override;
 
      //==============================================================================
-     void paint (juce::Graphics&) override;
      void resized() override;
 
  private:

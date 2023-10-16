@@ -263,6 +263,8 @@ namespace Parser
         layout(_layout)
       {};
 
+      virtual void begin(Style& style, juce::Rectangle<float> rect) {(void) style; (void) rect; };
+      virtual void end() {};
       void updateStyle(YAML::Node node, Style& style);
 
       Widget* widget;

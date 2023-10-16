@@ -16,6 +16,7 @@
 #include "widgets/XYPad.h"
 #include <Icons.h>
 #include "widgets/FadIcons.h"
+#include "widgets/Board.h"
 
 // Build Application from YAML-file
 
@@ -29,7 +30,7 @@ bool equalFloats(float a, float b) {
 template<class T>
 void printVar(std::string name, T val)
 {
-  PLOG_DEBUG << name << ": " << val << "\n";
+  PLOG_INFO << name << ": " << val << "\n";
 }
 
 //------------------------------------------------------------------------------------- 
@@ -357,7 +358,6 @@ void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string
 {
   widget->setRange(0, 1.0);
   widget->setValue(app->state->getDouble(name));
-  PLOG_DEBUG << "setSlider: widget name: " << app->state->getDouble(name);
   
   // Callback to update channel value on change in slider
   if (widgetType != Parser::Widget::Output) {
@@ -389,6 +389,7 @@ class BuildWidget : public Parser::Widget {
       padRect(rect, style.pad);
       juce::Slider* knob = new juce::Slider(juce::Slider::SliderStyle::Rotary, juce::Slider::TextEntryBoxPosition::NoTextBox);
       knob->setName(name);
+      PLOG_DEBUG << "make knob: widget name: " << name << " value: " << app->state->getDouble(name);
       setSlider(app, knob, style, name, juce::Slider::rotarySliderFillColourId);
       app->scene->addWidget(knob, rect);
     }
@@ -401,6 +402,7 @@ class BuildWidget : public Parser::Widget {
           : juce::Slider::SliderStyle::LinearHorizontal;
       juce::Slider* slider = new juce::Slider(sliderStyle, juce::Slider::TextEntryBoxPosition::NoTextBox);
       slider->setName(name);
+      PLOG_DEBUG << "make slider: widget name: " << name << " value: " << app->state->getDouble(name);
       setSlider(app, slider, style, name, juce::Slider::trackColourId);
       app->scene->addWidget(slider, rect);
     };
@@ -474,12 +476,26 @@ class BuildWidget : public Parser::Widget {
       });
 
       int* counter = new int(0);
-      widget->onStateChange = [&style,this,name,widget,counter] { 
-        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
-          *counter = *counter + 1;
-          this->app->state->setInt(name, *counter); 
+      // we use a trick to ensure that note is not retriggered when state
+      // is change automatically
+      bool* isUser = new bool(true);
+      widget->onStateChange = [&style,this,name,widget,counter, isUser] { 
+        if (*isUser) {
+          if (widget->getState() == juce::Button::ButtonState::buttonDown) {
+            *counter = *counter + 1;
+            this->app->state->setInt(name, *counter); 
+          }
+        } else {
+          *isUser = true;
         }
       };
+
+      this->app->state->appendCallbackInt(name, new Callback<int>(
+        [widget, isUser](int val) {
+          *isUser = false;
+          widget->triggerClick();
+        } 
+      ));
 
       widget->setLookAndFeel(&(widget->getLookAndFeel()));
 
@@ -524,7 +540,6 @@ class BuildWidget : public Parser::Widget {
     void iconButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     {
       (void) name; (void) title;
-      PLOG_DEBUG << "ICON Button";
       padRect(rect, style.pad);
       Icon icon = getIcon(style.icon);
       std::unique_ptr<juce::XmlElement> svg_xml(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
@@ -547,7 +562,6 @@ class BuildWidget : public Parser::Widget {
       juce::DrawableButton* widget = new juce::DrawableButton(title, juce::DrawableButton::ImageFitted);
       widget->setImages(iconImage.get(), iconHoverImage.get(), iconDownImage.get()); 
      
-      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
       app->setColor(style.secondaryColor, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonOnColourId, c);
          widget->setColour(juce::TextButton::textColourOffId, c);
@@ -572,7 +586,6 @@ class BuildWidget : public Parser::Widget {
     void iconToggleButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     {
       (void) name; (void) title;
-      PLOG_DEBUG << "ICON Toggle Button";
       padRect(rect, style.pad);
       Icon icon = getIcon(style.secondaryIcon);
       std::unique_ptr<juce::XmlElement> svg_xml(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
@@ -632,7 +645,6 @@ class BuildWidget : public Parser::Widget {
         }
       };
      
-      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
       app->setColor(style.secondaryColor, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonOnColourId, c);
          widget->setColour(juce::TextButton::textColourOffId, c);
@@ -656,7 +668,6 @@ class BuildWidget : public Parser::Widget {
          widget->setColour(juce::TextButton::buttonColourId, c);
       });
      
-      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
       app->setColor(style.secondaryColor, [widget] (auto c) {
          widget->setColour(juce::TextButton::buttonOnColourId, c);
          widget->setColour(juce::TextButton::textColourOffId, c);
@@ -936,18 +947,33 @@ class BuildWidget : public Parser::Widget {
     void groupBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
     {
       padRect(rect, style.pad);
-      juce::Component* group = app->groupBegin(rect, name);
-      try {
-        juce::GroupComponent* widget = dynamic_cast<juce::GroupComponent*>(group);
-        app->setJustificationType(style.textAlign, [widget] (auto align) {
-          widget->setTextLabelPosition(align);
-        });
+      Group* group = app->groupBegin(style, rect, name);
+      if (group->getHasBorder()) {
+        GroupBoard* widget = dynamic_cast<GroupBoard*>(group->getGroupWidget());
+        if (widget) {
+          app->setJustificationType(style.textAlign, [widget] (auto align) {
+            widget->setTextLabelPosition(align);
+          });
 
-        app->setColor(style.color, [widget] (auto c) {
-          widget->setColour(juce::GroupComponent::outlineColourId, c);
-          widget->setColour(juce::GroupComponent::textColourId, c);
-        });
-      } catch (...) {}
+          app->setColor(style.color, [widget] (auto c) {
+            widget->setColour(juce::GroupComponent::outlineColourId, c);
+          });
+          app->setColor(style.color, [widget] (auto c) {
+            widget->setColour(juce::GroupComponent::textColourId, c);
+          });
+
+          app->setColor(style.background, [widget] (auto c) {
+            widget->setBackground(c);
+          });
+        }
+      } else {
+        Board* widget = dynamic_cast<Board*>(group->getGroupWidget());
+        if (widget) {
+          app->setColor(style.background, [widget] (auto c) {
+            widget->setBackground(c);
+          });
+        }
+      }
     }
 
     void groupEnd() override
@@ -959,7 +985,7 @@ class BuildWidget : public Parser::Widget {
     {
       PLOG_DEBUG << "panelBegin: " << rect.toString() << " , name: " << name;
       padRect(rect, style.pad);
-      Panel* panel = app->panelBegin(rect, name);    
+      Panel* panel = app->panelBegin(style, rect, name);    
       app->state->appendCallbackInt(name, new Callback<int>([panel] (int n) { panel->selectVisible((size_t) n); }));
     }
 
@@ -1000,6 +1026,31 @@ class BuildLayout : public Parser::Layout {
     App* app;
 };
 
+class BuildUi : public Parser::Ui {
+  public:
+    BuildUi(App* _app, Parser::Widget* widget, Parser::Layout* layout) : 
+        Parser::Ui(widget, layout), 
+        app(_app) 
+    {}
+
+    void begin(Parser::Style &style, juce::Rectangle<float> rect) override {
+      Group* group = app->groupBegin(style, rect, "");
+      Board* widget = dynamic_cast<Board*>(group->getGroupWidget());
+      if (widget) {
+        app->setColor(style.background, [widget] (auto c) {
+          widget->setBackground(c);
+        });
+      }
+    }
+
+    void end() override {
+      app->groupEnd();
+    }
+
+  private:
+    App* app;
+};
+
 //------------------------------------------------------------------------------------- 
 // Build App from YAML file
 
@@ -1014,7 +1065,7 @@ void initApp(App* app, CsdModel* csound, YAML::Node node)
   Parser::Config* buildConfig = new BuildConfig(app);
   Parser::Widget* buildWidget = new BuildWidget(app);
   Parser::Layout* buildLayout = new BuildLayout(app);
-  Parser::Ui* buildUi = new Parser::Ui(buildWidget, buildLayout);
+  Parser::Ui* buildUi = new BuildUi(app, buildWidget, buildLayout);
   CsoundChannelReader* csoundChannelReader = new CsoundChannelReader(app, csound);
   Parser::CsoundUi* buildCsoundUi = new BuildCsoundUi(app, csound, csoundChannelReader);
   Parser::Window* buildWindow = new Parser::Window(buildState, buildUi, buildConfig, buildCsoundUi);

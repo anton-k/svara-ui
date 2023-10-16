@@ -3,7 +3,6 @@
 #include <vector>
 #include <functional>
 
-
 class Dot : public juce::Component {
   public:
     Dot(): color() {}

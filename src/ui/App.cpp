@@ -132,7 +132,7 @@ std::string Panel::getGroupName()
 
 void Panel::initItem() 
 {
-  auto group = new Group(rect, getGroupName(), false);
+  auto group = new Group(style, rect, getGroupName(), false);
   panels.push_back(group);
 }
 
@@ -172,17 +172,6 @@ void Scene::resized()
     PLOG_DEBUG << "WIDGET SIZE: " << widgets.size();
 };
 
-void Scene::paint(juce::Graphics &g)
-{
-    // This is called when the MainComponent is resized.
-    // If you add any child components, this is where you should
-    // update their positions.
-    g.fillAll(backgroundColour);
-    std::for_each(widgets.begin(), widgets.end(), [&g](auto box) { box->paint(g); });
-    // PLOG_DEBUG << "WIDGET SIZE: " << widgets.size();
-};
-
-
 void Scene::append(Box* box)
 {
   if (groupStack.empty()) {
@@ -204,11 +193,11 @@ void Scene::setup(juce::Component* parent)
   std::for_each(widgets.begin(), widgets.end(), [parent, call] (Box* box) { box->append(call); });
 }
 
-juce::Component* App::groupBegin(Parser::Rect rect, std::string name)
+Group* App::groupBegin(Parser::Style &style, Parser::Rect rect, std::string name)
 {
-  auto groupBox = new Group(rect, name, true);
+  auto groupBox = new Group(style, rect, name, style.border.width != 0 || name != "");
   scene->groupStack.push_back(groupBox);
-  return groupBox->getGroupWidget();
+  return groupBox;
 }
 
 void App::groupEnd()
@@ -219,9 +208,9 @@ void App::groupEnd()
   scene->append(lastGroup);
 }
 
-Panel* App::panelBegin(Parser::Rect rect, std::string name)
+Panel* App::panelBegin(Parser::Style style, Parser::Rect rect, std::string name)
 {
-  Panel* panel = new Panel(rect, name);
+  Panel* panel = new Panel(style, rect, name);
   scene->groupStack.push_back(panel);
   return panel;
 }

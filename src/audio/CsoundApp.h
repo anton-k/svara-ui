@@ -15,7 +15,6 @@ class CsdApp : public KeyPressListener // juce::Component
   public:
     CsdApp(CsdProcessor*);
     ~CsdApp();
-    void paint(juce::Graphics&) override;
     void resized() override;
 
   private:

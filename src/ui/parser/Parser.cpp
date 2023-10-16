@@ -513,12 +513,14 @@ void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect, Style sty
   std::string tag = getLayoutListTag(isHor);
   std::vector<std::pair<float,YAML::Node>> boxes;  
 
-  forKey(node, tag, [&boxes](auto elems) {
+  forKey(node, tag, [parent, &style, rect, &boxes](auto elems) {
+      parent->widget->groupBegin(style, rect, "");
       if (elems.IsSequence()) {
         forNodes(elems, [&boxes](auto elem) { 
             boxes.push_back(std::pair(getScale(elem), elem));
         });
       }
+      parent->widget->groupEnd();
   });
   
   foldBoxes(isHor, boxes, rect, style, parent);
@@ -559,7 +561,7 @@ void runTabs(Ui* parent, YAML::Node node, Rect rect, Style style)
 
 void runLayout(Ui* parent, YAML::Node node, Rect rect, Style style)
 {
-  bool isHor = true;
+  bool isHor = true;  
   forListLayout(isHor,  parent, node, rect, style);
   forListLayout(!isHor, parent, node, rect, style);
   runGroup(parent, node, rect, style);
@@ -784,7 +786,12 @@ void Window::run(YAML::Node node)
 {
   this->config->onKey(node, "config");
   this->state->onKey(node, "state");
-  this->ui->onKey(node, "ui", Rect(0.0, 0.0, 1.0, 1.0), Style());
+  Style style;
+  this->ui->updateStyle(node, style);
+  juce::Rectangle<float> topLevelRect = juce::Rectangle<float>(0, 0, 1, 1);
+  this->ui->begin(style, topLevelRect);
+  this->ui->onKey(node, "ui", topLevelRect, style);
+  this->ui->end();
   this->csoundUi->onKey(node, "csound");
 }
 

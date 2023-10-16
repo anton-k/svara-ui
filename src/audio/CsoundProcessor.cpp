@@ -372,10 +372,6 @@ CsdEditor::CsdEditor (CsdProcessor& p)
 // CsdEditor::~CsdEditor(){}
 
 //==============================================================================
-void CsdEditor::paint (juce::Graphics& g)
-{
-    g.fillAll (juce::Colours::white);
-}
 
 void CsdEditor::resized()
 {

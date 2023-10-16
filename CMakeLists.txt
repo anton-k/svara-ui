@@ -87,6 +87,7 @@ target_sources(GuiAppExample
         src/ui/widgets/XYPad.cpp
         src/ui/widgets/ToggleGroup.cpp
         src/ui/widgets/KeyPressListener.cpp
+        src/ui/widgets/Board.cpp
         )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
