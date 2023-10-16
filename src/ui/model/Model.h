@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <csound.hpp>
+#include <plog/Log.h>
 
 int check_model();
 
@@ -351,6 +352,18 @@ using Get = std::function<T()>;
 template<typename T>
 using Set = std::function<void(T)>;
 
+template<typename T>
+Set<T> appendSet(Set<T> a, Set<T> b) {
+  return [a, b](T val) {
+    a(val);
+    b(val);
+  };
+}
+template<typename T>
+Set<T> emptySet() {
+  return [](T val) { (void) val; };
+}
+
 // Interface for Csound engine. Which actions UI can perform
 class CsdModel {
   public:
@@ -367,17 +380,21 @@ class CsdModel {
     virtual Get<std::string> getStringChannel(std::string name) = 0;
 
     // schedule a note
-    virtual void schedule(std::string name, std::vector<MYFLT> args) = 0;
+    virtual void readScore(std::string &sco) = 0;
 };
 
 // Mock csd implementation does nothing
 class MockCsdModel : public CsdModel {
   public:
-    Set<MYFLT> setChannel(std::string _name) override {
-      return [](MYFLT _val) {};
+    Set<MYFLT> setChannel(std::string name) override {
+      return [name](MYFLT val) {
+        PLOG_INFO << "[csd] set control channel " << name << " to: " << val;
+      };
     }
-    Set<std::string> setStringChannel(std::string _name) override {
-      return [](std::string _val) {};
+    Set<std::string> setStringChannel(std::string name) override {
+      return [name](std::string val) {
+        PLOG_INFO << "[csd] set string channel " << name << " to: " << val;
+      };
     }
 
     Get<MYFLT> getChannel(std::string _name) override {
@@ -388,7 +405,9 @@ class MockCsdModel : public CsdModel {
       return []() { return ""; };
     }
 
-    void schedule(std::string name, std::vector<MYFLT> args) override {};
+    void readScore(std::string &sco) override {
+      PLOG_INFO << "[csd] read score: " << sco;
+    };
 };
 
 // Real Csound interface implementation
@@ -430,8 +449,9 @@ class RealCsdModel : public CsdModel {
       };
     }
 
-    // TODO
-    void schedule(std::string name, std::vector<MYFLT> args) override {};
+    void readScore(std::string &sco) override {
+      csound->ReadScore(sco.c_str());
+    };
 
   private:
     Csound* csound;

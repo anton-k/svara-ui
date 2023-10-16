@@ -17,6 +17,10 @@ double getDouble (YAML::Node node, double def)
   return init;
 }
 
+bool isNumeric(YAML::Node node) {
+  return isInt(node) || isDouble(node);
+}
+
 bool isDouble(YAML::Node node)
 {
   if (node.IsScalar()) {

@@ -196,6 +196,7 @@ class BuildCsoundUi : public Parser::CsoundUi {
               [this, chan](int val) { chan((MYFLT) val); }
             );
             app->state->appendCallbackInt(name, setter);
+            break;
           }
         case Type::Double:
           {
@@ -204,6 +205,7 @@ class BuildCsoundUi : public Parser::CsoundUi {
               [this, chan](double val) { chan((MYFLT) val); }
             );
             app->state->appendCallbackDouble(name, setter);
+            break;
           }
  
         case Type::String: 
@@ -213,6 +215,7 @@ class BuildCsoundUi : public Parser::CsoundUi {
               [this, chan](std::string val) { chan(val); }
             );
             app->state->appendCallbackString(name, setter);
+            break;
           }
       }
     };
@@ -229,6 +232,32 @@ class BuildCsoundUi : public Parser::CsoundUi {
         PLOG_ERROR << "String read channels are not supported for Csound";
       }
     };
+
+    void initScore(std::string name, Set<int> score) override {
+      PLOG_DEBUG << "Init csound score on channel: " << name;
+      app->state->appendCallbackInt(name, new Callback<int>([score](int val) { score(val); }));      
+    };
+
+    Type getType(std::string name) override
+    {
+      return app->state->getType(name);
+    }
+      
+    Get<int> getterInt(std::string name) override {
+      return [name, this]() { return this->app->state->getInt(name); };
+    }
+
+    Get<double> getterDouble(std::string name) override {
+      return [name, this]() { return this->app->state->getDouble(name); };
+    }
+
+    Get<std::string> getterString(std::string name) override {
+      return [name, this]() { return this->app->state->getString(name); };
+    }
+
+    void sendScore(std::string sco) override {
+      csound->readScore(sco);
+    }
 
   private:
     App* app;

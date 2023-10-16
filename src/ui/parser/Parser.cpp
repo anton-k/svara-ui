@@ -114,6 +114,7 @@ Update* UpdateVars::runUpdater(YAML::Node node)
           } else {
             PLOG_ERROR << "update " << key << " is defined as int, but set to non int value";
           }
+          break;
         }
       case Type::Double :
         {
@@ -125,6 +126,7 @@ Update* UpdateVars::runUpdater(YAML::Node node)
           } else {
             PLOG_ERROR << "update " << key << " is defined as double, but set to non double value";
           }
+          break;
         }
       case Type::String :
         {
@@ -132,6 +134,7 @@ Update* UpdateVars::runUpdater(YAML::Node node)
           Callback<std::string>* setter = this->getSetString(key);
           auto proc = [this,setter,str] () { setter->apply(str); };
           res->append(Procedure(proc));
+          break;
         }
     }
   });
@@ -609,6 +612,110 @@ void Ui::run(YAML::Node node, Rect rect, Style style)
 // -------------------------------------------------------------------
 // Csound UI
 
+Get<std::string> CsoundUi::getScoreString(YAML::Node node) {
+  bool isConst = true;
+  std::vector<std::pair<Type, Val<std::string>>> vals;
+
+  forNodes(node, [this, &isConst, &vals](auto valNode) {
+      auto val = getValString(valNode, "");
+      Type ty = Type::String;
+      if (val.isChan()) {
+        isConst = false;
+        ty = this->getType(val.getChan().name);
+      } else {
+        if (isInt(valNode)) { ty = Type::Int; }
+        if (isDouble(valNode)) { ty = Type::Double; }
+      }
+      vals.push_back(std::pair(ty, val));
+  });
+
+  if (isConst) {
+    std::string res = "i";
+    std::for_each(vals.begin(), vals.end(), [&res](auto val) {
+      res.append(std::string(" "));
+      if (val.first != Type::String) {
+        res.append(val.second.getVal());
+      } else {
+        res.append("\"");
+        res.append(val.second.getVal());
+        res.append("\"");
+      }      
+    });
+    return [res]() { return res; };
+  } else {    
+    return [this, vals]() {
+      std::string res = "i";
+      std::for_each(vals.begin(), vals.end(), [this, &res](auto val) {
+        res.append(std::string(" "));
+        if (val.second.isChan()) {
+          std::string chanName = val.second.getChan().name;
+          switch (val.first) {
+            case Type::Int: { 
+              res.append(std::to_string(this->getterInt(chanName)())); 
+              break;
+            }
+            case Type::Double: { 
+              res.append(std::to_string(this->getterDouble(chanName)())); 
+              break;
+            }
+            case Type::String: {
+                res.append("\"");              
+                res.append(this->getterString(chanName)());
+                res.append("\"");
+                break;
+              }
+          }
+        } else {
+          if (val.first != Type::String) {
+            res.append(val.second.getVal());
+          } else {
+            res.append("\"");
+            res.append(val.second.getVal());
+            res.append("\"");
+          }      
+        }
+      });
+      return res; 
+
+    };
+  }
+  return []() { return "Error failed to parse notes"; };
+}
+
+Set<int> CsoundUi::parseSingleNoteScore (YAML::Node node) {
+  Get<std::string> getter = this->getScoreString(node);
+  return [this, getter](int val) { this->sendScore(getter()); };
+}
+
+Set<int> CsoundUi::parseManyNoteScore (YAML::Node node) {
+  Set<int> res = emptySet<int>();
+  forNodes(node, [this, &res](auto noteNode) {
+    res = appendSet(res, this->parseSingleNoteScore(noteNode));
+  });
+  return res;
+}
+
+Set<int> CsoundUi::parseCaseScore (YAML::Node node) {}
+
+Set<int> CsoundUi::parseScore(YAML::Node node) {
+  if (node.IsSequence() && node.size() > 0) {
+    if (node[0].IsScalar()) {
+      return parseSingleNoteScore(node);
+    } else if (node[0].IsSequence()) {
+      return parseManyNoteScore(node);
+    }    
+  }
+
+  if (node.IsMap()) {
+    return parseCaseScore(node);
+  }
+
+  return [](int n) {
+    (void) n;
+    PLOG_ERROR << "Failed to parse score expression";
+  };
+}
+
 void CsoundUi::run(YAML::Node node)
 {
   forKey(node, "write", [this](auto writeNode) {
@@ -616,10 +723,17 @@ void CsoundUi::run(YAML::Node node)
         this->initWriteChannel(getString(channel, "unknown-channel"));
     });       
   });
+  
   forKey(node, "read", [this](auto readNode) {
     forNodes(readNode, [this](auto channel) {
         this->initReadChannel(getString(channel, "unknown-channel"));
     });       
+  });
+
+  forKey(node, "score", [this](auto scoreNode) {
+    forObject(scoreNode, [this](std::string name, auto valNode) {
+        this->initScore(name, this->parseScore(valNode));
+    });
   });
 }
 

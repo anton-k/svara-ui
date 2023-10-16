@@ -274,9 +274,22 @@ namespace Parser
   {
     public:
       CsoundUi() {};
-      virtual void initWriteChannel(std::string name) = 0; // { (void)name; };
-      virtual void initReadChannel(std::string name) = 0 ;// {(void)name; };
+      virtual void initWriteChannel(std::string name) { (void)name; }
+      virtual void initReadChannel(std::string name) {(void)name; }
+      virtual void initScore(std::string name, Set<int> send) { (void)name; (void)send; }
       void run(YAML::Node node);
+
+      virtual Type getType(std::string name) = 0;
+      virtual Get<int> getterInt(std::string name) = 0;
+      virtual Get<double> getterDouble(std::string name) = 0;
+      virtual Get<std::string> getterString(std::string name) = 0;
+      virtual void sendScore(std::string sco) = 0;
+
+      Get<std::string> getScoreString(YAML::Node node);
+      Set<int> parseSingleNoteScore (YAML::Node node);
+      Set<int> parseManyNoteScore (YAML::Node node);
+      Set<int> parseCaseScore (YAML::Node node);
+      Set<int> parseScore(YAML::Node node);
   };
 
   class Config : public IsYaml

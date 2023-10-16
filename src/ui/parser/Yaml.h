@@ -1,5 +1,4 @@
 // YAML helpers
-
 #pragma once
 #include "../../libs/yaml-cpp/include/yaml-cpp/yaml.h"
 #include <string>
@@ -21,6 +20,8 @@ namespace Parser
   int getInt (YAML::Node node, int def);
 
   bool isInt(YAML::Node node);
+
+  bool isNumeric(YAML::Node node);
 
   std::string getString (YAML::Node node, std::string def);
 

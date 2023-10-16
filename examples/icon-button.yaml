@@ -15,6 +15,16 @@ state:
     bar8!: 0
     bar9!: 0
     bar10!: 0
+    val1: 0.5
+    val2: 0.75
+csound:
+  write: [bar6]
+  score:
+    bar1: ["play1", 0, 1]
+    bar2:
+      - ["play2", 0, 1, on]
+      - ["play2", 0, 1, off]
+    bar3: ["play3", 0, 1, .bar3, .val1, next, .val2]
 ui:
   ver:
     - button: foo
@@ -58,6 +68,10 @@ ui:
         - icon-toggle-button: bar10
           style:
             icon: pointer
+    - ver:
+        - slider: val1
+        - slider: val2
+      scale: 0.4
   style:
     color: olive
     secondary-color: blue
