@@ -13,6 +13,10 @@ state:
     a:
       down:
         tog-col: orange
+  schedule:
+    foo: [fooInstr, 0, 1]
+    bar: [barInstr, 0, 10]
+
 ui:
   ver:
     - button: foo

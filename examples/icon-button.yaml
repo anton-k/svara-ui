@@ -5,9 +5,16 @@ config:
 state:
   init:
     foo!: 0
-    zoo!: 0
-    bar!: 0
-    qux!: 1
+    bar1!: 0
+    bar2!: 0
+    bar3!: 0
+    bar4!: 0
+    bar5!: 0
+    bar6!: 0
+    bar7!: 0
+    bar8!: 0
+    bar9!: 0
+    bar10!: 0
 ui:
   ver:
     - button: foo
@@ -15,54 +22,45 @@ ui:
       style:
         secondary-color: navy
     - hor:
-        - icon-button: bar
+        - icon-button: bar1
           style:
-            color: red
             icon: usb
-        - icon-button: bar
+        - icon-button: bar2
           style:
-            color: orange
             icon: adsr
-        - icon-button: bar
+        - icon-toggle-button: bar3
           style:
-            color: yellow
             icon: play
-        - icon-button: bar
+            secondary-icon: stop
+        - icon-button: bar4
           style:
-            color: green
             icon: save
-        - icon-button: bar
+        - icon-button: bar5
           style:
-            color: blue
             icon: copy
     - hor:
-        - icon-toggle-button: bar
+        - icon-toggle-button: bar6
           style:
-            color: red
-            secondary-color: olive
             icon: diskio
             secondary-icon: stop
-        - icon-toggle-button: bar
+        - icon-toggle-button: bar7
           style:
-            color: orange
             icon: filterbandpass
             secondary-icon: filterlowpass
-        - icon-toggle-button: bar
+        - icon-toggle-button: bar8
           style:
-            color: yellow
             icon: phase
             secondary-icon: mono
-        - icon-toggle-button: bar
+        - icon-toggle-button: bar9
           style:
-            color: green
-            secondary-color: maroon
             icon: caretdown
             secondary-icon: caretup
-        - icon-button: bar
+        - icon-toggle-button: bar10
           style:
-            color: blue
             icon: pointer
   style:
     color: olive
+    secondary-color: blue
     pad: 0.05
     background: navy
+    text-size: 25

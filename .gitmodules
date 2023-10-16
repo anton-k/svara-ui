@@ -7,3 +7,6 @@
 [submodule "libs/fontaudio"]
 	path = libs/fontaudio
 	url = git@github.com:fefanto/fontaudio.git
+[submodule "libs/juce"]
+	path = libs/juce
+	url = https://github.com/juce-framework/JUCE

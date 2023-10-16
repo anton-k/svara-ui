@@ -19,6 +19,13 @@
 
 // Build Application from YAML-file
 
+// float compare resolution
+const float EPS = 0.0001;
+
+bool equalFloats(float a, float b) {
+  return abs(a - b) < EPS;
+}
+
 template<class T>
 void printVar(std::string name, T val)
 {
@@ -332,7 +339,7 @@ void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string
   if (widgetType != Parser::Widget::Input) {
     app->state->appendCallbackDouble(name, new Callback<double>([widget](double val) {
         float v = val;
-        if (widget->getValue() != v) {
+        if (!equalFloats(widget->getValue(), v)) {
           widget->setValue(v);
         }
     }));
@@ -420,6 +427,8 @@ class BuildWidget : public Parser::Widget {
       app->scene->addWidget(widget, rect);
     };
 
+    // TODO: see nvim examples/Plugins/AUv3SynthPluginDemo.h
+    // JUCE example on how to change font size
     void button(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 
       padRect(rect, style.pad);
@@ -442,6 +451,8 @@ class BuildWidget : public Parser::Widget {
           this->app->state->setInt(name, *counter); 
         }
       };
+
+      widget->setLookAndFeel(&(widget->getLookAndFeel()));
 
       PLOG_DEBUG << "make button: " << name << " with text: " << title;
       app->scene->addWidget(widget, rect);
@@ -586,6 +597,11 @@ class BuildWidget : public Parser::Widget {
       widget->setToggleable(true);
       widget->setClickingTogglesState(true);
       widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
+      widget->onStateChange = [&style,this,name,widget] { 
+        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
+          this->app->state->setInt(name, 1 - this->app->state->getInt(name));
+        }
+      };
      
       PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
       app->setColor(style.secondaryColor, [widget] (auto c) {
@@ -596,15 +612,6 @@ class BuildWidget : public Parser::Widget {
         widget->setColour(juce::DrawableButton::backgroundColourId, c);
         widget->setColour(juce::DrawableButton::backgroundOnColourId, c);
       });
-
-
-      int* counter = new int(0);
-      widget->onStateChange = [&style,this,name,widget,counter] { 
-        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
-          *counter = *counter + 1;
-          this->app->state->setInt(name, *counter); 
-        }
-      };
 
       PLOG_DEBUG << "make icon toggle button: " << name << " with text: " << title;
       app->scene->addWidget(widget, rect);
