@@ -23,9 +23,9 @@ project(GUI_APP_EXAMPLE VERSION 0.0.1)
 # include that subdirectory as part of the build.
 
 
-find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your system
+# find_package(JUCE CONFIG REQUIRED)        # If you've installed JUCE to your system
 # or
-# add_subdirectory(JUCE)                    # If you've put JUCE in a subdirectory called JUCE
+add_subdirectory(libs/juce)                    # If you've put JUCE in a subdirectory called JUCE
 
 # If your app depends the VST2 SDK, perhaps to host VST2 plugins, CMake needs to be told where
 # to find the SDK on your system. This setup should be done before calling `juce_add_gui_app`.
@@ -71,21 +71,23 @@ juce_add_gui_app(GuiAppExample
 
 target_sources(GuiAppExample
     PRIVATE
-        src/model/Model.cpp
-        src/app/App.cpp
-        src/app/Palette.cpp
-        src/app/Build.cpp
-        src/Main.cpp
-        src/MainComponent.cpp
-        src/parser/Debug.cpp
-        src/parser/Yaml.cpp
-        src/parser/Parser.cpp
-        src/parser/Expr.cpp
-        src/widgets/Dot.cpp
-        src/widgets/Meter.cpp
-        src/widgets/XYPad.cpp
-        src/widgets/ToggleGroup.cpp
-        src/widgets/KeyPressListener.cpp
+        src/app/desktop/Main.cpp
+        src/app/desktop/MockUi.cpp
+        src/audio/CsoundApp.cpp
+        src/audio/CsoundProcessor.cpp
+        src/ui/model/Model.cpp
+        src/ui/App.cpp
+        src/ui/Palette.cpp
+        src/ui/Build.cpp
+        src/ui/parser/Yaml.cpp
+        src/ui/parser/Parser.cpp
+        src/ui/parser/Expr.cpp
+        src/ui/widgets/Dot.cpp
+        src/ui/widgets/Meter.cpp
+        src/ui/widgets/XYPad.cpp
+        src/ui/widgets/ToggleGroup.cpp
+        src/ui/widgets/KeyPressListener.cpp
+        src/ui/widgets/Board.cpp
         )
 
 # `target_compile_definitions` adds some preprocessor definitions to our target. In a Projucer
@@ -118,8 +120,161 @@ juce_add_binary_data(FontaudioIcons
   HEADER_NAME "Icons.h"
   NAMESPACE Icons
   SOURCES
-  resources/Icons/fad-ADR.svg
-  #  libs/fontaudio/svgs/fad-ADSR.svg
+  libs/fontaudio/svgs/fad-ADR.svg
+  libs/fontaudio/svgs/fad-ADSR.svg
+  libs/fontaudio/svgs/fad-AHDSR.svg
+  libs/fontaudio/svgs/fad-armrecording.svg
+  libs/fontaudio/svgs/fad-arpchord.svg
+  libs/fontaudio/svgs/fad-arpdownandup.svg
+  libs/fontaudio/svgs/fad-arpdown.svg
+  libs/fontaudio/svgs/fad-arpdownup.svg
+  libs/fontaudio/svgs/fad-arpplayorder.svg
+  libs/fontaudio/svgs/fad-arprandom.svg
+  libs/fontaudio/svgs/fad-arpupandown.svg
+  libs/fontaudio/svgs/fad-arpupdown.svg
+  libs/fontaudio/svgs/fad-arpup.svg
+  libs/fontaudio/svgs/fad-arrows-horz.svg
+  libs/fontaudio/svgs/fad-arrows-vert.svg
+  libs/fontaudio/svgs/fad-AR.svg
+  libs/fontaudio/svgs/fad-automation-2p.svg
+  libs/fontaudio/svgs/fad-automation-3p.svg
+  libs/fontaudio/svgs/fad-automation-4p.svg
+  libs/fontaudio/svgs/fad-backward.svg
+  libs/fontaudio/svgs/fad-bluetooth.svg
+  libs/fontaudio/svgs/fad-caret-down.svg
+  libs/fontaudio/svgs/fad-caret-left.svg
+  libs/fontaudio/svgs/fad-caret-right.svg
+  libs/fontaudio/svgs/fad-caret-up.svg
+  libs/fontaudio/svgs/fad-close.svg
+  libs/fontaudio/svgs/fad-copy.svg
+  libs/fontaudio/svgs/fad-cpu.svg
+  libs/fontaudio/svgs/fad-cutter.svg
+  libs/fontaudio/svgs/fad-digital0.svg
+  libs/fontaudio/svgs/fad-digital1.svg
+  libs/fontaudio/svgs/fad-digital2.svg
+  libs/fontaudio/svgs/fad-digital3.svg
+  libs/fontaudio/svgs/fad-digital4.svg
+  libs/fontaudio/svgs/fad-digital5.svg
+  libs/fontaudio/svgs/fad-digital6.svg
+  libs/fontaudio/svgs/fad-digital7.svg
+  libs/fontaudio/svgs/fad-digital8.svg
+  libs/fontaudio/svgs/fad-digital9.svg
+  libs/fontaudio/svgs/fad-digital-colon.svg
+  libs/fontaudio/svgs/fad-digital-dot.svg
+  libs/fontaudio/svgs/fad-diskio.svg
+  libs/fontaudio/svgs/fad-drumpad.svg
+  libs/fontaudio/svgs/fad-duplicate.svg
+  libs/fontaudio/svgs/fad-eraser.svg
+  libs/fontaudio/svgs/fad-ffwd.svg
+  libs/fontaudio/svgs/fad-filter-bandpass.svg
+  libs/fontaudio/svgs/fad-filter-bell.svg
+  libs/fontaudio/svgs/fad-filter-bypass.svg
+  libs/fontaudio/svgs/fad-filter-highpass.svg
+  libs/fontaudio/svgs/fad-filter-lowpass.svg
+  libs/fontaudio/svgs/fad-filter-notch.svg
+  libs/fontaudio/svgs/fad-filter-rez-highpass.svg
+  libs/fontaudio/svgs/fad-filter-rez-lowpass.svg
+  libs/fontaudio/svgs/fad-filter-shelving-hi.svg
+  libs/fontaudio/svgs/fad-filter-shelving-lo.svg
+  libs/fontaudio/svgs/fad-foldback.svg
+  libs/fontaudio/svgs/fad-forward.svg
+  libs/fontaudio/svgs/fad-hardclipcurve.svg
+  libs/fontaudio/svgs/fad-hardclip.svg
+  libs/fontaudio/svgs/fad-headphones.svg
+  libs/fontaudio/svgs/fad-h-expand.svg
+  libs/fontaudio/svgs/fad-keyboard.svg
+  libs/fontaudio/svgs/fad-lock.svg
+  libs/fontaudio/svgs/fad-logo-aax.svg
+  libs/fontaudio/svgs/fad-logo-abletonlink.svg
+  libs/fontaudio/svgs/fad-logo-audacity.svg
+  libs/fontaudio/svgs/fad-logo-audiobus.svg
+  libs/fontaudio/svgs/fad-logo-au.svg
+  libs/fontaudio/svgs/fad-logo-cubase.svg
+  libs/fontaudio/svgs/fad-logo-fl.svg
+  libs/fontaudio/svgs/fad-logo-juce.svg
+  libs/fontaudio/svgs/fad-logo-ladspa.svg
+  libs/fontaudio/svgs/fad-logo-live.svg
+  libs/fontaudio/svgs/fad-logo-lv2.svg
+  libs/fontaudio/svgs/fad-logo-protools.svg
+  libs/fontaudio/svgs/fad-logo-rackext.svg
+  libs/fontaudio/svgs/fad-logo-reaper.svg
+  libs/fontaudio/svgs/fad-logo-reason.svg
+  libs/fontaudio/svgs/fad-logo-rewire.svg
+  libs/fontaudio/svgs/fad-logo-studioone.svg
+  libs/fontaudio/svgs/fad-logo-tracktion.svg
+  libs/fontaudio/svgs/fad-logo-vst.svg
+  libs/fontaudio/svgs/fad-logo-waveform.svg
+  libs/fontaudio/svgs/fad-loop.svg
+  libs/fontaudio/svgs/fad-metronome.svg
+  libs/fontaudio/svgs/fad-microphone.svg
+  libs/fontaudio/svgs/fad-midiplug.svg
+  libs/fontaudio/svgs/fad-modrandom.svg
+  libs/fontaudio/svgs/fad-modsawdown.svg
+  libs/fontaudio/svgs/fad-modsawup.svg
+  libs/fontaudio/svgs/fad-modsh.svg
+  libs/fontaudio/svgs/fad-modsine.svg
+  libs/fontaudio/svgs/fad-modsquare.svg
+  libs/fontaudio/svgs/fad-modtri.svg
+  libs/fontaudio/svgs/fad-modularplug.svg
+  libs/fontaudio/svgs/fad-mono.svg
+  libs/fontaudio/svgs/fad-mute.svg
+  libs/fontaudio/svgs/fad-next.svg
+  libs/fontaudio/svgs/fad-open.svg
+  libs/fontaudio/svgs/fad-paste.svg
+  libs/fontaudio/svgs/fad-pause.svg
+  libs/fontaudio/svgs/fad-pen.svg
+  libs/fontaudio/svgs/fad-phase.svg
+  libs/fontaudio/svgs/fad-play.svg
+  libs/fontaudio/svgs/fad-pointer.svg
+  libs/fontaudio/svgs/fad-powerswitch.svg
+  libs/fontaudio/svgs/fad-preset-ab.svg
+  libs/fontaudio/svgs/fad-preset-a.svg
+  libs/fontaudio/svgs/fad-preset-ba.svg
+  libs/fontaudio/svgs/fad-preset-b.svg
+  libs/fontaudio/svgs/fad-prev.svg
+  libs/fontaudio/svgs/fad-punch-in.svg
+  libs/fontaudio/svgs/fad-punch-out.svg
+  libs/fontaudio/svgs/fad-ram.svg
+  libs/fontaudio/svgs/fad-random-1dice.svg
+  libs/fontaudio/svgs/fad-random-2dice.svg
+  libs/fontaudio/svgs/fad-record.svg
+  libs/fontaudio/svgs/fad-redo.svg
+  libs/fontaudio/svgs/fad-repeat-one.svg
+  libs/fontaudio/svgs/fad-repeat.svg
+  libs/fontaudio/svgs/fad-rew.svg
+  libs/fontaudio/svgs/fad-roundswitch-off.svg
+  libs/fontaudio/svgs/fad-roundswitch-on.svg
+  libs/fontaudio/svgs/fad-saveas.svg
+  libs/fontaudio/svgs/fad-save.svg
+  libs/fontaudio/svgs/fad-scissors.svg
+  libs/fontaudio/svgs/fad-shuffle.svg
+  libs/fontaudio/svgs/fad-sliderhandle-1.svg
+  libs/fontaudio/svgs/fad-sliderhandle-2.svg
+  libs/fontaudio/svgs/fad-slider-round-1.svg
+  libs/fontaudio/svgs/fad-slider-round-2.svg
+  libs/fontaudio/svgs/fad-slider-round-3.svg
+  libs/fontaudio/svgs/fad-softclipcurve.svg
+  libs/fontaudio/svgs/fad-softclip.svg
+  libs/fontaudio/svgs/fad-solo.svg
+  libs/fontaudio/svgs/fad-speaker.svg
+  libs/fontaudio/svgs/fad-squareswitch-off.svg
+  libs/fontaudio/svgs/fad-squareswitch-on.svg
+  libs/fontaudio/svgs/fad-stereo.svg
+  libs/fontaudio/svgs/fad-stop.svg
+  libs/fontaudio/svgs/fad-thunderbolt.svg
+  libs/fontaudio/svgs/fad-timeselect.svg
+  libs/fontaudio/svgs/fad-undo.svg
+  libs/fontaudio/svgs/fad-unlock.svg
+  libs/fontaudio/svgs/fad-usb.svg
+  libs/fontaudio/svgs/fad-v-expand.svg
+  libs/fontaudio/svgs/fad-vroundswitch-off.svg
+  libs/fontaudio/svgs/fad-vroundswitch-on.svg
+  libs/fontaudio/svgs/fad-vsquareswitch-off.svg
+  libs/fontaudio/svgs/fad-vsquareswitch-on.svg
+  libs/fontaudio/svgs/fad-waveform.svg
+  libs/fontaudio/svgs/fad-xlrplug.svg
+  libs/fontaudio/svgs/fad-zoomin.svg
+  libs/fontaudio/svgs/fad-zoomout.svg  
 )
 
 target_include_directories(GuiAppExample PRIVATE resources/Icons)
@@ -130,10 +285,15 @@ target_include_directories(GuiAppExample PRIVATE resources/Icons)
 # linked automatically. If we'd generated a binary data target above, we would need to link to it
 # here too. This is a standard CMake command.
 
+include_directories("/usr/include/csound")
+
+# see JUCE/examples/DemoRunner/CmakeLists.txt for examples of extra flags and utils
 target_link_libraries(GuiAppExample
     PRIVATE
         # GuiAppData            # If we'd created a binary data target, we'd link to it here
         juce::juce_gui_extra
+        juce::juce_audio_utils
+        juce::juce_audio_devices
         FontaudioIcons
     PUBLIC
         juce::juce_recommended_config_flags
@@ -141,11 +301,12 @@ target_link_libraries(GuiAppExample
         juce::juce_recommended_warning_flags
         plog
         yaml-cpp
+        csound64
         )
 
-include_directories("../MyStaticLibrary")
+      include_directories("../MyStaticLibrary")
 
-target_compile_options(GuiAppExample PRIVATE -Werror -Wall -Wextra)
+      target_compile_options(GuiAppExample PRIVATE -Wall -Wextra)
 
 # How to load images on linux
 # https://github.com/monocasual/giada/blob/master/CMakeLists.txt

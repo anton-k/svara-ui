@@ -4,6 +4,8 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <csound.hpp>
+#include <plog/Log.h>
 
 int check_model();
 
@@ -122,7 +124,6 @@ class Callback
     std::vector<std::function<void(T)>> funs;
 };
 
-
 // ---------------------------------------------------------------------------
 // Var
 
@@ -149,7 +150,6 @@ class Var
 
 // ---------------------------------------------------------------------------
 // State
-
 
 template <class T>
 class Vars
@@ -346,3 +346,114 @@ Expr<B> map(std::function<B(A)> f, Expr<A> a)
   return Expr<B>([a,f] { return f(a.apply()); }, std::set<Chan>(a.getChans()));
 }
 
+template<typename T>
+using Get = std::function<T()>;
+
+template<typename T>
+using Set = std::function<void(T)>;
+
+template<typename T>
+Set<T> appendSet(Set<T> a, Set<T> b) {
+  return [a, b](T val) {
+    a(val);
+    b(val);
+  };
+}
+template<typename T>
+Set<T> emptySet() {
+  return [](T val) { (void) val; };
+}
+
+// Interface for Csound engine. Which actions UI can perform
+class CsdModel {
+  public:
+    // return setter of control channel
+    virtual Set<MYFLT> setChannel(std::string name) = 0;
+
+    // return setter of string channel
+    virtual Set<std::string> setStringChannel(std::string name) = 0;
+
+    // return getter of control channel
+    virtual Get<MYFLT> getChannel(std::string name) = 0;
+
+    // return getter of control channel
+    virtual Get<std::string> getStringChannel(std::string name) = 0;
+
+    // schedule a note
+    virtual void readScore(std::string &sco) = 0;
+};
+
+// Mock csd implementation does nothing
+class MockCsdModel : public CsdModel {
+  public:
+    Set<MYFLT> setChannel(std::string name) override {
+      return [name](MYFLT val) {
+        PLOG_INFO << "[csd] set control channel " << name << " to: " << val;
+      };
+    }
+    Set<std::string> setStringChannel(std::string name) override {
+      return [name](std::string val) {
+        PLOG_INFO << "[csd] set string channel " << name << " to: " << val;
+      };
+    }
+
+    Get<MYFLT> getChannel(std::string _name) override {
+      return []() { return 0; };
+    }
+
+    Get<std::string> getStringChannel(std::string _name) override {
+      return []() { return ""; };
+    }
+
+    void readScore(std::string &sco) override {
+      PLOG_INFO << "[csd] read score: " << sco;
+    };
+};
+
+// Real Csound interface implementation
+class RealCsdModel : public CsdModel {
+  public:
+    RealCsdModel(Csound* _csound): csound(_csound) {}
+
+    Set<MYFLT> setChannel(std::string name) override {
+      MYFLT *channelPtr;
+      csound->GetChannelPtr(channelPtr, name.c_str(), CSOUND_INPUT_CHANNEL | CSOUND_CONTROL_CHANNEL);
+
+      Set<MYFLT> setter = [channelPtr](MYFLT val) {
+        *channelPtr = val;
+      };
+      return setter;
+    }
+
+    Set<std::string> setStringChannel(std::string name) override {
+      return [this, name](std::string val) {
+        this->csound->SetStringChannel(name.c_str(), (char *) val.c_str());
+      };
+    }
+
+    Get<MYFLT> getChannel(std::string name) override {
+      MYFLT *channelPtr;
+      csound->GetChannelPtr(channelPtr, name.c_str(), CSOUND_OUTPUT_CHANNEL | CSOUND_CONTROL_CHANNEL);
+
+      Get<MYFLT> getter = [channelPtr]() {
+        return *channelPtr;
+      };
+      return getter;
+    }
+
+    Get<std::string> getStringChannel(std::string name) override {
+      return [this, name]() {
+        char* result = {};
+        this->csound->GetStringChannel(name.c_str(), result);
+        return std::string(result);
+      };
+    }
+
+    void readScore(std::string &sco) override {
+      PLOG_INFO << "[csd] read score: " << sco;
+      csound->ReadScore(sco.c_str());
+    };
+
+  private:
+    Csound* csound;
+};

@@ -1,0 +1,15 @@
+config:
+  size:
+    width: 200
+    height: 200
+state:
+  init:
+    gain!: 0.5
+    showGain: 0.0
+ui:
+  hor:
+    - knob: gain
+    - dot-meter: showGain
+csound:
+  write: [gain]
+  read: [showGain]

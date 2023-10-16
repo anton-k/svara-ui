@@ -1,0 +1,27 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo: 0.5
+    zoo: 0.5
+    bar: 0.25
+ui:
+  ver:
+    - knob: bar
+    - hor:
+      - group:
+          hor:
+            - knob: foo
+            - knob: zoo
+          name: filter
+        style:
+          color: olive
+          background: navy
+
+      - knob: bar
+  style:
+    background: olive
+
+

@@ -7,13 +7,13 @@ namespace Parser {
 template<class T>
 void printVar(std::string name, T val)
 {
-  std::cout << name << ": " << val << "\n";
+  PLOG_DEBUG << name << ": " << val << "\n";
 }
 
 template<class T>
 void printUpdateVar(std::string trigger, std::string name, T val)
 {
-  std::cout << trigger << " " << name << ": " << val << "\n";
+  PLOG_DEBUG << trigger << " " << name << ": " << val << "\n";
 }
 
 class DebugInits : public InitVars {
@@ -40,7 +40,7 @@ class DebugConfig : public Config {
   public:
     void windowSize(int height, int width) override 
     {
-      std::cout << "window size" << "\n" << "  height: " << height << "\n" << "  width: " << width << "\n";
+      PLOG_DEBUG << "window size" << "\n" << "  height: " << height << "\n" << "  width: " << width << "\n";
     }
 };
 
@@ -48,7 +48,7 @@ class DebugWidget : public Widget {
   void knob(Style& style, Rect rect, std::string name) override { printVar("knob", name); };
   void slider(Style& style, Rect rect, std::string name) override { printVar("slider", name); };
   void bar(Style& style, Rect rect, std::string name) override { printVar("bar", name); };
-  void xyPad(Rect rect, std::string nameX, std::string nameY) override { std::cout << "xy-pad: " << nameX << " " << nameY << "\n"; };
+  void xyPad(Rect rect, std::string nameX, std::string nameY) override { PLOG_DEBUG << "xy-pad: " << nameX << " " << nameY << "\n"; };
   void button(Rect rect, std::string name) override { printVar("button", name); };
   void toggle(Rect rect, std::string name) override { printVar("toggle", name); };
   // void buttonRow(std::string name) override { (void)name; };
@@ -70,8 +70,8 @@ class DebugStyle : public StyleUpdate {
   void secondaryColor(Parser::Val<Parser::Col> col) override { printVar("secondary-color", col.getVal().val); };
   void textSize(Val<int> size) override { printVar("text-size", size.getVal()); };
   void font(Parser::Val<std::string> name) override { printVar("font", name.getVal()); };
-  void pad(Pad pad) override { std::cout << "pad: " << pad.top << " " << pad.bottom << " "<< pad.left << " " << pad.right << "\n"; };
-  void border(Border border) override { std::cout << "border: " << border.width << " " << border.round << "\n"; };
+  void pad(Pad pad) override { PLOG_DEBUG << "pad: " << pad.top << " " << pad.bottom << " "<< pad.left << " " << pad.right << "\n"; };
+  void border(Border border) override { PLOG_DEBUG << "border: " << border.width << " " << border.round << "\n"; };
   void hints(Hint val) override { printVar("hint", fromHint(val)); };
 };
 

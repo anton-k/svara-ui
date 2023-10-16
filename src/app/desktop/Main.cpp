@@ -1,4 +1,11 @@
-#include "MainComponent.h"
+#include "../../audio/CsoundApp.h"
+#include "../../audio/CsoundProcessor.h"
+
+#include "csound.hpp"
+#include <plog/Log.h>
+#include <plog/Initializers/ConsoleInitializer.h>
+#include <plog/Formatters/MessageOnlyFormatter.h>
+#include "MockUi.h"
 
 //==============================================================================
 class GuiAppApplication  : public juce::JUCEApplication
@@ -10,7 +17,7 @@ public:
     // We inject these as compile definitions from the CMakeLists.txt
     // If you've enabled the juce header with `juce_generate_juce_header(<thisTarget>)`
     // you could `#include <JuceHeader.h>` and use `ProjectInfo::projectName` etc. instead.
-    const juce::String getApplicationName() override       { return "svara";/* JUCE_APPLICATION_NAME_STRING;*/ }
+    const juce::String getApplicationName() override       { return "svara-ui";/* JUCE_APPLICATION_NAME_STRING;*/ }
     const juce::String getApplicationVersion() override    { return JUCE_APPLICATION_VERSION_STRING; }
     bool moreThanOneInstanceAllowed() override             { return true; }
 
@@ -19,14 +26,28 @@ public:
     {
         // This method is where you should put your application's initialisation code..
         juce::ignoreUnused (commandLine);
+    
+        plog::init<plog::MessageOnlyFormatter>(plog::verbose, plog::streamStdOut);
 
-        mainWindow.reset (new MainWindow (getApplicationName()));
+       	InitApp args = InitApp(juce::ArgumentList("svara-ui", getCommandLineParameterArray()));
+
+       	if (args.isUiMock) {
+       	  component = std::unique_ptr<juce::Component> (new MockUi(juce::File(args.uiFile.c_str())));
+        } else {
+          player = std::make_unique<CsdProcessor> ();
+          player->setup(juce::File(args.csoundFile.c_str()));
+          component = std::unique_ptr<juce::Component> (new CsdApp (player.get()));
+        }
+
+        //Create an instance of Csound
+        mainWindow.reset (new MainWindow ("ui", component.get()));
     }
 
     void shutdown() override
     {
         // Add your application's shutdown code here..
-
+        if (player) { player->stop(); }
+        component = nullptr;
         mainWindow = nullptr; // (deletes our window)
     }
 
@@ -54,14 +75,15 @@ public:
     class MainWindow    : public juce::DocumentWindow
     {
     public:
-        explicit MainWindow (juce::String name)
+        explicit MainWindow (juce::String name, juce::Component* _component)
             : DocumentWindow (name,
                               juce::Desktop::getInstance().getDefaultLookAndFeel()
                                                           .findColour (ResizableWindow::backgroundColourId),
-                              DocumentWindow::allButtons)
+                              DocumentWindow::allButtons),
+        component(_component)
         {
             setUsingNativeTitleBar (true);
-            setContentOwned (new MainComponent(), true);
+            setContentOwned (component, true);
 
            #if JUCE_IOS || JUCE_ANDROID
             setFullScreen (true);
@@ -91,11 +113,14 @@ public:
         */
 
     private:
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)
+        juce::Component* component;
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)        
     };
 
 private:
     std::unique_ptr<MainWindow> mainWindow;
+    std::unique_ptr<CsdProcessor> player;
+    std::unique_ptr<juce::Component> component;
 };
 
 //==============================================================================

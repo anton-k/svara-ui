@@ -8,6 +8,35 @@
 namespace Parser
 {
 
+// Reads YAML definition of UI from csound file. 
+// Definition should be in XML-element <SvaraUi> ... </SvaraUi>.
+bool readUiDef (juce::File csdFile, juce::String &result) {
+  bool hasUi = false;
+  bool collectLines = false;
+  juce::StringArray def;
+
+  if (csdFile.existsAsFile()) {
+    juce::StringArray linesFromCsd;
+    linesFromCsd.addLines(csdFile.loadFileAsString());
+
+    for (const auto& line : linesFromCsd) {
+      if (line.startsWith("</SvaraUi>")) {
+        result = def.joinIntoString("\n");
+        return collectLines; // if we stated to collect lines then result is ok
+      }
+
+      if (collectLines) {
+        def.add(line);
+      }
+
+      if (!collectLines && line.startsWith("<SvaraUi>")) {
+        collectLines = true;
+      } 
+    }
+  }
+  return hasUi;
+}
+
 Expr<std::string> toStringExpr(Val<std::string> v, State* state)
 {
   if (v.isChan()) {
@@ -85,6 +114,7 @@ Update* UpdateVars::runUpdater(YAML::Node node)
           } else {
             PLOG_ERROR << "update " << key << " is defined as int, but set to non int value";
           }
+          break;
         }
       case Type::Double :
         {
@@ -96,6 +126,7 @@ Update* UpdateVars::runUpdater(YAML::Node node)
           } else {
             PLOG_ERROR << "update " << key << " is defined as double, but set to non double value";
           }
+          break;
         }
       case Type::String :
         {
@@ -103,6 +134,7 @@ Update* UpdateVars::runUpdater(YAML::Node node)
           Callback<std::string>* setter = this->getSetString(key);
           auto proc = [this,setter,str] () { setter->apply(str); };
           res->append(Procedure(proc));
+          break;
         }
     }
   });
@@ -248,6 +280,16 @@ std::string getWidgetName(YAML::Node node)
   });  
   return name;
 }
+
+std::string getIconName(YAML::Node node)
+{
+  std::string name = "logojuce";
+  forString(node, "icon", [&name](auto str) { 
+    name = str; 
+  });  
+  return name;
+}
+
 
 std::vector<std::string> getNames(YAML::Node node)
 {
@@ -398,6 +440,7 @@ void Widget::run(YAML::Node node, Rect rect, Style style)
   forString(node, "bar", [this, rect, widgetType, &style](auto chan) { this->bar(style, rect, chan, widgetType); });
   forString(node, "button", [this, name, rect, &style](auto chan) { this->button(style, rect, chan, name); });
   forString(node, "icon-button", [this, name, rect, &style](auto chan) { this->iconButton(style, rect, chan, name); });
+  forString(node, "icon-toggle-button", [this, name, rect, &style](auto chan) { this->iconToggleButton(style, rect, chan, name); });
   forString(node, "toggle", [this, name, rect, &style](auto chan) { this->toggle(style, rect, chan, name); });
   forString(node, "press-button", [this, name, rect, &style](auto chan) { this->pressButton(style, rect, chan, name); });
   forString(node, "check-toggle", [this, name, rect, &style](auto chan) { this->checkToggle(style, rect, chan, name); });
@@ -470,12 +513,14 @@ void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect, Style sty
   std::string tag = getLayoutListTag(isHor);
   std::vector<std::pair<float,YAML::Node>> boxes;  
 
-  forKey(node, tag, [&boxes](auto elems) {
+  forKey(node, tag, [parent, &style, rect, &boxes](auto elems) {
+      parent->widget->groupBegin(style, rect, "");
       if (elems.IsSequence()) {
         forNodes(elems, [&boxes](auto elem) { 
             boxes.push_back(std::pair(getScale(elem), elem));
         });
       }
+      parent->widget->groupEnd();
   });
   
   foldBoxes(isHor, boxes, rect, style, parent);
@@ -516,7 +561,7 @@ void runTabs(Ui* parent, YAML::Node node, Rect rect, Style style)
 
 void runLayout(Ui* parent, YAML::Node node, Rect rect, Style style)
 {
-  bool isHor = true;
+  bool isHor = true;  
   forListLayout(isHor,  parent, node, rect, style);
   forListLayout(!isHor, parent, node, rect, style);
   runGroup(parent, node, rect, style);
@@ -529,9 +574,19 @@ void Ui::updateStyle(YAML::Node root, Style& style)
     YAML::Node node = root["style"];
     forValColor(node, "color", [this,&style](auto col) { style.color = col; });
     forValColor(node, "background", [this,&style](auto col) { style.background = col; });
-    forValColor(node, "secondary-color", [this,&style](auto col) { style.secondaryColor = col; });
+    if (hasKey(node, "secondary-color")) {
+      forValColor(node, "secondary-color", [this,&style](auto col) { style.secondaryColor = col; });
+    } else {
+      forValColor(node, "color", [this,&style](auto col) { style.secondaryColor = col; });
+    }
     forInt(node, "text-size", [this,&style](auto size) { style.textSize = size; });
     forString(node, "text-align", [this, &style](auto align) { style.textAlign = align; });
+    forString(node, "icon", [this, &style](auto icon) { style.icon = icon; });
+    if (hasKey(node, "secondary-icon")) {
+      forString(node, "secondary-icon", [this, &style](auto icon) { style.secondaryIcon = icon; });
+    } else {
+      forString(node, "icon", [this, &style](auto icon) { style.secondaryIcon = icon; });
+    }
     forValString(node, "font", [this,&style](auto f) { style.font = f; });
     forString(node, "hints", [this,&style](auto x) { style.hint = toHint(x); });    
     forDouble(node, "pad", [this,&style](double x) { style.pad = Pad(x, x, x, x); });
@@ -550,11 +605,166 @@ void Ui::updateStyle(YAML::Node root, Style& style)
 void Ui::run(YAML::Node node, Rect rect, Style style) 
 { 
   PLOG_DEBUG << "UI::RUN";
-  // std::cout << node << "\n";  // TODO how to print node body in logger?
   PLOG_DEBUG << "RECT: " << rect.toString() << "\n";
   updateStyle(node, style);
   this->widget->run(node, rect, style);
   runLayout(this, node, rect, style);
+}
+
+// -------------------------------------------------------------------
+// Csound UI
+
+Set<int> errorScore() {
+  return [](int n) {
+    (void) n;
+    PLOG_ERROR << "Failed to parse score expression";
+  };
+}
+
+Get<std::string> CsoundUi::getScoreString(YAML::Node node) {
+  bool isConst = true;
+  std::vector<std::pair<Type, Val<std::string>>> vals;
+
+  forNodes(node, [this, &isConst, &vals](auto valNode) {
+      auto val = getValString(valNode, "");
+      Type ty = Type::String;
+      if (val.isChan()) {
+        isConst = false;
+        ty = this->getType(val.getChan().name);
+      } else {
+        if (isInt(valNode)) { ty = Type::Int; }
+        if (isDouble(valNode)) { ty = Type::Double; }
+      }
+      vals.push_back(std::pair(ty, val));
+  });
+
+  if (isConst) {
+    std::string res = "i";
+    std::for_each(vals.begin(), vals.end(), [&res](auto val) {
+      res.append(std::string(" "));
+      if (val.first != Type::String) {
+        res.append(val.second.getVal());
+      } else {
+        res.append("\"");
+        res.append(val.second.getVal());
+        res.append("\"");
+      }      
+    });
+    return [res]() { return res; };
+  } else {    
+    return [this, vals]() {
+      std::string res = "i";
+      std::for_each(vals.begin(), vals.end(), [this, &res](auto val) {
+        res.append(std::string(" "));
+        if (val.second.isChan()) {
+          std::string chanName = val.second.getChan().name;
+          switch (val.first) {
+            case Type::Int: { 
+              res.append(std::to_string(this->getterInt(chanName)())); 
+              break;
+            }
+            case Type::Double: { 
+              res.append(std::to_string(this->getterDouble(chanName)())); 
+              break;
+            }
+            case Type::String: {
+                res.append("\"");              
+                res.append(this->getterString(chanName)());
+                res.append("\"");
+                break;
+              }
+          }
+        } else {
+          if (val.first != Type::String) {
+            res.append(val.second.getVal());
+          } else {
+            res.append("\"");
+            res.append(val.second.getVal());
+            res.append("\"");
+          }      
+        }
+      });
+      return res; 
+
+    };
+  }
+  return []() { return "Error failed to parse notes"; };
+}
+
+Set<int> CsoundUi::parseSingleNoteScore (YAML::Node node) {
+  Get<std::string> getter = this->getScoreString(node);
+  return [this, getter](int val) { this->sendScore(getter()); };
+}
+
+Set<int> CsoundUi::parseManyNoteScore (YAML::Node node) {
+  Set<int> res = emptySet<int>();
+  forNodes(node, [this, &res](auto noteNode) {
+    res = appendSet(res, this->parseSingleNoteScore(noteNode));
+  });
+  return res;
+}
+
+Set<int> CsoundUi::parseCaseScore (YAML::Node node) {
+  Set<int> res = emptySet<int>();
+  bool isOk = false;
+  forKey(node, "case", [this, &isOk, &res](auto caseNode) {
+    if (caseNode.IsSequence()) {
+      int val = 0;
+      forNodes(caseNode, [this, &val, &res](auto noteNode) {
+        int currentVal = val;
+        Set<int> current = this->parseNotes(noteNode);
+        Set<int> withCond = [currentVal, current](int v) { if (v == currentVal) { current(v); }};
+        res = appendSet(res, withCond);
+        val++;
+      });
+    }
+    isOk = true;
+  });
+
+  return isOk ? res : errorScore();
+}
+
+Set<int> CsoundUi::parseNotes(YAML::Node node) {
+  if (node[0].IsScalar()) {
+    return parseSingleNoteScore(node);
+  } else if (node[0].IsSequence()) {
+    return parseManyNoteScore(node);
+  } 
+  
+  return errorScore();
+}
+
+Set<int> CsoundUi::parseScore(YAML::Node node) {
+  if (node.IsSequence() && node.size() > 0) {
+    return this->parseNotes(node);
+  }
+
+  if (node.IsMap() && hasKey(node, "case")) {
+    return parseCaseScore(node);
+  }
+
+  return errorScore();
+}
+
+void CsoundUi::run(YAML::Node node)
+{
+  forKey(node, "write", [this](auto writeNode) {
+    forNodes(writeNode, [this](auto channel) {
+        this->initWriteChannel(getString(channel, "unknown-channel"));
+    });       
+  });
+  
+  forKey(node, "read", [this](auto readNode) {
+    forNodes(readNode, [this](auto channel) {
+        this->initReadChannel(getString(channel, "unknown-channel"));
+    });       
+  });
+
+  forKey(node, "score", [this](auto scoreNode) {
+    forObject(scoreNode, [this](std::string name, auto valNode) {
+        this->initScore(name, this->parseScore(valNode));
+    });
+  });
 }
 
 // -------------------------------------------------------------------
@@ -576,7 +786,13 @@ void Window::run(YAML::Node node)
 {
   this->config->onKey(node, "config");
   this->state->onKey(node, "state");
-  this->ui->onKey(node, "ui", Rect(0.0, 0.0, 1.0, 1.0), Style());
+  Style style;
+  this->ui->updateStyle(node, style);
+  juce::Rectangle<float> topLevelRect = juce::Rectangle<float>(0, 0, 1, 1);
+  this->ui->begin(style, topLevelRect);
+  this->ui->onKey(node, "ui", topLevelRect, style);
+  this->ui->end();
+  this->csoundUi->onKey(node, "csound");
 }
 
 

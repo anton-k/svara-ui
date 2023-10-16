@@ -1,10 +1,12 @@
 #pragma once
 
-#include "../model/Model.h"
-#include "../parser/Parser.h"
+#include "model/Model.h"
+#include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
-#include "../widgets/KeyPressListener.h"
+#include "widgets/KeyPressListener.h"
+#include "widgets/Board.h"
 
+// Palette is a map from string names to colors
 class Palette {
   public:
     Palette();
@@ -15,6 +17,7 @@ class Palette {
     juce::Colour defaultColor;
 };
 
+// Application config
 class Config {
   public:
     Config(): windowWidth(200), windowHeight(100), palette(Palette()) {};
@@ -23,7 +26,16 @@ class Config {
     Palette palette;
 };
 
+class InitApp {
+  public:
+    InitApp(juce::ArgumentList args);
 
+    std::string csoundFile;
+    std::string uiFile;
+    bool isUiMock;
+};
+
+// Box is a container for UI-widget. It has bounding rectangle and visibility
 class Box {
   public:
     virtual std::string getName() = 0;
@@ -57,6 +69,8 @@ class Widget : public Box {
     juce::Component* widget;
 };
 
+
+// Container of widgets for layout
 class GroupBox : public Box {
   public:
     virtual void push_back(Box* box) { (void) box; };
@@ -66,26 +80,26 @@ class GroupBox : public Box {
 // Groups widgets and draws names border around them
 class Group : public GroupBox {
   public:
-    Group(juce::GroupComponent* _group, juce::Rectangle<float> _rect, bool _hasBorder):
+    Group(juce::Component* _group, juce::Rectangle<float> _rect, bool _hasBorder):
       rect(_rect),
       group(_group),
       children(std::vector<Box*>()),
       hasBorder(_hasBorder)
     {}
 
-    Group(Parser::Rect _rect, std::string name, bool _hasBorder)
+    Group(Parser::Style &style, Parser::Rect _rect, std::string name, bool _hasBorder)
     {
       hasBorder = _hasBorder;
 
       if (hasBorder) {
-        juce::GroupComponent* widget = new juce::GroupComponent();
+        juce::GroupComponent* widget = new GroupBoard();
         if (name.size() > 0) {
           widget->setText(juce::String(name));
           widget->setName(juce::String(name));
         }
         group = widget;
       } else {
-        group = new juce::Component();
+        group = new Board();
         group->setName(name);
       }
 
@@ -109,6 +123,8 @@ class Group : public GroupBox {
 
     juce::Component* getGroupWidget() { return group; }
 
+    bool getHasBorder() { return hasBorder; }
+
   private:
     Parser::Rect rect;
     juce::Component* group;
@@ -120,8 +136,9 @@ class Group : public GroupBox {
 // It is useful to implement tab like functionality.
 class Panel : public GroupBox {
   public:
-    Panel(Parser::Rect _rect, std::string _name):
+    Panel(Parser::Style _style, Parser::Rect _rect, std::string _name):
       rect(_rect),
+      style(_style),
       selected(0),
       panels(std::vector<Group*>()),
       name(_name)
@@ -156,6 +173,7 @@ class Panel : public GroupBox {
     std::string getGroupName();
 
     Parser::Rect rect;
+    Parser::Style style;
     size_t selected;
     std::vector<Group*> panels;
     std::string name;
@@ -185,12 +203,11 @@ public:
     void onKeyEvent(KeyEvent event);
 
 private:
-    //==============================================================================
-    // Your private member variables go here...
     void append(Box* box);
     std::vector<Box*> widgets;
     std::vector<GroupBox*> groupStack;
     Callback<KeyEvent> onKey;
+    juce::Colour backgroundColour = juce::Colour(0);
 };
 
 
@@ -212,11 +229,11 @@ class App {
     }
 
     // groups
-    juce::Component* groupBegin(Parser::Rect rect, std::string name = "");
+    Group* groupBegin(Parser::Style &style, Parser::Rect rect, std::string name = "");
     void groupEnd();
 
     // panels
-    Panel* panelBegin(Parser::Rect rect, std::string name);
+    Panel* panelBegin(Parser::Style style, Parser::Rect rect, std::string name);
     Panel* panelEnd();
     void panelItemBegin();
     void panelItemEnd();
@@ -234,4 +251,4 @@ class App {
     Scene* scene;
 };
 
-void initApp(App* app, YAML::Node node);
+void initApp(App* app, CsdModel* csound, YAML::Node node);

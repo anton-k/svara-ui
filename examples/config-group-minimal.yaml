@@ -7,15 +7,18 @@ state:
     foo: 0.5
     zoo: 0.5
 ui:
+  style:
+    background: navy
   group:
     style:
-      pad: 0.02
-    name: manin
+      pad: 0.04
+    name: main
     ver:
       - ver:
           - knob: foo
             style:
               color: orange
+              pad: 0.1
           - group:
               name: fourth
               slider: foo
@@ -24,10 +27,17 @@ ui:
               bottom: 0
       - group:
           name: second
+          style:
+            background: gray
+            pad: 0.06
           hor:
             - knob: zoo
+              style:
+                pad: 0.1
             - group:
                 knob: zoo
                 name: third
               style:
-                pad: 0.03
+                color: orange
+                background: olive
+                pad: 0.06

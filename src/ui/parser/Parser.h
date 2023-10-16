@@ -8,6 +8,7 @@
 namespace Parser
 {
   void check_parser();
+  bool readUiDef (juce::File csdFile, juce::String &result);
 
   typedef juce::Rectangle<float> Rect;
 
@@ -95,7 +96,10 @@ namespace Parser
         textAlign ("centered"),
         font (""),
         pad (Pad()),
-        border(Border()) {}
+        border(Border()),
+        icon ("logojuce"),
+        secondaryIcon ("logojuce")
+      {}
 
       Val<Col> color, secondaryColor, background;
       Val<double> textSize;
@@ -104,6 +108,7 @@ namespace Parser
       Pad pad;
       Border border;
       Hint hint;
+      std::string icon, secondaryIcon;
   };
 
   class IsYaml
@@ -193,6 +198,7 @@ namespace Parser
       virtual void button(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
       virtual void iconButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
       virtual void toggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
+      virtual void iconToggleButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void) title; };
       virtual void pressButton(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void checkToggle(Style& style, Rect rect, std::string name, std::string title) { (void) style; (void) rect; (void)name; (void)title; };
       virtual void checkGroup(Style& style, Rect rect, std::string chan, std::vector<std::string> names, bool isVer) { (void) style; (void) rect; (void) chan; (void)names; (void) isVer; };
@@ -257,11 +263,36 @@ namespace Parser
         layout(_layout)
       {};
 
+      virtual void begin(Style& style, juce::Rectangle<float> rect) {(void) style; (void) rect; };
+      virtual void end() {};
       void updateStyle(YAML::Node node, Style& style);
 
       Widget* widget;
       Layout* layout;
       void run(YAML::Node node, Rect rect, Style style) override;
+  };
+
+  class CsoundUi : public IsYaml
+  {
+    public:
+      CsoundUi() {};
+      virtual void initWriteChannel(std::string name) { (void)name; }
+      virtual void initReadChannel(std::string name) {(void)name; }
+      virtual void initScore(std::string name, Set<int> send) { (void)name; (void)send; }
+      void run(YAML::Node node);
+
+      virtual Type getType(std::string name) = 0;
+      virtual Get<int> getterInt(std::string name) = 0;
+      virtual Get<double> getterDouble(std::string name) = 0;
+      virtual Get<std::string> getterString(std::string name) = 0;
+      virtual void sendScore(std::string sco) = 0;
+
+      Get<std::string> getScoreString(YAML::Node node);
+      Set<int> parseSingleNoteScore (YAML::Node node);
+      Set<int> parseManyNoteScore (YAML::Node node);
+      Set<int> parseCaseScore (YAML::Node node);
+      Set<int> parseNotes(YAML::Node node);
+      Set<int> parseScore(YAML::Node node);
   };
 
   class Config : public IsYaml
@@ -277,14 +308,15 @@ namespace Parser
   class Window : public IsYaml
   {
     public:
-      Window();
-      Window(InitState* _state, Ui* _ui, Config* _config): state(_state), ui(_ui), config(_config) {};
+      // Window();
+      Window(InitState* _state, Ui* _ui, Config* _config, CsoundUi* _csoundUi): state(_state), ui(_ui), config(_config), csoundUi(_csoundUi) {};
 
       void run(YAML::Node node);
 
       InitState* state;
       Ui* ui;
       Config* config;
+      CsoundUi* csoundUi;
   };
 
   void run(Window win, YAML::Node node);

@@ -104,7 +104,7 @@ void Vars<T>::print()
 {
   for ( auto it = vars.begin(); it != vars.end(); ++it  )
   {
-    std::cout << it->first << " " << std::to_string(it->second->get()) << std::endl;
+    PLOG_DEBUG << it->first << " " << std::to_string(it->second->get()) << std::endl;
   } 
 }
 
@@ -260,7 +260,7 @@ void State::appendSetterString(std::string name, std::string key, std::string va
 // debug
 void State::printInt(std::string name)
 {
-  std::cout << name << ": " << getInt(name) << "\n";
+  PLOG_DEBUG << name << ": " << getInt(name) << "\n";
 }
 
 void State::printInts()
@@ -303,10 +303,10 @@ int check_model()
   Val* v1 = new DoubleVal(2);
   Val* v2 = new DoubleVal(2);
 
-  Callback<double> print( [](double d) { std::cout << d << "\n"; });
+  Callback<double> print( [](double d) { PLOG_DEBUG << d << "\n"; });
 
-  Callback<double> sayHi([](double d) { (void)d; std::cout << "Hi\n"; } );
-  Callback<double> sayBoo([](double d) { (void)d; std::cout << "Boo\n"; } );
+  Callback<double> sayHi([](double d) { (void)d; PLOG_DEBUG << "Hi\n"; } );
+  Callback<double> sayBoo([](double d) { (void)d; PLOG_DEBUG << "Boo\n"; } );
 
   double res = v1->getDouble() + v2->getDouble();
   print.append(sayHi);
@@ -323,7 +323,7 @@ int check_model()
 
   st.appendCallbackInt("x", new Callback<int>([&st](int v) { st.setInt("z", v + st.getInt("y")); }));
   st.appendCallbackInt("y", new Callback<int>([&st](int v) { st.setInt("z", v + st.getInt("x")); }));
-  st.appendCallbackInt("z", new Callback<int>([&st](int v) { (void)v; std::cout << "Z was updated with " << st.getInt("z") << "\n"; }));
+  st.appendCallbackInt("z", new Callback<int>([&st](int v) { (void)v; PLOG_DEBUG << "Z was updated with " << st.getInt("z") << "\n"; }));
 
   st.printInts();
   st.setInt("x", 2);

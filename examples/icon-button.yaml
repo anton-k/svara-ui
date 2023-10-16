@@ -5,37 +5,91 @@ config:
 state:
   init:
     foo!: 0
-    zoo!: 0
-    bar!: 0
-    qux!: 1
+    bar1!: 0
+    bar2!: 0
+    bar3!: 0
+    bar4!: 0
+    bar5!: 0
+    bar6!: 0
+    bar7!: 0
+    bar8!: 0
+    bar9!: 0
+    bar10!: 0
+    val1: 0.5
+    val2: 0.75
+csound:
+  write: [bar6]
+  score:
+    foo: [playFoo, 0, 1, .foo]
+    bar1: [play1, 0, 1]
+    bar2:
+      - [play2, 0, 1, on]
+      - [play2, 0, 1, off]
+    bar3:
+      case:
+        - [play1, 0, 1, off]
+        - [play1, 0, 1, on]
+    bar4: [play3, 0, 1, .bar3, .val1, next, .val2]
+    bar6:
+      case:
+        - [ [play1, 0, 1, off]
+          , [play2, 0, 1, off]
+          ]
+        - [play1, 0, 1, on]
 ui:
   ver:
     - button: foo
       name: plain
+      style:
+        secondary-color: navy
     - hor:
-        - icon-button: bar
-          name: press
+        - icon-button: bar1
           style:
-            color: red
-        - icon-button: bar
-          name: press
+            icon: usb
+        - icon-button: bar2
           style:
-            color: orange
-        - icon-button: bar
-          name: press
+            icon: adsr
+        - icon-toggle-button: bar3
           style:
-            color: yellow
-        - icon-button: bar
-          name: press
+            icon: play
+            secondary-icon: stop
+        - icon-button: bar4
           style:
-            color: green
-        - icon-button: bar
-          name: press
+            icon: save
+        - icon-button: bar5
           style:
-            color: blue
+            icon: copy
+    - group:
+        name: group
+        style:
+          background: black
+        hor:
+          - icon-toggle-button: bar6
+            style:
+              icon: diskio
+              secondary-icon: stop
+          - icon-toggle-button: bar7
+            style:
+              icon: filterbandpass
+              secondary-icon: filterlowpass
+          - icon-toggle-button: bar8
+            style:
+              icon: phase
+              secondary-icon: mono
+          - icon-toggle-button: bar9
+            style:
+              icon: caretdown
+              secondary-icon: caretup
+          - icon-toggle-button: bar10
+            style:
+              icon: pointer
+    - ver:
+        - slider: val1
+        - slider: val2
+      scale: 0.4
   style:
     color: olive
-    secondary-color: navy
+    secondary-color: blue
     pad: 0.05
-
-
+    background: navy
+    text-size: 25

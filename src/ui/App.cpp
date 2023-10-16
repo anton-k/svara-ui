@@ -1,5 +1,5 @@
 #include "App.h"
-#include "../parser/Parser.h"
+#include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <plog/Log.h>
 
@@ -13,6 +13,23 @@ juce::Colour Palette::fromName(Parser::Col col)
   } else {
     return defaultColor;
   }
+}
+
+// ------------------------------------------------------------------------------------- 
+// init app argument list
+
+InitApp::InitApp(juce::ArgumentList args)
+{
+  if (args.containsOption("--csound")) {
+    csoundFile = std::string(args.getValueForOption("--csound").toRawUTF8());
+    isUiMock = false;
+  } else {
+    isUiMock = true;
+  }
+
+  if (args.containsOption("--ui")) {
+    uiFile = std::string(args.getValueForOption("--ui").toRawUTF8()); 
+  } 
 }
 
 // ------------------------------------------------------------------------------------- 
@@ -115,7 +132,7 @@ std::string Panel::getGroupName()
 
 void Panel::initItem() 
 {
-  auto group = new Group(rect, getGroupName(), false);
+  auto group = new Group(style, rect, getGroupName(), false);
   panels.push_back(group);
 }
 
@@ -176,11 +193,11 @@ void Scene::setup(juce::Component* parent)
   std::for_each(widgets.begin(), widgets.end(), [parent, call] (Box* box) { box->append(call); });
 }
 
-juce::Component* App::groupBegin(Parser::Rect rect, std::string name)
+Group* App::groupBegin(Parser::Style &style, Parser::Rect rect, std::string name)
 {
-  auto groupBox = new Group(rect, name, true);
+  auto groupBox = new Group(style, rect, name, style.border.width != 0 || name != "");
   scene->groupStack.push_back(groupBox);
-  return groupBox->getGroupWidget();
+  return groupBox;
 }
 
 void App::groupEnd()
@@ -191,9 +208,9 @@ void App::groupEnd()
   scene->append(lastGroup);
 }
 
-Panel* App::panelBegin(Parser::Rect rect, std::string name)
+Panel* App::panelBegin(Parser::Style style, Parser::Rect rect, std::string name)
 {
-  Panel* panel = new Panel(rect, name);
+  Panel* panel = new Panel(style, rect, name);
   scene->groupStack.push_back(panel);
   return panel;
 }
