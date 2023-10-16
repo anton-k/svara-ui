@@ -1019,6 +1019,6 @@ void initApp(App* app, CsdModel* csound, YAML::Node node)
   Parser::CsoundUi* buildCsoundUi = new BuildCsoundUi(app, csound, csoundChannelReader);
   Parser::Window* buildWindow = new Parser::Window(buildState, buildUi, buildConfig, buildCsoundUi);
   buildWindow->run(node);
-  csoundChannelReader->startTimerHz(4);
+  csoundChannelReader->startTimerHz(20);
 }
 

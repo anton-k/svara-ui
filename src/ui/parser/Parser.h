@@ -289,6 +289,7 @@ namespace Parser
       Set<int> parseSingleNoteScore (YAML::Node node);
       Set<int> parseManyNoteScore (YAML::Node node);
       Set<int> parseCaseScore (YAML::Node node);
+      Set<int> parseNotes(YAML::Node node);
       Set<int> parseScore(YAML::Node node);
   };
 

@@ -612,6 +612,13 @@ void Ui::run(YAML::Node node, Rect rect, Style style)
 // -------------------------------------------------------------------
 // Csound UI
 
+Set<int> errorScore() {
+  return [](int n) {
+    (void) n;
+    PLOG_ERROR << "Failed to parse score expression";
+  };
+}
+
 Get<std::string> CsoundUi::getScoreString(YAML::Node node) {
   bool isConst = true;
   std::vector<std::pair<Type, Val<std::string>>> vals;
@@ -695,25 +702,46 @@ Set<int> CsoundUi::parseManyNoteScore (YAML::Node node) {
   return res;
 }
 
-Set<int> CsoundUi::parseCaseScore (YAML::Node node) {}
+Set<int> CsoundUi::parseCaseScore (YAML::Node node) {
+  Set<int> res = emptySet<int>();
+  bool isOk = false;
+  forKey(node, "case", [this, &isOk, &res](auto caseNode) {
+    if (caseNode.IsSequence()) {
+      int val = 0;
+      forNodes(caseNode, [this, &val, &res](auto noteNode) {
+        int currentVal = val;
+        Set<int> current = this->parseNotes(noteNode);
+        Set<int> withCond = [currentVal, current](int v) { if (v == currentVal) { current(v); }};
+        res = appendSet(res, withCond);
+        val++;
+      });
+    }
+    isOk = true;
+  });
+
+  return isOk ? res : errorScore();
+}
+
+Set<int> CsoundUi::parseNotes(YAML::Node node) {
+  if (node[0].IsScalar()) {
+    return parseSingleNoteScore(node);
+  } else if (node[0].IsSequence()) {
+    return parseManyNoteScore(node);
+  } 
+  
+  return errorScore();
+}
 
 Set<int> CsoundUi::parseScore(YAML::Node node) {
   if (node.IsSequence() && node.size() > 0) {
-    if (node[0].IsScalar()) {
-      return parseSingleNoteScore(node);
-    } else if (node[0].IsSequence()) {
-      return parseManyNoteScore(node);
-    }    
+    return this->parseNotes(node);
   }
 
-  if (node.IsMap()) {
+  if (node.IsMap() && hasKey(node, "case")) {
     return parseCaseScore(node);
   }
 
-  return [](int n) {
-    (void) n;
-    PLOG_ERROR << "Failed to parse score expression";
-  };
+  return errorScore();
 }
 
 void CsoundUi::run(YAML::Node node)

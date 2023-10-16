@@ -20,11 +20,22 @@ state:
 csound:
   write: [bar6]
   score:
-    bar1: ["play1", 0, 1]
+    foo: [playFoo, 0, 1, .foo]
+    bar1: [play1, 0, 1]
     bar2:
-      - ["play2", 0, 1, on]
-      - ["play2", 0, 1, off]
-    bar3: ["play3", 0, 1, .bar3, .val1, next, .val2]
+      - [play2, 0, 1, on]
+      - [play2, 0, 1, off]
+    bar3:
+      case:
+        - [play1, 0, 1, off]
+        - [play1, 0, 1, on]
+    bar4: [play3, 0, 1, .bar3, .val1, next, .val2]
+    bar6:
+      case:
+        - [ [play1, 0, 1, off]
+          , [play2, 0, 1, off]
+          ]
+        - [play1, 0, 1, on]
 ui:
   ver:
     - button: foo

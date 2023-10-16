@@ -450,6 +450,7 @@ class RealCsdModel : public CsdModel {
     }
 
     void readScore(std::string &sco) override {
+      PLOG_INFO << "[csd] read score: " << sco;
       csound->ReadScore(sco.c_str());
     };
 
