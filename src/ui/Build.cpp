@@ -17,6 +17,8 @@
 #include <Icons.h>
 #include "widgets/FadIcons.h"
 #include "widgets/Board.h"
+#include "widgets/Knob.h"
+#include "widgets/Slider.h"
 
 // Build Application from YAML-file
 
@@ -337,7 +339,6 @@ void setFont(App* app, Parser::Val<std::string> typeface, std::function<juce::Fo
   }
 }
 
-
 void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string name, juce::Slider::ColourIds colourId, Parser::Widget::Type widgetType = Parser::Widget::Auto)
 {
   widget->setRange(0, 1.0);
@@ -357,11 +358,12 @@ void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string
         }
     }));
   }
-
+/*
   app->setColor(style.color, [widget, colourId] (auto c) {
     widget->setColour(colourId, c);
     widget->setColour(juce::Slider::thumbColourId, c);          
   });
+*/
 }
 
 
@@ -371,7 +373,8 @@ class BuildWidget : public Parser::Widget {
     void knob(Parser::Style& style, Parser::Rect rect, std::string name) override 
     { 
       padRect(rect, style.pad);
-      juce::Slider* knob = new juce::Slider(juce::Slider::SliderStyle::Rotary, juce::Slider::TextEntryBoxPosition::NoTextBox);
+      Knob* knob = new Knob();
+      knob->setStyle(app, style);
       knob->setName(name);
       PLOG_DEBUG << "make knob: widget name: " << name << " value: " << app->state->getDouble(name);
       setSlider(app, knob, style, name, juce::Slider::rotarySliderFillColourId);
@@ -381,10 +384,8 @@ class BuildWidget : public Parser::Widget {
     void slider(Parser::Style& style, Parser::Rect rect, std::string name) override 
     {
       padRect(rect, style.pad);
-      juce::Slider::SliderStyle sliderStyle = (rect.getWidth() < rect.getHeight()) 
-          ? juce::Slider::SliderStyle::LinearVertical
-          : juce::Slider::SliderStyle::LinearHorizontal;
-      juce::Slider* slider = new juce::Slider(sliderStyle, juce::Slider::TextEntryBoxPosition::NoTextBox);
+      Slider* slider = new Slider(rect);
+      slider->setStyle(app, style);
       slider->setName(name);
       PLOG_DEBUG << "make slider: widget name: " << name << " value: " << app->state->getDouble(name);
       setSlider(app, slider, style, name, juce::Slider::trackColourId);
