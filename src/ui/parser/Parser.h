@@ -1,5 +1,5 @@
 #pragma once
-#include "../../libs/yaml-cpp/include/yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
 #include <string>
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "../model/Model.h"

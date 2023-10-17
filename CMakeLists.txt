@@ -277,8 +277,6 @@ juce_add_binary_data(FontaudioIcons
   libs/fontaudio/svgs/fad-zoomout.svg  
 )
 
-target_include_directories(GuiAppExample PRIVATE resources/Icons)
-
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
 # we're linking our executable target to the `juce::juce_gui_extra` module. Inter-module
 # dependencies are resolved automatically, so `juce_core`, `juce_events` and so on will also be

@@ -1,6 +1,6 @@
 // YAML helpers
 #pragma once
-#include "../../libs/yaml-cpp/include/yaml-cpp/yaml.h"
+#include <yaml-cpp/yaml.h>
 #include <string>
 #include <functional>
 #include "Parser.h"
