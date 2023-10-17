@@ -50,11 +50,6 @@ namespace Parser
       T val;
   };
 
-  Expr<int> toIntExpr(Val<int> v, State* state);
-  Expr<double> toDoubleExpr(Val<double> v, State* state);
-  Expr<std::string> toStringExpr(Val<std::string> v, State* state);
-  Expr<Col> toColExpr(Val<Col> v, State* state);
-
   class Pad
   {
     public:

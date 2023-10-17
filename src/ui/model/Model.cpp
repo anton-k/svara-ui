@@ -271,33 +271,6 @@ void State::printInts()
 // ---------------------------------------------------------------------------
 // Check
 
-Expr<int> readIntChan(Chan chan, State* state)
-{
-  std::set<Chan> ch;
-  ch.insert(chan);
-  auto getter = [state, chan] { return state->getInt(chan.name); };
-  return Expr<int>(getter, ch);
-}
-
-Expr<double> readDoubleChan(Chan chan, State* state)
-{
-  std::set<Chan> ch;
-  ch.insert(chan);
-  auto getter = [state, chan] { return state->getDouble(chan.name); };
-  return Expr<double>(getter, ch);
-}
-
-Expr<std::string> readStringChan(Chan chan, State* state)
-{
-  std::set<Chan> ch;
-  ch.insert(chan);
-  auto getter = [state, chan] { return state->getString(chan.name); };
-  return Expr<std::string>(getter, ch);
-}
-
-// ---------------------------------------------------------------------------
-// Check
-
 int check_model() 
 {
   Val* v1 = new DoubleVal(2);
