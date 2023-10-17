@@ -5,7 +5,7 @@ build:
 
 run: build
 	./cmake-build/GuiAppExample_artefacts/Gui\ App\ Example \
-			--ui=examples/combo-box.yaml
+			--ui=examples/toggle.yaml
 #		  --csound=examples/keyboard-hang.csd
 
 config:

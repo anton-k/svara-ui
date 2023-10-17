@@ -386,21 +386,24 @@ class BuildWidget : public Parser::Widget {
     { 
       Toggle* widget = new Toggle(title);
       widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
+     
+      auto onColor = style.color;
+      auto offColor = style.secondaryColor;
       
-      widget->onStateChange = [&style,this,name,widget] { 
+      widget->onStateChange = [this,name,widget, onColor, offColor] { 
         if (widget->getState() == juce::Button::ButtonState::buttonDown) {
-          this->app->state->setInt(name, 1 - this->app->state->getInt(name));
-          if (widget->getToggleState()) {
-              widget->setColour(
-                  juce::TextButton::buttonColourId, 
-                  this->app->findColor(readCol(style.secondaryColor, this->app)));
-          } else {
-              widget->setColour(
-                  juce::TextButton::buttonColourId, 
-                  this->app->findColor(readCol(style.color, this->app)));
-          }
+          int newVal = 1 - this->app->state->getInt(name);
+          this->app->state->setInt(name, newVal);
+          // we invert toggle state because it was inverted on callback call of state->int
+          // without this call UI and state will go out of sync
+          widget->setToggleState(!widget->getToggleState(), juce::dontSendNotification);
         }
       };
+
+      this->app->state->appendCallbackInt(name, new Callback<int>([widget](int val) {        
+        bool tog = widget->getToggleState();
+        widget->setToggleState(val == 1, juce::dontSendNotification);
+      }));
       
       addWidget(style, widget, rect);
     };

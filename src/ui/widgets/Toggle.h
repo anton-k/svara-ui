@@ -16,10 +16,10 @@ class Toggle : public juce::TextButton, public HasStyle {
 
     void setColor(HasStyle::ColorId colId, juce::Colour col) override {
       if (colId == HasStyle::ColorId::First) {
-        setColour(juce::TextButton::buttonColourId, col);
+        setColour(juce::TextButton::buttonOnColourId, col);
       }
       if (colId == HasStyle::ColorId::Second) {
-        setColour(juce::TextButton::buttonOnColourId, col);
+        setColour(juce::TextButton::buttonColourId, col);
         setColour(juce::TextButton::textColourOffId, col);
       }
     }
