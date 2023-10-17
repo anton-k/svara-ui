@@ -1,0 +1,26 @@
+config:
+  size:
+    width: 400
+    height: 400
+state:
+  init:
+    foo!: 0
+    on: 0
+    off: 0
+  update:
+    on:
+      foo: 1
+    off:
+      foo: 0
+ui:
+  ver:
+    - toggle: foo
+      style:
+        color: olive
+        secondary-color: blue
+        pad: 0.05
+    - hor:
+        - button: on
+        - button: off
+      style:
+        pad: 0.05
