@@ -1,5 +1,6 @@
 #pragma once
 #include <juce_gui_extra/juce_gui_extra.h>
+#include "../Style.h"
 
 class Slider : public juce::Slider, public HasStyle {
   public:

@@ -797,10 +797,7 @@ class BuildWidget : public Parser::Widget {
     {
       padRect(rect, style.pad);
       Dot* widget = new Dot();
-      app->setColor(style.color, [widget] (auto c) {
-        widget->setColor(c);
-      });
-      
+      widget->setStyle(app, style);
       app->addWidget(style, widget, rect);
     }
 

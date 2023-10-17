@@ -1,5 +1,6 @@
 #pragma once
 #include <juce_gui_extra/juce_gui_extra.h>
+#include "../Style.h"
 
 class Bar : public juce::Slider, public HasStyle {
   public:
@@ -27,4 +28,3 @@ class Bar : public juce::Slider, public HasStyle {
     void setFont(juce::Font) override {}
     void setTextAlign(juce::Justification) override {}
 };
-

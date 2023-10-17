@@ -10,6 +10,9 @@ state:
 ui:
   ver:
     - bar: zoo
+      style:
+        pad: 0.05
+      scale: 0.4
     - knob: bar
     - hor:
       - group:
