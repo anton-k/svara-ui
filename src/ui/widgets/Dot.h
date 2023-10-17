@@ -2,8 +2,9 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <vector>
 #include <functional>
+#include "../Style.h"
 
-class Dot : public juce::Component {
+class Dot : public juce::Component, public HasStyle {
   public:
     Dot(): color() {}
     Dot(juce::Colour _color): color(_color) {}
@@ -12,6 +13,21 @@ class Dot : public juce::Component {
 
     juce::Colour getColor() const { return color;}
     void setColor(juce::Colour c) { color = c; repaint(); }
+
+    bool hasColor(HasStyle::ColorId colId) override {
+      return colId == HasStyle::ColorId::First;
+    }
+
+    void setColor(HasStyle::ColorId colId, juce::Colour col) override {
+      if (colId == HasStyle::ColorId::First) {
+        setColor(col);
+      }
+    }
+
+    bool hasText() override { return false; }
+    void setTextSize(double) override {}
+    void setFont(juce::Font) override {}
+    void setTextAlign(juce::Justification) override {}
 
   private:
     juce::Colour color;

@@ -2,9 +2,9 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <vector>
 #include <functional>
+#include "../Style.h"
 
-
-class XYPad : public juce::Component
+class XYPad : public juce::Component, public HasStyle
 {
   public:
     XYPad():
@@ -14,6 +14,25 @@ class XYPad : public juce::Component
       cursorColor(juce::Colours::blue),
       frameColor(juce::Colours::orange)
     {}
+
+    bool hasColor(HasStyle::ColorId colId) override {
+      return colId == HasStyle::ColorId::First || colId == HasStyle::ColorId::First;
+    }
+
+    void setColor(HasStyle::ColorId colId, juce::Colour col) override {
+      if (colId == HasStyle::ColorId::First) {
+        setCursorColor(col);
+      }
+      if (colId == HasStyle::ColorId::Second) {
+        setFrameColor(col);
+      }
+    }
+
+    bool hasText() override { return false; }
+    void setTextSize(double) override {}
+    void setFont(juce::Font) override {}
+    void setTextAlign(juce::Justification) override {}
+
 
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent &event) override;

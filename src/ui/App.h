@@ -4,7 +4,8 @@
 #include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "widgets/KeyPressListener.h"
-#include "widgets/Board.h"
+
+class App;
 
 // Palette is a map from string names to colors
 class Palette {
@@ -73,7 +74,7 @@ class Widget : public Box {
 // Container of widgets for layout
 class GroupBox : public Box {
   public:
-    virtual void push_back(Box* box) { (void) box; };
+    virtual void push_back(App* app, Parser::Style &style, Box* box) { (void) box; };
     virtual void end() {};
 };
 
@@ -87,33 +88,13 @@ class Group : public GroupBox {
       hasBorder(_hasBorder)
     {}
 
-    Group(Parser::Style &style, Parser::Rect _rect, std::string name, bool _hasBorder)
-    {
-      hasBorder = _hasBorder;
-
-      if (hasBorder) {
-        juce::GroupComponent* widget = new GroupBoard();
-        if (name.size() > 0) {
-          widget->setText(juce::String(name));
-          widget->setName(juce::String(name));
-        }
-        group = widget;
-      } else {
-        group = new Board();
-        group->setName(name);
-      }
-
-      children = std::vector<Box*>();
-      rect = _rect;
-    }
-
     void setBounds() override;
 
     void append(std::function<void(juce::Component*)> call) override;
 
     void setVisible(bool) override;
 
-    void push_back(Box* box) override;
+    void push_back(App* app, Parser::Style &style, Box* box) override;
 
     std::string getName() override;
 
@@ -148,7 +129,7 @@ class Panel : public GroupBox {
 
     void append(std::function<void(juce::Component*)> call) override;
 
-    void push_back(Box* box) override;
+    void push_back(App* app, Parser::Style &style, Box* box) override;
 
     void setVisible(bool) override;
 
@@ -157,7 +138,7 @@ class Panel : public GroupBox {
       panels.pop_back();
     }
 
-    void initItem();
+    void initItem(App*, Parser::Style&);
 
     void selectVisible(size_t choice);
 
@@ -195,7 +176,7 @@ public:
 //    void paint (juce::Graphics&) override;
     void resized();
 
-    void addWidget(juce::Component* comp, Parser::Rect rect);
+    void addWidget(App*, Parser::Style&, juce::Component* comp, Parser::Rect rect);
 
     void setup(juce::Component* parent);
 
@@ -203,7 +184,7 @@ public:
     void onKeyEvent(KeyEvent event);
 
 private:
-    void append(Box* box);
+    void append(App* app, Parser::Style &style, Box* box);
     std::vector<Box*> widgets;
     std::vector<GroupBox*> groupStack;
     Callback<KeyEvent> onKey;
@@ -230,21 +211,27 @@ class App {
 
     // groups
     Group* groupBegin(Parser::Style &style, Parser::Rect rect, std::string name = "");
-    void groupEnd();
+    void groupEnd(Parser::Style&);
 
     // panels
     Panel* panelBegin(Parser::Style style, Parser::Rect rect, std::string name);
-    Panel* panelEnd();
+    Panel* panelEnd(Parser::Style&);
     void panelItemBegin();
-    void panelItemEnd();
+    void panelItemEnd(Parser::Style&);
 
     void setJustificationType (Parser::Val<std::string> val, std::function<void(juce::Justification)>);
+    void setTextSize (Parser::Val<double> val, Set<double>);
     void setColor(Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter);
+    void setColor(std::optional<Parser::Val<Parser::Col>> col, std::function<void(juce::Colour)> setter);
 
     void resized()
     {
       scene->resized();
     };
+
+    void addWidget(Parser::Style& style, juce::Component* comp, Parser::Rect rect) {
+      scene->addWidget(this, style, comp, rect);
+    }
 
     Config* config;
     State* state;

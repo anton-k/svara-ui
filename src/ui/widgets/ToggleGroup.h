@@ -15,16 +15,17 @@ class ToggleGroup : public juce::Component
     void resized() override;
 
     void addItem(juce::Button* button);
+    const std::vector<juce::Button*>& getItems() { return buttons; }
 
     size_t getValue();
 
     void setValue(size_t choice);
 
     std::function<void(size_t)> onChange;
+    std::vector<juce::Button*> buttons;
 
   private:
     bool isVertical;
     size_t selected;
-    std::vector<juce::Button*> buttons;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ToggleGroup)
 };

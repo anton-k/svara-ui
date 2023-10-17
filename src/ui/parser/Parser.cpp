@@ -520,7 +520,7 @@ void forListLayout(bool isHor, Ui* parent, YAML::Node node, Rect rect, Style sty
             boxes.push_back(std::pair(getScale(elem), elem));
         });
       }
-      parent->widget->groupEnd();
+      parent->widget->groupEnd(style);
   });
   
   foldBoxes(isHor, boxes, rect, style, parent);
@@ -534,7 +534,7 @@ void runGroup(Ui* parent, YAML::Node node, Rect rect, Style style)
 
     parent->widget->groupBegin(style, rect, groupName);
     parent->run(x, Rect(0.0, 0.0, 1.0, 1.0), style);
-    parent->widget->groupEnd();
+    parent->widget->groupEnd(style);
   });
 }
 
@@ -551,10 +551,10 @@ void runTabs(Ui* parent, YAML::Node node, Rect rect, Style style)
       forNodes(tabNode["items"], [parent, &style] (YAML::Node x) {
         parent->widget->panelItemBegin();        
         parent->run(x, Rect(0.0, 0.0, 1.0, 1.0), style);
-        parent->widget->panelItemEnd();        
+        parent->widget->panelItemEnd(style);        
       });
 
-      parent->widget->panelEnd(name);    
+      parent->widget->panelEnd(style, name);    
     }
   });
 }
@@ -791,10 +791,9 @@ void Window::run(YAML::Node node)
   juce::Rectangle<float> topLevelRect = juce::Rectangle<float>(0, 0, 1, 1);
   this->ui->begin(style, topLevelRect);
   this->ui->onKey(node, "ui", topLevelRect, style);
-  this->ui->end();
+  this->ui->end(style);
   this->csoundUi->onKey(node, "csound");
 }
-
 
 void run(Window* win, YAML::Node node)
 {
