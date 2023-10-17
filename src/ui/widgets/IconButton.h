@@ -3,7 +3,7 @@
 #include "../Style.h"
 #include "FadIcons.h"
 
-class IconButton : public juce::DrawableButton, public HasStyle {
+class IconButton : public juce::DrawableButton, public HasStyle, public HasClick {
   public:
     IconButton(std::string title, std::string iconName) :
       icon(getIcon(iconName)),
@@ -15,6 +15,19 @@ class IconButton : public juce::DrawableButton, public HasStyle {
       iconDownImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
       setImages(iconImage.get(), iconHoverImage.get(), iconDownImage.get());
     }
+
+    // state update
+
+    bool isDownClick() override {
+      return getState() == juce::Button::ButtonState::buttonDown;
+    }
+
+    void setOnClick(Proc proc) override {
+      onStateChange = proc;
+    }
+    void triggerClick() override { juce::Button::triggerClick(); }
+
+    // style
 
     bool hasColor(HasStyle::ColorId colId) override {
       return  colId == HasStyle::ColorId::First;
@@ -45,8 +58,6 @@ class IconButton : public juce::DrawableButton, public HasStyle {
     void setFont(juce::Font) override {}
     void setTextAlign(juce::Justification) override {}
 
-    int counter = 0;
-    bool isUser = true;
   private:
     Icon icon;
     std::unique_ptr<juce::XmlElement> svg_xml = nullptr;
@@ -54,5 +65,4 @@ class IconButton : public juce::DrawableButton, public HasStyle {
     juce::Colour iconImageColour = juce::Colours::black;
     juce::Colour iconHoverImageColour = juce::Colours::black;
     juce::Colour iconDownImageColour = juce::Colours::black;
-
 };

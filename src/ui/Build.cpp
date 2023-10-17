@@ -12,6 +12,7 @@
 #include "Style.h"
 #include "model/Model.h"
 #include "parser/Parser.h"
+#include "Value.h"
 
 #include "widgets/ToggleGroup.h"
 #include "widgets/Dot.h"
@@ -33,13 +34,6 @@
 #include "widgets/ComboBox.h"
 
 // Build Application from YAML-file
-
-// float compare resolution
-const float EPS = 0.0001;
-
-bool equalFloats(float a, float b) {
-  return abs(a - b) < EPS;
-}
 
 template<class T>
 void printVar(std::string name, T val)
@@ -300,27 +294,6 @@ void setFont(App* app, Parser::Val<std::string> typeface, std::function<juce::Fo
   }
 }
 
-void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string name, juce::Slider::ColourIds colourId, Parser::Widget::Type widgetType = Parser::Widget::Auto)
-{
-  widget->setRange(0, 1.0);
-  widget->setValue(app->state->getDouble(name));
-  
-  // Callback to update channel value on change in slider
-  if (widgetType != Parser::Widget::Output) {
-    widget->onValueChange = [app, name, widget] { app->state->setDouble(name, widget->getValue()); };
-  }
-  
-  // Callback to update slider on value change
-  if (widgetType != Parser::Widget::Input) {
-    app->state->appendCallbackDouble(name, new Callback<double>([widget](double val) {
-        float v = val;
-        if (!equalFloats(widget->getValue(), v)) {
-          widget->setValue(v);
-        }
-    }));
-  }
-}
-
 class BuildWidget : public Parser::Widget {
   public:
     BuildWidget(App* _app): app(_app) {}
@@ -337,8 +310,8 @@ class BuildWidget : public Parser::Widget {
     { 
       Knob* knob = new Knob();
       knob->setName(name);
+      knob->linkValue(app, name);
       PLOG_DEBUG << "make knob: widget name: " << name << " value: " << app->state->getDouble(name);
-      setSlider(app, knob, style, name, juce::Slider::rotarySliderFillColourId);
       addWidget(style, knob, rect);
     }
     
@@ -346,8 +319,8 @@ class BuildWidget : public Parser::Widget {
     {
       Slider* slider = new Slider(rect);
       slider->setName(name);
+      slider->linkValue(app, name);
       PLOG_DEBUG << "make slider: widget name: " << name << " value: " << app->state->getDouble(name);
-      setSlider(app, slider, style, name, juce::Slider::trackColourId);
       addWidget(style, slider, rect);
     };
     
@@ -355,7 +328,7 @@ class BuildWidget : public Parser::Widget {
     {
       Bar* slider = new Bar(rect);
       slider->setName(name);
-      setSlider(app, slider, style, name, juce::Slider::trackColourId, widgetType);
+      slider->linkValue(app, name);
       PLOG_DEBUG << "make bar: widget name: " << name << " value: " << app->state->getDouble(name);
       addWidget(style, slider, rect);
     };
@@ -395,26 +368,7 @@ class BuildWidget : public Parser::Widget {
     void button(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 
       Button* widget = new Button(title);
-      
-      // we use a trick to ensure that note is not retriggered when state
-      // is change automatically
-      widget->onStateChange = [&style,this,name,widget] { 
-        if (widget->isUser) {
-          if (widget->getState() == juce::Button::ButtonState::buttonDown) {
-            widget->counter = widget->counter + 1;
-            this->app->state->setInt(name, widget->counter); 
-          }
-        } else {
-          widget->isUser = true;
-        }
-      };
-
-      this->app->state->appendCallbackInt(name, new Callback<int>(
-        [widget](int val) {
-          widget->isUser = false;
-          widget->triggerClick();
-        } 
-      ));
+      widget->linkValue(app, name);
 
       PLOG_DEBUG << "make button: " << name << " with text: " << title;
       addWidget(style, widget, rect);
@@ -446,22 +400,7 @@ class BuildWidget : public Parser::Widget {
     {
       (void) name; (void) title;
       IconButton* widget = new IconButton(title, style.icon);
-
-      widget->onStateChange = [&style,this,name,widget] { 
-        if (widget->isUser) {
-          if (widget->getState() == juce::Button::ButtonState::buttonDown) {
-            widget->counter = widget->counter + 1;
-            this->app->state->setInt(name, widget->counter); 
-            widget->isUser = true;
-          }
-        }
-      };
-      this->app->state->appendCallbackInt(name, new Callback<int>(
-        [widget](int val) {
-          widget->isUser = false;
-          widget->triggerClick();
-        } 
-      ));
+      widget->linkValue(app, name);
 
       PLOG_DEBUG << "make icon toggle button: " << name << " with text: " << title;
       addWidget(style, widget, rect);

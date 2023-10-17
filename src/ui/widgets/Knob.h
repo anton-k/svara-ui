@@ -1,11 +1,21 @@
 #pragma once
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "../Style.h"
+#include "../Value.h"
 
-class Knob : public juce::Slider, public HasStyle {
+class Knob : public juce::Slider, public HasStyle, public HasValue {
   public:
     Knob() : juce::Slider(juce::Slider::SliderStyle::Rotary, juce::Slider::TextEntryBoxPosition::NoTextBox)
     {}
+
+    // state update
+    void setValueChange(Proc proc) override { onValueChange = proc; }
+    double getCurrentValue() override { return getValue(); }
+    void setCurrentValue(double v) override { setValue(v); }
+    void setValueRange(double a, double b) override { setRange(a, b); }
+    Parser::Widget::Type getWidgetType() override { return Parser::Widget::Auto; }
+
+    // style
 
     bool hasColor(HasStyle::ColorId colId) override {
       return colId == HasStyle::ColorId::First;

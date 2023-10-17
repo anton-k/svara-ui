@@ -4,9 +4,9 @@ config:
     height: 400
 state:
   init:
-    foo: 0.5
-    zoo: 0.5
-    bar: 0.25
+    foo!: 0.5
+    zoo!: 0.5
+    bar!: 0.25
 ui:
   ver:
     - knob: bar
