@@ -5,8 +5,8 @@ build:
 
 run: build
 	./cmake-build/GuiAppExample_artefacts/Gui\ App\ Example \
-		  --csound=examples/keyboard-hang.csd
-#			--ui=examples/config-group-minimal.yaml
+			--ui=examples/groups.yaml
+#		  --csound=examples/keyboard-hang.csd
 
 config:
 	cmake -B cmake-build-install -DCMAKE_INSTALL_PREFIX=/home/anton/dev/cpp/JUCE/install

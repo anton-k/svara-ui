@@ -2,6 +2,8 @@
 #include "parser/Parser.h"
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <plog/Log.h>
+#include "../general/Fun.h"
+#include "widgets/Board.h"
 
 // ------------------------------------------------------------------------------------- 
 // Palette
@@ -62,13 +64,14 @@ void Group::setBounds()
 {
   PLOG_DEBUG << "GROUP SIZE " << children.size();
   group->setBoundsRelative(rect);
-  std::for_each(children.begin(), children.end(), [this](auto box) { box->setBounds();} );
+
+  forEach<Box*>(children, [this](auto box) { box->setBounds();} );
 }
 
 void Group::append(std::function<void(juce::Component*)> add)
 {
   add(group);
-  std::for_each(children.begin(), children.end(), [this](auto box) {
+  forEach<Box*>(children, [this](auto box) {
     box->append( [this](juce::Component* child) {
       group->addAndMakeVisible(child);
     });
@@ -80,8 +83,9 @@ void Group::setVisible (bool isVisible)
   group->setVisible(isVisible);
 }
 
-void Group::push_back(Box* box) 
+void Group::push_back(App* app, Parser::Style &style, Box* box) 
 {
+  (void) app; (void) style;
   PLOG_DEBUG << "Group push_back: " << box->getName();
   children.push_back(box);
 }
@@ -111,16 +115,16 @@ void Panel::append(std::function<void(juce::Component*)> add)
   });
 }
 
-void Panel::push_back(Box* box)
+void Panel::push_back(App* app, Parser::Style &style, Box* box)
 {
   if (panels.empty()) {
-    initItem();
+    initItem(app, style);
   }
 
   Group* lastPanel = panels.back();
 
   PLOG_DEBUG << "Panel push_back: " << box->getName() << " to panel " << panels.size();
-  lastPanel->push_back(box);
+  lastPanel->push_back(app, style, box);
 }
 
 std::string Panel::getGroupName()
@@ -130,9 +134,14 @@ std::string Panel::getGroupName()
   return ss.str();
 }
 
-void Panel::initItem() 
+void Panel::initItem(App* app, Parser::Style &style) 
 {
-  auto group = new Group(style, rect, getGroupName(), false);
+  bool hasBorder = false;
+  Board* groupComponent = new Board();
+  groupComponent->setStyle(app, style);
+  groupComponent->setName(getGroupName());
+
+  auto group = new Group(groupComponent, rect, hasBorder);
   panels.push_back(group);
 }
 
@@ -172,19 +181,19 @@ void Scene::resized()
     PLOG_DEBUG << "WIDGET SIZE: " << widgets.size();
 };
 
-void Scene::append(Box* box)
+void Scene::append(App* app, Parser::Style &style, Box* box)
 {
   if (groupStack.empty()) {
     widgets.push_back(box);
   } else {
     GroupBox* lastGroup = groupStack.back();
-    lastGroup->push_back(box);
+    lastGroup->push_back(app, style, box);
   }
 };
 
-void Scene::addWidget(juce::Component* comp, Parser::Rect rect)
+void Scene::addWidget(App* app, Parser::Style &style, juce::Component* comp, Parser::Rect rect)
 {
-  append(new Widget(comp, rect));
+  append(app, style, new Widget(comp, rect));
 }
 
 void Scene::setup(juce::Component* parent)
@@ -195,17 +204,34 @@ void Scene::setup(juce::Component* parent)
 
 Group* App::groupBegin(Parser::Style &style, Parser::Rect rect, std::string name)
 {
-  auto groupBox = new Group(style, rect, name, style.border.width != 0 || name != "");
+  bool hasBorder = style.border.width != 0 || name != "";
+  juce::Component* group;
+  if (hasBorder) {
+    GroupBoard* widget = new GroupBoard();
+    if (name.size() > 0) {
+      widget->setText(juce::String(name));
+      widget->setName(juce::String(name));
+    }
+    widget->setStyle(this, style);
+    group = widget;
+  } else {
+    Board* widget = new Board();
+    widget->setStyle(this, style);
+    group = widget;
+    group->setName(name);
+  }
+
+  auto groupBox = new Group(group, rect, hasBorder);
   scene->groupStack.push_back(groupBox);
   return groupBox;
 }
 
-void App::groupEnd()
+void App::groupEnd(Parser::Style &style)
 {
   GroupBox* lastGroup = scene->groupStack.back();  
   lastGroup->end();
   scene->groupStack.pop_back();
-  scene->append(lastGroup);
+  scene->append(this, style, lastGroup);
 }
 
 Panel* App::panelBegin(Parser::Style style, Parser::Rect rect, std::string name)
@@ -230,20 +256,20 @@ void App::panelItemBegin()
   // lastGroup->initItem();
 }
 
-void App::panelItemEnd()
+void App::panelItemEnd(Parser::Style &style)
 {
   Panel* lastGroup = toPanel(scene->groupStack.back(), "panel item begin: not a panel on groupStack");
-  lastGroup->initItem();
+  lastGroup->initItem(this, style);
 }
 
-Panel* App::panelEnd()
+Panel* App::panelEnd(Parser::Style& style)
 {
   Panel* lastGroup = toPanel(scene->groupStack.back(), "panel item end: not a panel on groupStack");  
   PLOG_DEBUG << "PANEL SIZE END PRE: " << lastGroup->getSize();
   lastGroup->end();
   PLOG_DEBUG << "PANEL SIZE END POST: " << lastGroup->getSize();
   scene->groupStack.pop_back();
-  scene->append(lastGroup);
+  scene->append(this, style, lastGroup);
   return lastGroup;
 }
 
@@ -277,4 +303,26 @@ void App::setJustificationType (Parser::Val<std::string> val, std::function<void
     setter(Parser::toJustification(val.getVal()));
   }
 }
+
+void App::setColor(Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter)
+{
+  if (col.isVal()) {
+    juce::Colour c = this->findColor(col.getVal());
+    setter(c);
+  } else {
+    PLOG_DEBUG << "SETTING COLOR\n";
+    Chan chn = col.getChan();
+    setter(this->findColor(this->state->getString(chn.name)));
+    this->state->appendCallbackString(chn.name, new Callback<std::string>([this,setter](auto newCol) { 
+      juce::Colour c = this->findColor(newCol);
+      setter(c);
+    }));               
+  }
+}
+
+void App::setColor(std::optional<Parser::Val<Parser::Col>> col, std::function<void(juce::Colour)> setter) {
+  forEach<Parser::Val<Parser::Col>>(col, [this, setter](auto c) { this->setColor(c, setter); });
+}
+
+
 

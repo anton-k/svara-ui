@@ -288,22 +288,6 @@ void padRect(Parser::Rect& rect, Parser::Pad pad)
   rect.setWidth(w);
 }
 
-void App::setColor(Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter)
-{
-  if (col.isVal()) {
-    juce::Colour c = this->findColor(col.getVal());
-    setter(c);
-  } else {
-    PLOG_DEBUG << "SETTING COLOR\n";
-    Chan chn = col.getChan();
-    setter(this->findColor(this->state->getString(chn.name)));
-    this->state->appendCallbackString(chn.name, new Callback<std::string>([this,setter](auto newCol) { 
-      juce::Colour c = this->findColor(newCol);
-      setter(c);
-    }));               
-  }
-}
-
 void setColor(App* app, const Expr<Parser::Col>& col, std::function<void(juce::Colour)> setter)
 {
   PLOG_DEBUG << "A 1";
@@ -391,7 +375,7 @@ class BuildWidget : public Parser::Widget {
       knob->setName(name);
       PLOG_DEBUG << "make knob: widget name: " << name << " value: " << app->state->getDouble(name);
       setSlider(app, knob, style, name, juce::Slider::rotarySliderFillColourId);
-      app->scene->addWidget(knob, rect);
+      app->addWidget(style, knob, rect);
     }
     
     void slider(Parser::Style& style, Parser::Rect rect, std::string name) override 
@@ -404,7 +388,7 @@ class BuildWidget : public Parser::Widget {
       slider->setName(name);
       PLOG_DEBUG << "make slider: widget name: " << name << " value: " << app->state->getDouble(name);
       setSlider(app, slider, style, name, juce::Slider::trackColourId);
-      app->scene->addWidget(slider, rect);
+      app->addWidget(style, slider, rect);
     };
     
     void bar(Parser::Style& style, Parser::Rect rect, std::string name, Parser::Widget::Type widgetType) override 
@@ -416,7 +400,7 @@ class BuildWidget : public Parser::Widget {
       juce::Slider* slider = new juce::Slider(sliderStyle, juce::Slider::TextEntryBoxPosition::NoTextBox);
       slider->setName(name);
       setSlider(app, slider, style, name, juce::Slider::trackColourId, widgetType);
-      app->scene->addWidget(slider, rect);
+      app->addWidget(style, slider, rect);
     };
 
     void xyPad(Parser::Style& style, Parser::Rect rect, std::string nameX, std::string nameY) override 
@@ -455,7 +439,7 @@ class BuildWidget : public Parser::Widget {
          widget->setFrameColor(c);
       });
 
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
     // TODO: see nvim examples/Plugins/AUv3SynthPluginDemo.h
@@ -500,7 +484,7 @@ class BuildWidget : public Parser::Widget {
       widget->setLookAndFeel(&(widget->getLookAndFeel()));
 
       PLOG_DEBUG << "make button: " << name << " with text: " << title;
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
     void toggle(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
@@ -534,7 +518,7 @@ class BuildWidget : public Parser::Widget {
         }
       };
       
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
     
     void iconButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
@@ -580,7 +564,7 @@ class BuildWidget : public Parser::Widget {
       };
 
       PLOG_DEBUG << "make icon toggle button: " << name << " with text: " << title;
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
      
     void iconToggleButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
@@ -655,7 +639,7 @@ class BuildWidget : public Parser::Widget {
       });
 
       PLOG_DEBUG << "make icon toggle button: " << name << " with text: " << title;
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
      
 
@@ -682,7 +666,7 @@ class BuildWidget : public Parser::Widget {
       };
 
       PLOG_DEBUG << "make button: " << name << " with text: " << title;
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
     void checkToggle(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
@@ -713,7 +697,7 @@ class BuildWidget : public Parser::Widget {
           }
         }
       };
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
     void checkGroup(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<std::string> names, bool isVertical) override
@@ -738,7 +722,7 @@ class BuildWidget : public Parser::Widget {
         this->app->state->setInt(chan, n);
       };
 
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
     void buttonGroup(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<std::string> names, bool isVertical) override
@@ -779,7 +763,7 @@ class BuildWidget : public Parser::Widget {
         this->app->state->setInt(chan, n);
       };
 
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
    
@@ -803,7 +787,7 @@ class BuildWidget : public Parser::Widget {
       app->setJustificationType(style.textAlign, [widget] (auto justType) { 
         widget->setJustificationType (justType);
       });
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
     void image(Parser::Style& style, Parser::Rect rect, std::string file) 
@@ -812,7 +796,7 @@ class BuildWidget : public Parser::Widget {
       juce::Image image = juce::ImageFileFormat::loadFrom(juce::File(file));
       juce::ImageComponent* widget = new juce::ImageComponent(file);
       widget->setImage(image); 
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
     void dot(Parser::Style& style, Parser::Rect rect)
@@ -823,7 +807,7 @@ class BuildWidget : public Parser::Widget {
         widget->setColor(c);
       });
       
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     }
 
     void barDisplay(Parser::Style& style, Parser::Rect rect, std::string chan)
@@ -838,7 +822,7 @@ class BuildWidget : public Parser::Widget {
         widget->setValue((float) x);
       }));
       
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     }
 
 
@@ -853,7 +837,7 @@ class BuildWidget : public Parser::Widget {
       widget->setColors(cols);
       widget->setValue((float) app->state->getDouble(chan));
       app->state->appendCallbackDouble(chan, new Callback<double>([widget] (double v) { widget->setValue((float) v);}));
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
     virtual void barMeter(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<Parser::Col> colors) 
@@ -867,7 +851,7 @@ class BuildWidget : public Parser::Widget {
       widget->setColors(cols);
       widget->setValue((float) app->state->getDouble(chan));
       app->state->appendCallbackDouble(chan, new Callback<double>([widget] (double v) { widget->setValue((float) v);}));
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
     };
 
 
@@ -890,7 +874,7 @@ class BuildWidget : public Parser::Widget {
       app->setJustificationType(style.textAlign, [widget] (auto justType) { 
         widget->setJustificationType (justType);
       });
-      app->scene->addWidget(widget, rect);
+      app->addWidget(style, widget, rect);
       
       widget->setEditable(true);
       widget->onTextChange = [this, name, widget] {
@@ -939,7 +923,7 @@ class BuildWidget : public Parser::Widget {
         widget->setColour(juce::ComboBox::backgroundColourId, c);
       });
 
-      app->scene->addWidget(widget, rect);      
+      app->addWidget(style, widget, rect);      
     };
 
     void space(Parser::Rect rect) override { (void) rect; };
@@ -948,37 +932,15 @@ class BuildWidget : public Parser::Widget {
     {
       padRect(rect, style.pad);
       Group* group = app->groupBegin(style, rect, name);
-      if (group->getHasBorder()) {
-        GroupBoard* widget = dynamic_cast<GroupBoard*>(group->getGroupWidget());
-        if (widget) {
-          app->setJustificationType(style.textAlign, [widget] (auto align) {
-            widget->setTextLabelPosition(align);
-          });
-
-          app->setColor(style.color, [widget] (auto c) {
-            widget->setColour(juce::GroupComponent::outlineColourId, c);
-          });
-          app->setColor(style.color, [widget] (auto c) {
-            widget->setColour(juce::GroupComponent::textColourId, c);
-          });
-
-          app->setColor(style.background, [widget] (auto c) {
-            widget->setBackground(c);
-          });
-        }
-      } else {
-        Board* widget = dynamic_cast<Board*>(group->getGroupWidget());
-        if (widget) {
-          app->setColor(style.background, [widget] (auto c) {
-            widget->setBackground(c);
-          });
-        }
+      HasStyle* widget = dynamic_cast<HasStyle*>(group->getGroupWidget());
+      if (widget) {
+        widget->setStyle(app, style);
       }
     }
 
-    void groupEnd() override
+    void groupEnd(Parser::Style &style) override
     {
-      app->groupEnd();
+      app->groupEnd(style);
     }
 
     void panelBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
@@ -989,10 +951,10 @@ class BuildWidget : public Parser::Widget {
       app->state->appendCallbackInt(name, new Callback<int>([panel] (int n) { panel->selectVisible((size_t) n); }));
     }
 
-    void panelEnd(std::string name) override
+    void panelEnd(Parser::Style &style, std::string name) override
     {
       PLOG_DEBUG << "panelEnd: " << name;
-      Panel* panel = app->panelEnd();
+      Panel* panel = app->panelEnd(style);
       panel->selectVisible((size_t) app->state->getInt(name));
     }
 
@@ -1002,10 +964,10 @@ class BuildWidget : public Parser::Widget {
       app->panelItemBegin();
     }
 
-    void panelItemEnd() override
+    void panelItemEnd(Parser::Style &style) override
     {
       PLOG_DEBUG << "panelItemEnd";
-      app->panelItemEnd();
+      app->panelItemEnd(style);
     }
 
   private:
@@ -1035,16 +997,14 @@ class BuildUi : public Parser::Ui {
 
     void begin(Parser::Style &style, juce::Rectangle<float> rect) override {
       Group* group = app->groupBegin(style, rect, "");
-      Board* widget = dynamic_cast<Board*>(group->getGroupWidget());
+      HasStyle* widget = dynamic_cast<HasStyle*>(group->getGroupWidget());      
       if (widget) {
-        app->setColor(style.background, [widget] (auto c) {
-          widget->setBackground(c);
-        });
+        widget->setStyle(app, style);
       }
     }
 
-    void end() override {
-      app->groupEnd();
+    void end(Parser::Style &style) override {
+      app->groupEnd(style);
     }
 
   private:

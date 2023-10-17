@@ -101,7 +101,8 @@ namespace Parser
         secondaryIcon ("logojuce")
       {}
 
-      Val<Col> color, secondaryColor, background;
+      Val<Col> color, secondaryColor;
+      std::optional<Val<Col>> background;
       Val<double> textSize;
       Val<std::string> textAlign;
       Val<std::string> font;
@@ -217,13 +218,13 @@ namespace Parser
 
       // groups: set of items
       virtual void groupBegin(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void) name; };
-      virtual void groupEnd() {};
+      virtual void groupEnd(Parser::Style&) {};
 
       // panels. With panels we can toggle visibility of groups of widgets
       virtual void panelBegin(Style& style, Rect rect, std::string name) { (void) style; (void) rect; (void) name; };
       virtual void panelItemBegin() {};
-      virtual void panelItemEnd() {};
-      virtual void panelEnd(std::string name) { (void) name; };
+      virtual void panelItemEnd(Parser::Style&) {};
+      virtual void panelEnd(Parser::Style&, std::string name) { (void) name; };
 
       void run(YAML::Node node, Rect rect, Style style) override;
       void parseComboBox(YAML::Node node, Rect rect, Style style);
@@ -264,7 +265,7 @@ namespace Parser
       {};
 
       virtual void begin(Style& style, juce::Rectangle<float> rect) {(void) style; (void) rect; };
-      virtual void end() {};
+      virtual void end(Parser::Style &) {};
       void updateStyle(YAML::Node node, Style& style);
 
       Widget* widget;

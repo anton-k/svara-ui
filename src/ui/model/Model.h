@@ -6,6 +6,7 @@
 #include <string>
 #include <csound.hpp>
 #include <plog/Log.h>
+#include "../../general/Fun.h"
 
 int check_model();
 
@@ -344,24 +345,6 @@ template <typename A, typename B>
 Expr<B> map(std::function<B(A)> f, Expr<A> a)
 {
   return Expr<B>([a,f] { return f(a.apply()); }, std::set<Chan>(a.getChans()));
-}
-
-template<typename T>
-using Get = std::function<T()>;
-
-template<typename T>
-using Set = std::function<void(T)>;
-
-template<typename T>
-Set<T> appendSet(Set<T> a, Set<T> b) {
-  return [a, b](T val) {
-    a(val);
-    b(val);
-  };
-}
-template<typename T>
-Set<T> emptySet() {
-  return [](T val) { (void) val; };
 }
 
 // Interface for Csound engine. Which actions UI can perform
