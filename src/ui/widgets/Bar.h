@@ -1,13 +1,13 @@
 #pragma once
 #include <juce_gui_extra/juce_gui_extra.h>
 
-class Slider : public juce::Slider, public HasStyle {
+class Bar : public juce::Slider, public HasStyle {
   public:
-    Slider(juce::Rectangle<float> rect) :
+    Bar(juce::Rectangle<float> rect) :
       juce::Slider(
-          (rect.getWidth() < rect.getHeight())
-          ? juce::Slider::SliderStyle::LinearVertical
-          : juce::Slider::SliderStyle::LinearHorizontal,
+        (rect.getWidth() < rect.getHeight())
+          ? juce::Slider::SliderStyle::LinearBarVertical
+          : juce::Slider::SliderStyle::LinearBar,
           juce::Slider::TextEntryBoxPosition::NoTextBox)
     {}
 

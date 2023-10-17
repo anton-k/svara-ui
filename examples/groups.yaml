@@ -9,7 +9,7 @@ state:
     bar: 0.25
 ui:
   ver:
-    - slider: bar
+    - bar: zoo
     - knob: bar
     - hor:
       - group:

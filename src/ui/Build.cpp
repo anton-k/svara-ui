@@ -19,6 +19,7 @@
 #include "widgets/Board.h"
 #include "widgets/Knob.h"
 #include "widgets/Slider.h"
+#include "widgets/Bar.h"
 
 // Build Application from YAML-file
 
@@ -358,14 +359,7 @@ void setSlider(App* app, juce::Slider* widget, Parser::Style& style, std::string
         }
     }));
   }
-/*
-  app->setColor(style.color, [widget, colourId] (auto c) {
-    widget->setColour(colourId, c);
-    widget->setColour(juce::Slider::thumbColourId, c);          
-  });
-*/
 }
-
 
 class BuildWidget : public Parser::Widget {
   public:
@@ -395,12 +389,11 @@ class BuildWidget : public Parser::Widget {
     void bar(Parser::Style& style, Parser::Rect rect, std::string name, Parser::Widget::Type widgetType) override 
     {
       padRect(rect, style.pad);
-      juce::Slider::SliderStyle sliderStyle = (rect.getWidth() < rect.getHeight()) 
-          ? juce::Slider::SliderStyle::LinearBarVertical 
-          : juce::Slider::SliderStyle::LinearBar;
-      juce::Slider* slider = new juce::Slider(sliderStyle, juce::Slider::TextEntryBoxPosition::NoTextBox);
+      Bar* slider = new Bar(rect);
+      slider->setStyle(app, style);
       slider->setName(name);
       setSlider(app, slider, style, name, juce::Slider::trackColourId, widgetType);
+      PLOG_DEBUG << "make bar: widget name: " << name << " value: " << app->state->getDouble(name);
       app->addWidget(style, slider, rect);
     };
 
