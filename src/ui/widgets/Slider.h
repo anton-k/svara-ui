@@ -2,7 +2,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include "../Style.h"
 
-class Slider : public juce::Slider, public HasStyle {
+class Slider : public juce::Slider, public HasStyle, public HasValue {
   public:
     Slider(juce::Rectangle<float> rect) :
       juce::Slider(
@@ -12,6 +12,14 @@ class Slider : public juce::Slider, public HasStyle {
           juce::Slider::TextEntryBoxPosition::NoTextBox)
     {}
 
+    // state update
+    void setValueChange(Proc proc) override { onValueChange = proc; }
+    double getCurrentValue() override { return getValue(); }
+    void setCurrentValue(double v) override { setValue(v); }
+    void setValueRange(double a, double b) override { setRange(a, b); }
+    Parser::Widget::Type getWidgetType() override { return Parser::Widget::Auto; }
+
+    // style
     bool hasColor(HasStyle::ColorId colId) override {
       return colId == HasStyle::ColorId::First;
     }
