@@ -191,8 +191,28 @@ void Scene::append(App* app, Parser::Style &style, Box* box)
   }
 };
 
+void padRect(Parser::Rect& rect, Parser::Pad pad) 
+{
+  float x = rect.getX(), 
+        y = rect.getY(), 
+        w = rect.getWidth(),
+        h = rect.getHeight();
+
+  x = x + pad.left * w;
+  y = y + pad.top * h;
+  w = w * (1 - pad.left - pad.right);
+  h = h * (1 - pad.top - pad.bottom);
+
+  rect.setX(x);
+  rect.setY(y);
+  rect.setHeight(h);
+  rect.setWidth(w);
+}
+
+
 void Scene::addWidget(App* app, Parser::Style &style, juce::Component* comp, Parser::Rect rect)
 {
+  padRect(rect, style.pad);
   append(app, style, new Widget(comp, rect));
 }
 
@@ -303,6 +323,20 @@ void App::setJustificationType (Parser::Val<std::string> val, std::function<void
     setter(Parser::toJustification(val.getVal()));
   }
 }
+
+void App::setTextSize (Parser::Val<double> val, Set<double> setter)
+{
+  if (val.isChan()) {
+    std::string name = val.getChan().name;
+    setter(this->state->getDouble(name));
+    this->state->appendCallbackDouble(name, new Callback<double>([this, setter] (auto v) {
+      setter(v);
+    }));
+  } else {
+    setter(val.getVal());
+  }
+}
+
 
 void App::setColor(Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter)
 {

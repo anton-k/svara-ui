@@ -220,6 +220,7 @@ class App {
     void panelItemEnd(Parser::Style&);
 
     void setJustificationType (Parser::Val<std::string> val, std::function<void(juce::Justification)>);
+    void setTextSize (Parser::Val<double> val, Set<double>);
     void setColor(Parser::Val<Parser::Col> col, std::function<void(juce::Colour)> setter);
     void setColor(std::optional<Parser::Val<Parser::Col>> col, std::function<void(juce::Colour)> setter);
 

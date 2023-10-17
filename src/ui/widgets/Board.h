@@ -36,7 +36,7 @@ class GroupBoard : public juce::GroupComponent, public HasStyle {
     }
 
     bool hasText() override { return true; }
-    void setTextSize(int) override {}
+    void setTextSize(double) override {}
     void setFont(juce::Font) override {}
 
     void setTextAlign(juce::Justification align) override {
@@ -72,7 +72,7 @@ class Board : public juce::Component, public HasStyle {
     }
 
     bool hasText() override { return false; }
-    void setTextSize(int) override {}
+    void setTextSize(double) override {}
     void setFont(juce::Font) override {}
     void setTextAlign(juce::Justification) override {}
 

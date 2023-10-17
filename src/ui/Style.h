@@ -17,7 +17,7 @@ class HasStyle {
 
     // font
     virtual bool hasText() = 0;
-    virtual void setTextSize(int) = 0;
+    virtual void setTextSize(double) = 0;
     virtual void setFont(juce::Font) = 0;
     virtual void setTextAlign(juce::Justification) = 0;
 

@@ -22,8 +22,13 @@ void HasStyle::setStyle(App* app, Parser::Style &style) {
   setWidgetColor(this, app, HasStyle::ColorId::First, style.color);
   setWidgetColor(this, app, HasStyle::ColorId::Second, style.secondaryColor);
   setWidgetColor(this, app, HasStyle::ColorId::Background, style.background);
-  
-  app->setJustificationType(style.textAlign, [this] (auto align) {
-    this->setTextAlign(align);
-  });
+ 
+  if (hasText()) {
+    app->setJustificationType(style.textAlign, [this] (auto align) {
+      this->setTextAlign(align);
+    });
+    app->setTextSize(style.textSize, [this] (auto size) {
+      this->setTextSize(size);
+    });
+  }
 }

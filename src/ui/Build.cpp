@@ -8,18 +8,28 @@
 #include "csound.hpp"
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include <Icons.h>
 #include "model/Model.h"
 #include "parser/Parser.h"
+
 #include "widgets/ToggleGroup.h"
 #include "widgets/Dot.h"
 #include "widgets/Meter.h"
 #include "widgets/XYPad.h"
-#include <Icons.h>
 #include "widgets/FadIcons.h"
 #include "widgets/Board.h"
 #include "widgets/Knob.h"
 #include "widgets/Slider.h"
 #include "widgets/Bar.h"
+#include "widgets/Button.h"
+#include "widgets/Toggle.h"
+#include "widgets/IconButton.h"
+#include "widgets/IconToggleButton.h"
+#include "widgets/PressButton.h"
+#include "widgets/CheckToggle.h"
+#include "widgets/ButtonGroup.h"
+#include "widgets/Label.h"
+#include "widgets/ComboBox.h"
 
 // Build Application from YAML-file
 
@@ -273,57 +283,6 @@ class BuildCsoundUi : public Parser::CsoundUi {
 //------------------------------------------------------------------------------------- 
 // Build UI
 
-void padRect(Parser::Rect& rect, Parser::Pad pad) 
-{
-  float x = rect.getX(), 
-        y = rect.getY(), 
-        w = rect.getWidth(),
-        h = rect.getHeight();
-
-  x = x + pad.left * w;
-  y = y + pad.top * h;
-  w = w * (1 - pad.left - pad.right);
-  h = h * (1 - pad.top - pad.bottom);
-
-  rect.setX(x);
-  rect.setY(y);
-  rect.setHeight(h);
-  rect.setWidth(w);
-}
-
-void setColor(App* app, const Expr<Parser::Col>& col, std::function<void(juce::Colour)> setter)
-{
-  PLOG_DEBUG << "A 1";
-  setter(app->findColor(col.apply()));
-  PLOG_DEBUG << "A 1-2";
-  std::set<Chan> chans = col.getChans();
-  PLOG_DEBUG << "A 2";
-  std::for_each(chans.begin(), chans.end(), [app, setter] (auto chn) {
-    PLOG_DEBUG << "A 3";
-    app->state->appendCallbackString(chn.name, new Callback<std::string>([app,setter](auto newCol) { 
-      juce::Colour c = app->findColor(newCol);
-      setter(c);
-    }));               
-  });
-  PLOG_DEBUG << "A 4";
-}
-
-void setTextSize(App* app, Parser::Val<double> textSize, std::function<juce::Font(void)> getFont, std::function<void(juce::Font)> setFont)
-{
-  if (textSize.isVal()) {
-    juce::Font font = getFont();
-    font.setHeight(textSize.getVal());
-    setFont(font);
-  } else {
-    Chan chan = textSize.getChan();
-    app->state->appendCallbackDouble(chan.name, new Callback<double>([&getFont,&setFont] (auto size) {
-      juce::Font font = getFont();
-      font.setHeight(size);
-      setFont(font);
-    ;}));
-  }
-}
-
 void setFont(App* app, Parser::Val<std::string> typeface, std::function<juce::Font(void)> getFont, std::function<void(juce::Font)> setFont)
 {
   if (typeface.isVal()) {
@@ -366,7 +325,6 @@ class BuildWidget : public Parser::Widget {
     BuildWidget(App* _app): app(_app) {}
     void knob(Parser::Style& style, Parser::Rect rect, std::string name) override 
     { 
-      padRect(rect, style.pad);
       Knob* knob = new Knob();
       knob->setStyle(app, style);
       knob->setName(name);
@@ -377,7 +335,6 @@ class BuildWidget : public Parser::Widget {
     
     void slider(Parser::Style& style, Parser::Rect rect, std::string name) override 
     {
-      padRect(rect, style.pad);
       Slider* slider = new Slider(rect);
       slider->setStyle(app, style);
       slider->setName(name);
@@ -388,7 +345,6 @@ class BuildWidget : public Parser::Widget {
     
     void bar(Parser::Style& style, Parser::Rect rect, std::string name, Parser::Widget::Type widgetType) override 
     {
-      padRect(rect, style.pad);
       Bar* slider = new Bar(rect);
       slider->setStyle(app, style);
       slider->setName(name);
@@ -400,8 +356,8 @@ class BuildWidget : public Parser::Widget {
     void xyPad(Parser::Style& style, Parser::Rect rect, std::string nameX, std::string nameY) override 
     { 
       (void) nameX; (void) nameY;
-      padRect(rect, style.pad);
       XYPad* widget = new XYPad();
+      widget->setStyle(app, style);
 
       widget->setValue(juce::Point<float>(app->state->getDouble(nameX), app->state->getDouble(nameY)), false);
       widget->onValueChange = [this, widget, nameX, nameY] (juce::Point<float> p) {
@@ -425,14 +381,6 @@ class BuildWidget : public Parser::Widget {
         }
       }));
 
-      app->setColor(style.color, [widget] (auto c) {
-         widget->setCursorColor(c);
-      });
-
-      app->setColor(style.secondaryColor, [widget] (auto c) {
-         widget->setFrameColor(c);
-      });
-
       app->addWidget(style, widget, rect);
     };
 
@@ -440,42 +388,28 @@ class BuildWidget : public Parser::Widget {
     // JUCE example on how to change font size
     void button(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 
-      padRect(rect, style.pad);
-      juce::TextButton* widget = new juce::TextButton(title);
+      Button* widget = new Button(title);
+      widget->setStyle(app, style);
       
-      app->setColor(style.color, [widget] (auto c) {
-         widget->setColour(juce::TextButton::buttonColourId, c);
-      });
-     
-      PLOG_DEBUG << style.color.getVal().val << "  " << style.secondaryColor.getVal().val << "\n";
-      app->setColor(style.secondaryColor, [widget] (auto c) {
-         widget->setColour(juce::TextButton::buttonOnColourId, c);
-         widget->setColour(juce::TextButton::textColourOffId, c);
-      });
-
-      int* counter = new int(0);
       // we use a trick to ensure that note is not retriggered when state
       // is change automatically
-      bool* isUser = new bool(true);
-      widget->onStateChange = [&style,this,name,widget,counter, isUser] { 
-        if (*isUser) {
+      widget->onStateChange = [&style,this,name,widget] { 
+        if (widget->isUser) {
           if (widget->getState() == juce::Button::ButtonState::buttonDown) {
-            *counter = *counter + 1;
-            this->app->state->setInt(name, *counter); 
+            widget->counter = widget->counter + 1;
+            this->app->state->setInt(name, widget->counter); 
           }
         } else {
-          *isUser = true;
+          widget->isUser = true;
         }
       };
 
       this->app->state->appendCallbackInt(name, new Callback<int>(
-        [widget, isUser](int val) {
-          *isUser = false;
+        [widget](int val) {
+          widget->isUser = false;
           widget->triggerClick();
         } 
       ));
-
-      widget->setLookAndFeel(&(widget->getLookAndFeel()));
 
       PLOG_DEBUG << "make button: " << name << " with text: " << title;
       app->addWidget(style, widget, rect);
@@ -483,23 +417,12 @@ class BuildWidget : public Parser::Widget {
 
     void toggle(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 
-      padRect(rect, style.pad);
-      juce::TextButton* widget = new juce::TextButton(title);
-      widget->setToggleable(true);
-      widget->setClickingTogglesState(true);
+      Toggle* widget = new Toggle(title);
+      widget->setStyle(app, style);
       widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
       
       auto onColor = toColExpr(style.color, this->app->state);
       auto offColor = toColExpr(style.secondaryColor, this->app->state);
-
-      setColor(app, offColor, [widget] (auto c) {
-        widget->setColour(juce::TextButton::buttonColourId, c);
-        });
-
-      setColor(app, onColor, [widget] (auto c) {
-        widget->setColour(juce::TextButton::textColourOffId, c);
-        widget->setColour(juce::TextButton::buttonOnColourId, c);
-      });
 
       widget->onStateChange = [&style,this,name,widget, offColor, onColor] { 
         if (widget->getState() == juce::Button::ButtonState::buttonDown) {
@@ -518,44 +441,24 @@ class BuildWidget : public Parser::Widget {
     void iconButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     {
       (void) name; (void) title;
-      padRect(rect, style.pad);
-      Icon icon = getIcon(style.icon);
-      std::unique_ptr<juce::XmlElement> svg_xml(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
-      // ui::helpers::changeColor(svg_xml, "#61f0c4"); // RECOLOUR
-      auto iconImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
-      auto iconHoverImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
-      auto iconDownImage = juce::Drawable::createFromSVG(*svg_xml); // GET THIS AS DRAWABLE
-      app->setColor(style.color, [&iconImage] (auto c) {
-        iconImage->replaceColour(juce::Colours::black, c);
-      });
-      
-      app->setColor(style.color, [&iconHoverImage] (auto c) {
-        iconHoverImage->replaceColour(juce::Colours::black, c.darker());
-      });
-  
-      app->setColor(style.color, [&iconDownImage] (auto c) {
-        iconDownImage->replaceColour(juce::Colours::black, c.darker().darker());
-      });
-  
-      juce::DrawableButton* widget = new juce::DrawableButton(title, juce::DrawableButton::ImageFitted);
-      widget->setImages(iconImage.get(), iconHoverImage.get(), iconDownImage.get()); 
-     
-      app->setColor(style.secondaryColor, [widget] (auto c) {
-         widget->setColour(juce::TextButton::buttonOnColourId, c);
-         widget->setColour(juce::TextButton::textColourOffId, c);
-      });
-      app->setColor(style.background, [widget] (auto c) {
-        widget->setColour(juce::DrawableButton::backgroundColourId, c);
-        widget->setColour(juce::DrawableButton::backgroundOnColourId, c);
-      });
+      IconButton* widget = new IconButton(title, style.icon);
+      widget->setStyle(app, style);
 
-      int* counter = new int(0);
-      widget->onStateChange = [&style,this,name,widget,counter] { 
-        if (widget->getState() == juce::Button::ButtonState::buttonDown) {
-          *counter = *counter + 1;
-          this->app->state->setInt(name, *counter); 
+      widget->onStateChange = [&style,this,name,widget] { 
+        if (widget->isUser) {
+          if (widget->getState() == juce::Button::ButtonState::buttonDown) {
+            widget->counter = widget->counter + 1;
+            this->app->state->setInt(name, widget->counter); 
+            widget->isUser = true;
+          }
         }
       };
+      this->app->state->appendCallbackInt(name, new Callback<int>(
+        [widget](int val) {
+          widget->isUser = false;
+          widget->triggerClick();
+        } 
+      ));
 
       PLOG_DEBUG << "make icon toggle button: " << name << " with text: " << title;
       app->addWidget(style, widget, rect);
@@ -564,58 +467,9 @@ class BuildWidget : public Parser::Widget {
     void iconToggleButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     {
       (void) name; (void) title;
-      padRect(rect, style.pad);
-      Icon icon = getIcon(style.secondaryIcon);
-      std::unique_ptr<juce::XmlElement> svg_xml(juce::XmlDocument::parse(icon.first)); // GET THE SVG AS A XML
-      // ui::helpers::changeColor(svg_xml, "#61f0c4"); // RECOLOUR
-      auto iconImage = juce::Drawable::createFromSVG(*svg_xml); 
-      auto iconHoverImage = juce::Drawable::createFromSVG(*svg_xml); 
-      auto iconDownImage = juce::Drawable::createFromSVG(*svg_xml); 
-      auto iconDisabledImage = juce::Drawable::createFromSVG(*svg_xml); 
-      app->setColor(style.secondaryColor, [&iconImage] (auto c) {
-        iconImage->replaceColour(juce::Colours::black, c);
-      });
-      
-      app->setColor(style.secondaryColor, [&iconHoverImage] (auto c) {
-        iconHoverImage->replaceColour(juce::Colours::black, c.darker());
-      });
-  
-      app->setColor(style.secondaryColor, [&iconDownImage] (auto c) {
-        iconDownImage->replaceColour(juce::Colours::black, c.darker().darker());
-      });
-      
-      app->setColor(style.secondaryColor, [&iconDisabledImage] (auto c) {
-        iconDisabledImage->replaceColour(juce::Colours::black, c.darker().darker().darker());
-      });
+      IconToggleButton* widget = new IconToggleButton(title, style.icon, style.secondaryIcon);
+      widget->setStyle(app, style);
 
-      Icon iconOn = getIcon(style.icon);
-      std::unique_ptr<juce::XmlElement> svg_xml_on(juce::XmlDocument::parse(iconOn.first)); // GET THE SVG AS A XML
-      auto iconImageOn = juce::Drawable::createFromSVG(*svg_xml_on); 
-      auto iconHoverImageOn = juce::Drawable::createFromSVG(*svg_xml_on); 
-      auto iconDownImageOn = juce::Drawable::createFromSVG(*svg_xml_on); 
-      auto iconDisabledImageOn = juce::Drawable::createFromSVG(*svg_xml_on); 
-      app->setColor(style.color, [&iconImageOn] (auto c) {
-        iconImageOn->replaceColour(juce::Colours::black, c);
-      });
-      
-      app->setColor(style.color, [&iconHoverImageOn] (auto c) {
-        iconHoverImageOn->replaceColour(juce::Colours::black, c.darker());
-      });
-  
-      app->setColor(style.color, [&iconDownImageOn] (auto c) {
-        iconDownImageOn->replaceColour(juce::Colours::black, c.darker().darker());
-      });
-      
-      app->setColor(style.color, [&iconDisabledImageOn] (auto c) {
-        iconDisabledImageOn->replaceColour(juce::Colours::black, c.darker().darker().darker());
-      });
-
-      juce::DrawableButton* widget = new juce::DrawableButton(title, juce::DrawableButton::ImageFitted);
-      widget->setImages(
-        iconImage.get(), iconHoverImage.get(), iconDownImage.get(), iconDisabledImage.get(), 
-        iconImageOn.get(), iconHoverImageOn.get(), iconDownImageOn.get(), iconDisabledImageOn.get()); 
-      widget->setToggleable(true);
-      widget->setClickingTogglesState(true);
       widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
       widget->onStateChange = [&style,this,name,widget] { 
         if (widget->getState() == juce::Button::ButtonState::buttonDown) {
@@ -623,15 +477,6 @@ class BuildWidget : public Parser::Widget {
         }
       };
      
-      app->setColor(style.secondaryColor, [widget] (auto c) {
-         widget->setColour(juce::TextButton::buttonOnColourId, c);
-         widget->setColour(juce::TextButton::textColourOffId, c);
-      });
-      app->setColor(style.background, [widget] (auto c) {
-        widget->setColour(juce::DrawableButton::backgroundColourId, c);
-        widget->setColour(juce::DrawableButton::backgroundOnColourId, c);
-      });
-
       PLOG_DEBUG << "make icon toggle button: " << name << " with text: " << title;
       app->addWidget(style, widget, rect);
     };
@@ -639,18 +484,9 @@ class BuildWidget : public Parser::Widget {
 
     void pressButton(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 
-      padRect(rect, style.pad);
-      juce::TextButton* widget = new juce::TextButton(title);
+      PressButton* widget = new PressButton(title);
+      widget->setStyle(app, style);
       
-      app->setColor(style.color, [widget] (auto c) {
-         widget->setColour(juce::TextButton::buttonColourId, c);
-      });
-     
-      app->setColor(style.secondaryColor, [widget] (auto c) {
-         widget->setColour(juce::TextButton::buttonOnColourId, c);
-         widget->setColour(juce::TextButton::textColourOffId, c);
-      });
-
       widget->onStateChange = [&style,this,name,widget] { 
         if (widget->getState() == juce::Button::ButtonState::buttonDown) {
           this->app->state->setInt(name, 1); 
@@ -659,27 +495,18 @@ class BuildWidget : public Parser::Widget {
         }
       };
 
-      PLOG_DEBUG << "make button: " << name << " with text: " << title;
+      PLOG_DEBUG << "make press button: " << name << " with text: " << title;
       app->addWidget(style, widget, rect);
     };
 
     void checkToggle(Parser::Style& style, Parser::Rect rect, std::string name, std::string title) override 
     { 
-      padRect(rect, style.pad);
-      juce::ToggleButton* widget = new juce::ToggleButton(title);
+      CheckToggle* widget = new CheckToggle(title);
+      widget->setStyle(app, style);
       widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
       
       auto onColor = toColExpr(style.color, this->app->state);
       auto offColor = toColExpr(style.secondaryColor, this->app->state);
-
-      setColor(app, offColor, [widget] (auto c) {
-        widget->setColour(juce::ToggleButton::tickColourId , c);
-        });
-
-      setColor(app, onColor, [widget] (auto c) {
-        widget->setColour(juce::ToggleButton::tickDisabledColourId, c);
-        widget->setColour(juce::ToggleButton::textColourId, c);
-      });
 
       widget->onStateChange = [&style,this,name,widget, offColor, onColor] { 
         if (widget->getState() == juce::Button::ButtonState::buttonDown) {
@@ -696,7 +523,6 @@ class BuildWidget : public Parser::Widget {
 
     void checkGroup(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<std::string> names, bool isVertical) override
     { 
-      padRect(rect, style.pad);
       ToggleGroup* widget = new ToggleGroup(isVertical);
       std::for_each(names.begin(), names.end(), [this, widget] (auto name) {
         juce::ToggleButton* button = new juce::ToggleButton(name);
@@ -721,30 +547,9 @@ class BuildWidget : public Parser::Widget {
 
     void buttonGroup(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<std::string> names, bool isVertical) override
     { 
-      padRect(rect, style.pad);
-      auto onColor = toColExpr(style.color, this->app->state);
-      auto offColor = toColExpr(style.secondaryColor, this->app->state);
+      ButtonGroup* widget = new ButtonGroup(isVertical, app->state->getInt(chan), names);
+      widget->setStyle(app, style);
 
-      ToggleGroup* widget = new ToggleGroup(isVertical);
-      std::for_each(names.begin(), names.end(), [this, widget, onColor, offColor] (auto name) {
-        juce::TextButton* button = new juce::TextButton(name);
-        button->setToggleable(true);
-        button->setClickingTogglesState(true);
-        button->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
-
-        setColor(app, offColor, [button] (auto c) {
-          button->setColour(juce::TextButton::buttonColourId, c);
-          });
-
-        setColor(app, onColor, [button] (auto c) {
-          button->setColour(juce::TextButton::textColourOffId, c);
-          button->setColour(juce::TextButton::buttonOnColourId, c);
-        });
-
-        widget->addItem(button);
-      });
-
-      widget->setValue((size_t) app->state->getInt(chan));
       app->state->appendCallbackInt(chan, new Callback<int>([this, widget] (auto n) {
         size_t current = widget->getValue();
         size_t choice = (size_t) n;
@@ -763,30 +568,14 @@ class BuildWidget : public Parser::Widget {
    
     void label(Parser::Style& style, Parser::Rect rect, std::string val) override 
     {
-      padRect(rect, style.pad);
-      juce::Label* widget = new juce::Label();
-      widget->setName(val);
-      widget->setText(val, juce::dontSendNotification);
-      widget->setFont(juce::Font(16.0f, juce::Font::plain));
-
-      setTextSize(app, style.textSize, 
-          [widget] { return widget->getFont(); },
-          [widget] (auto font) { return widget->setFont(font); }
-      );
-
-      app->setColor(style.color, [widget] (auto c) {
-        widget->setColour(juce::Label::textColourId, c);
-      });
-
-      app->setJustificationType(style.textAlign, [widget] (auto justType) { 
-        widget->setJustificationType (justType);
-      });
+      Label* widget = new Label(val);
+      widget->setStyle(app, style);
       app->addWidget(style, widget, rect);
     };
 
+    // todo: background images
     void image(Parser::Style& style, Parser::Rect rect, std::string file) 
     { 
-      padRect(rect, style.pad);
       juce::Image image = juce::ImageFileFormat::loadFrom(juce::File(file));
       juce::ImageComponent* widget = new juce::ImageComponent(file);
       widget->setImage(image); 
@@ -795,7 +584,6 @@ class BuildWidget : public Parser::Widget {
 
     void dot(Parser::Style& style, Parser::Rect rect)
     {
-      padRect(rect, style.pad);
       Dot* widget = new Dot();
       widget->setStyle(app, style);
       app->addWidget(style, widget, rect);
@@ -803,11 +591,8 @@ class BuildWidget : public Parser::Widget {
 
     void barDisplay(Parser::Style& style, Parser::Rect rect, std::string chan)
     {
-      padRect(rect, style.pad);
       BarDisplay* widget = new BarDisplay();
-      app->setColor(style.color, [widget] (auto c) {
-        widget->setColor(c);
-      });
+      widget->setStyle(app, style);
 
       app->state->appendCallbackDouble(chan, new Callback<double>([widget] (double x) {
         widget->setValue((float) x);
@@ -816,10 +601,9 @@ class BuildWidget : public Parser::Widget {
       app->addWidget(style, widget, rect);
     }
 
-
+    // TODO: make rainbow range of colors configurable
     virtual void dotMeter(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<Parser::Col> colors) 
     { 
-      padRect(rect, style.pad);
       DotMeter* widget = new DotMeter();
       std::vector<juce::Colour> cols;
       std::for_each(colors.begin(), colors.end(), [this, &cols] (auto c) {
@@ -831,9 +615,9 @@ class BuildWidget : public Parser::Widget {
       app->addWidget(style, widget, rect);
     };
 
+    // TODO: make rainbow range of colors configurable
     virtual void barMeter(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<Parser::Col> colors) 
     { 
-      padRect(rect, style.pad);
       BarMeter* widget = new BarMeter();
       std::vector<juce::Colour> cols;
       std::for_each(colors.begin(), colors.end(), [this, &cols] (auto c) {
@@ -848,23 +632,8 @@ class BuildWidget : public Parser::Widget {
 
     void text(Parser::Style& style, Parser::Rect rect, std::string name) override 
     {
-      padRect(rect, style.pad);
-      juce::Label* widget = new juce::Label();      
-      widget->setName(name);
-      widget->setText(app->state->getString(name), juce::dontSendNotification);
-      widget->setFont(juce::Font(16.0f, juce::Font::plain));
+      Label* widget = new Label(name);      
 
-      setTextSize(app, style.textSize, 
-          [widget] { return widget->getFont(); },
-          [widget] (auto font) { return widget->setFont(font); }
-      );
-
-      app->setColor(style.color, [widget] (auto c) {
-        widget->setColour(juce::Label::textColourId, c);
-      });
-      app->setJustificationType(style.textAlign, [widget] (auto justType) { 
-        widget->setJustificationType (justType);
-      });
       app->addWidget(style, widget, rect);
       
       widget->setEditable(true);
@@ -879,16 +648,17 @@ class BuildWidget : public Parser::Widget {
       }));
     };
 
-    
     void comboBox(Parser::Style& style, Parser::Rect rect, std::string chan, std::vector<std::string> names) override
     { 
-      padRect(rect, style.pad);
-      juce::ComboBox* widget = new juce::ComboBox(chan);
+      ComboBox* widget = new ComboBox(chan, names);
+      widget->setStyle(app, style);
+      /*
       int counter = 1;
       std::for_each(names.begin(), names.end(), [widget, &counter] (auto name) {
         widget->addItem(name, counter);
         counter++;
       });
+      */
 
       widget->onChange = [this, widget, chan] {
         this->app->state->setInt(chan, widget->getSelectedItemIndex());
@@ -901,7 +671,7 @@ class BuildWidget : public Parser::Widget {
           widget->setSelectedItemIndex(choice);
         }
       })); 
-
+/*
       app->setJustificationType(style.textAlign, [widget] (auto align) {
         widget->setJustificationType(align);
       });
@@ -913,7 +683,7 @@ class BuildWidget : public Parser::Widget {
       app->setColor(style.background, [widget] (auto c) {
         widget->setColour(juce::ComboBox::backgroundColourId, c);
       });
-
+*/
       app->addWidget(style, widget, rect);      
     };
 
@@ -921,7 +691,6 @@ class BuildWidget : public Parser::Widget {
 
     void groupBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
     {
-      padRect(rect, style.pad);
       Group* group = app->groupBegin(style, rect, name);
       HasStyle* widget = dynamic_cast<HasStyle*>(group->getGroupWidget());
       if (widget) {
@@ -937,7 +706,6 @@ class BuildWidget : public Parser::Widget {
     void panelBegin(Parser::Style& style, Parser::Rect rect, std::string name) override
     {
       PLOG_DEBUG << "panelBegin: " << rect.toString() << " , name: " << name;
-      padRect(rect, style.pad);
       Panel* panel = app->panelBegin(style, rect, name);    
       app->state->appendCallbackInt(name, new Callback<int>([panel] (int n) { panel->selectVisible((size_t) n); }));
     }
@@ -1023,4 +791,3 @@ void initApp(App* app, CsdModel* csound, YAML::Node node)
   buildWindow->run(node);
   csoundChannelReader->startTimerHz(20);
 }
-
