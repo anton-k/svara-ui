@@ -37,27 +37,6 @@ bool readUiDef (juce::File csdFile, juce::String &result) {
   return hasUi;
 }
 
-Expr<std::string> toStringExpr(Val<std::string> v, State* state)
-{
-  if (v.isChan()) {
-    return readStringChan(v.getChan(), state);
-  } else {
-    return Expr<std::string>(v.getVal());
-  }
-}
-
-Expr<Col> toColExpr(Val<Col> v, State* state)
-{
-  if (v.isChan()) {
-    PLOG_DEBUG << "BOO CHAN " << v.getChan().name;
-    return map<std::string, Col>([] (std::string str) { return Col(str);}, readStringChan(v.getChan(), state));
-  } else {
-    PLOG_DEBUG << "BOO 1 " << v.getVal().val;
-    return Expr<Col>(v.getVal());
-  }
-}
-
-
 // -------------------------------------------------------------------
 // IsYaml
 

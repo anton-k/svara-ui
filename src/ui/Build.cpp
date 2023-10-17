@@ -41,6 +41,14 @@ void printVar(std::string name, T val)
   PLOG_INFO << name << ": " << val << "\n";
 }
 
+Parser::Col readCol(Parser::Val<Parser::Col> val, App* app) {
+  if (val.isChan()) {
+    return Parser::Col(app->state->getString(val.getChan().name));
+  } else {
+    return val.getVal();
+  }  
+}
+
 //------------------------------------------------------------------------------------- 
 // Build state
 class BuildInits : public Parser::InitVars {
@@ -379,16 +387,17 @@ class BuildWidget : public Parser::Widget {
       Toggle* widget = new Toggle(title);
       widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
       
-      auto onColor = toColExpr(style.color, this->app->state);
-      auto offColor = toColExpr(style.secondaryColor, this->app->state);
-
-      widget->onStateChange = [&style,this,name,widget, offColor, onColor] { 
+      widget->onStateChange = [&style,this,name,widget] { 
         if (widget->getState() == juce::Button::ButtonState::buttonDown) {
           this->app->state->setInt(name, 1 - this->app->state->getInt(name));
           if (widget->getToggleState()) {
-              widget->setColour(juce::TextButton::buttonColourId, this->app->findColor(offColor.apply()));
+              widget->setColour(
+                  juce::TextButton::buttonColourId, 
+                  this->app->findColor(readCol(style.secondaryColor, this->app)));
           } else {
-              widget->setColour(juce::TextButton::buttonColourId, this->app->findColor(onColor.apply()));
+              widget->setColour(
+                  juce::TextButton::buttonColourId, 
+                  this->app->findColor(readCol(style.color, this->app)));
           }
         }
       };
@@ -444,16 +453,17 @@ class BuildWidget : public Parser::Widget {
       CheckToggle* widget = new CheckToggle(title);
       widget->setToggleState(this->app->state->getInt(name) == 1, juce::dontSendNotification);
       
-      auto onColor = toColExpr(style.color, this->app->state);
-      auto offColor = toColExpr(style.secondaryColor, this->app->state);
-
-      widget->onStateChange = [&style,this,name,widget, offColor, onColor] { 
+      widget->onStateChange = [&style,this,name,widget] { 
         if (widget->getState() == juce::Button::ButtonState::buttonDown) {
           this->app->state->setInt(name, 1 - this->app->state->getInt(name));
           if (widget->getToggleState()) {
-              widget->setColour(juce::ToggleButton::tickColourId, this->app->findColor(offColor.apply()));
+              widget->setColour(
+                  juce::ToggleButton::tickColourId, 
+                  this->app->findColor(readCol(style.secondaryColor, this->app)));
           } else {
-              widget->setColour(juce::ToggleButton::tickColourId, this->app->findColor(onColor.apply()));
+              widget->setColour(
+                  juce::ToggleButton::tickColourId, 
+                  this->app->findColor(readCol(style.color, this->app)));
           }
         }
       };

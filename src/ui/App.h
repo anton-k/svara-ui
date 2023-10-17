@@ -202,13 +202,6 @@ class App {
       return config->palette.fromName(col);
     };
 
-    Expr<juce::Colour> colorExpr(Parser::Val<Parser::Col> val)
-    {
-      return map<Parser::Col, juce::Colour>
-          ([this] (auto col) { return this->findColor(col);},
-           Parser::toColExpr(val, this->state));
-    }
-
     // groups
     Group* groupBegin(Parser::Style &style, Parser::Rect rect, std::string name = "");
     void groupEnd(Parser::Style&);
